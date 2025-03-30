@@ -37,5 +37,5 @@ urlpatterns = [
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),  
     path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),  # Google OAuth 추가
-    path("", TemplateView.as_view(template_name="index.html")),
+    path("", TemplateView.as_view(template_name="frontend/index.html")),
 ]
