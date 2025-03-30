@@ -171,7 +171,7 @@ def create_resume(request):
             logger.debug(f"🔹 company_info: {company_info}")
             
             logger.debug("GPT API 호출 시작")
-            generated_resume = generate_resume(job_description, user_story)
+            generated_resume = generate_resume(job_description, user_story, company_info)
             logger.debug("GPT API 호출 완료")
             logger.info(f"GPT 자기소개서 생성 성공: {generated_resume[:100]}...")
             logger.debug(f"생성된 자기소개서 전체: {generated_resume}")
