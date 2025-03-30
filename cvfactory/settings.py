@@ -95,7 +95,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "allauth.account.middleware.AccountMiddleware",  # 이 부분을 주석 처리 또는 제거
+    "allauth.account.middleware.AccountMiddleware",
     "corsheaders.middleware.CorsMiddleware",
 ]
 

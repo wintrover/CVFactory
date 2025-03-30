@@ -10,6 +10,7 @@ import json
 import pandas as pd
 import logging
 from webdriver_manager.chrome import ChromeDriverManager
+from urllib.parse import urlparse
 
 logging.basicConfig(
     level=logging.INFO,  # 로그 레벨 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -155,40 +156,79 @@ def crawl_dynamic(url):
         driver.quit()
 
 # ------------------------------
-# 8. 재귀 크롤링 함수
+# 8. 회사 정보 크롤링 개선 함수 (Company_Crawler 통합)
 # ------------------------------
-def recursive_crawl(url, depth=1, max_depth=2, visited_urls=set()):
-    """ 회사 홈페이지에서 관련 페이지까지 크롤링 """
-    if url in visited_urls or depth > max_depth:
+def crawl_enhanced(start_url):
+    """ Company_Crawler 방식으로 개선된 크롤링 함수 """
+    driver = get_webdriver()
+    if not driver:
+        logger.error("웹드라이버 초기화 실패로 크롤링을 진행할 수 없습니다.")
         return ""
-
-    visited_urls.add(url)
-
-    page_type = detect_page_type(url)
-    if page_type == "static":
-        page_text = crawl_static(url)
-    else:
-        page_text = crawl_dynamic(url)
-
-    if depth == max_depth:
-        return page_text  # 최대 깊이 도달 시 반환
-
-    # 추가 크롤링 수행
+    
     try:
-        response = requests.get(url, timeout=10)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, "html.parser")
-            for link in soup.find_all("a", href=True):
-                sub_url = link["href"]
-
-                if sub_url.startswith("/"):
-                    sub_url = url.rstrip("/") + sub_url
-
-                return page_text + "\n" + recursive_crawl(sub_url, depth + 1, max_depth, visited_urls)
-    except requests.exceptions.RequestException:
-        pass
-
-    return page_text
+        # 1차 크롤링: 시작 URL
+        logger.info(f"1차 크롤링: {start_url}")
+        driver.get(start_url)
+        
+        # 텍스트 추출
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        for script in soup(["script", "style"]):
+            script.extract()
+        main_text = soup.get_text(separator=" ", strip=True)
+        
+        # 링크 추출
+        elements = driver.find_elements(By.TAG_NAME, "a")
+        all_links = [elem.get_attribute("href") for elem in elements if elem.get_attribute("href")]
+        
+        # 같은 도메인 링크만 필터링
+        base_domain = urlparse(start_url).netloc
+        valid_links = []
+        for link in all_links:
+            if link and link.startswith('http'):
+                link_domain = urlparse(link).netloc
+                if link_domain == base_domain:
+                    # TARGET_KEYWORDS와 일치하는 링크를 우선적으로 선택
+                    for keyword in TARGET_KEYWORDS:
+                        if keyword in link.lower():
+                            valid_links.append(link)
+                            break
+        
+        # 중복 제거
+        links = list(dict.fromkeys(valid_links))
+        
+        # 최대 5개 링크만 선택 (TARGET_KEYWORDS 포함된 링크 우선)
+        links = links[:5]
+        
+        result_text = f"=== 1차 크롤링: {start_url} ===\n{main_text}\n\n"
+        
+        # 2차 크롤링
+        logger.info(f"2차 크롤링: {len(links)}개 링크")
+        
+        for i, link in enumerate(links):
+            try:
+                logger.info(f"링크 {i+1}/{len(links)}: {link}")
+                driver.get(link)
+                
+                # 텍스트 추출
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                for script in soup(["script", "style"]):
+                    script.extract()
+                sub_text = soup.get_text(separator=" ", strip=True)
+                
+                # 결과 추가
+                result_text += f"=== 2차 크롤링 ({i+1}/{len(links)}): {link} ===\n{sub_text}\n\n"
+            
+            except Exception as e:
+                logger.error(f"오류 ({link}): {e}")
+        
+        logger.info("크롤링 완료")
+        return result_text
+        
+    except Exception as e:
+        logger.error(f"크롤링 중 오류 발생: {str(e)}")
+        return ""
+    finally:
+        driver.quit()
 
 # ------------------------------
 # 9. csrftoken과 sessionid 획득
@@ -231,66 +271,43 @@ def get_csrf_token_and_session_id():
         driver.quit()
 
 # ------------------------------
-# 10. 크롤링 실행
+# 10. 크롤링 실행 - 개선된 버전
 # ------------------------------
-
 def fetch_company_info(company_url):
     """ 회사 정보를 크롤링하는 함수 """
     try:
         logger.info(f" 회사 정보 크롤링 시작: {company_url}")
 
-        # CSRF 토큰 및 세션 ID 가져오기
-        csrf_token, session_id = get_csrf_token_and_session_id()
-        if not csrf_token or not session_id:
-            logger.warning("CSRF 토큰 또는 세션 ID를 가져오지 못했습니다. 크롤링은 계속 진행합니다.")
-            # 크롤링은 계속 진행
+        # URL 검증
+        if not company_url.startswith('http://') and not company_url.startswith('https://'):
+            company_url = 'https://' + company_url
+            logger.info(f"URL 수정됨: {company_url}")
 
-        # 요청 헤더 설정 (CSRF 및 세션 추가)
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        }
+        # 크롤링 방식 선택: 향상된 버전 사용
+        company_info = crawl_enhanced(company_url)
         
-        if csrf_token and session_id:
-            headers.update({
-                "X-CSRFToken": csrf_token,
-                "Cookie": f"csrftoken={csrf_token}; sessionid={session_id}",
-                "Referer": "http://127.0.0.1:8000/"
-            })
-
-        try:
-            response = requests.get(company_url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                logger.error(f" 회사 URL 접근 실패 (상태 코드: {response.status_code})")
-                return "접근할 수 없는 URL입니다."
-        except requests.exceptions.RequestException as e:
-            logger.error(f" 회사 URL 접근 중 오류 발생: {str(e)}")
-            return "URL 접근 중 오류가 발생했습니다."
-
-        # 페이지 유형 감지
-        page_type = detect_page_type(company_url)
-        logger.info(f" 페이지 유형: {page_type}")
-
-        # 페이지 유형에 따라 크롤링 시작
-        if page_type == "static":
-            company_info = crawl_static(company_url)
-        else:
-            company_info = crawl_dynamic(company_url)
-
         if not company_info:
-            logger.warning(" 직접 크롤링 실패, 재귀 크롤링 시도 중...")
-            company_info = recursive_crawl(company_url, depth=1, max_depth=2, visited_urls=set())
+            logger.warning("향상된 크롤링 방식이 실패했습니다. 기존 방식으로 시도합니다.")
+            # 기존 방식으로 시도
+            page_type = detect_page_type(company_url)
+            if page_type == "static":
+                company_info = crawl_static(company_url)
+            else:
+                company_info = crawl_dynamic(company_url)
 
+        logger.info(f"크롤링 완료, 총 {len(company_info)} 자 수집됨")
+        
         # 결과 반환
-        if not company_info or len(company_info) < 100:
-            logger.error(" 충분한 회사 정보를 가져오지 못했습니다.")
-            return "회사 정보를 충분히 가져오지 못했습니다."
-
-        logger.info(f" 회사 정보 크롤링 완료 ({len(company_info)} 글자)")
-        # 로깅에 너무 많은 정보가 출력되지 않도록 처음 100자만 출력
-        logger.info(f" 회사 정보 미리보기: {company_info[:100]}...")
-
         return company_info
 
     except Exception as e:
-        logger.error(f" 회사 정보 크롤링 중 오류 발생: {str(e)}")
-        return f"회사 정보 크롤링 중 오류가 발생했습니다: {str(e)}"
+        logger.error(f"회사 정보 크롤링 중 오류 발생: {str(e)}")
+        return "회사 정보를 가져오는 중에 오류가 발생했습니다. 다시 시도해주세요."
+
+# 테스트 코드
+if __name__ == "__main__":
+    # 테스트용 회사 URL
+    test_url = "https://www.samsung.com/"
+    result = fetch_company_info(test_url)
+    print(f"크롤링 결과 길이: {len(result)}")
+    print(result[:500] + "...")  # 결과 앞부분만 출력
