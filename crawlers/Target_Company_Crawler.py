@@ -12,15 +12,8 @@ import logging
 from webdriver_manager.chrome import ChromeDriverManager
 from urllib.parse import urlparse
 
-logging.basicConfig(
-    level=logging.INFO,  # 로그 레벨 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    format="%(asctime)s - %(levelname)s - %(message)s",  # 로그 형식
-    handlers=[
-        logging.StreamHandler()  # 콘솔에 로그 출력
-    ]
-)
-
-logger = logging.getLogger(__name__)  # 현재 모듈(__name__)에 대한 로거 생성
+# Django 설정의 'crawlers' 로거 사용
+logger = logging.getLogger('crawlers')
 
 # ------------------------------
 # 1. 설정 (키워드 & 깊이 & 필터링)
@@ -273,41 +266,22 @@ def get_csrf_token_and_session_id():
 # ------------------------------
 # 10. 크롤링 실행 - 개선된 버전
 # ------------------------------
-def fetch_company_info(company_url):
-    """ 회사 정보를 크롤링하는 함수 """
-    try:
-        logger.info(f" 회사 정보 크롤링 시작: {company_url}")
-
-        # URL 검증
-        if not company_url.startswith('http://') and not company_url.startswith('https://'):
-            company_url = 'https://' + company_url
-            logger.info(f"URL 수정됨: {company_url}")
-
-        # 크롤링 방식 선택: 향상된 버전 사용
-        company_info = crawl_enhanced(company_url)
-        
-        if not company_info:
-            logger.warning("향상된 크롤링 방식이 실패했습니다. 기존 방식으로 시도합니다.")
-            # 기존 방식으로 시도
-            page_type = detect_page_type(company_url)
-            if page_type == "static":
-                company_info = crawl_static(company_url)
-            else:
-                company_info = crawl_dynamic(company_url)
-
-        logger.info(f"크롤링 완료, 총 {len(company_info)} 자 수집됨")
-        
-        # 결과 반환
-        return company_info
-
-    except Exception as e:
-        logger.error(f"회사 정보 크롤링 중 오류 발생: {str(e)}")
-        return "회사 정보를 가져오는 중에 오류가 발생했습니다. 다시 시도해주세요."
+def fetch_company_info(start_url):
+    """ 회사 정보 수집 API 함수 """
+    logger.info(f"회사 정보 크롤링 시작: {start_url}")
+    result = crawl_enhanced(start_url)
+    if result:
+        logger.info(f"크롤링 결과 길이: {len(result)}")
+        logger.debug(f"크롤링 결과 미리보기: {result[:500]}...")  # 결과 앞부분만 출력
+        return result
+    else:
+        logger.warning(f"크롤링 결과가 없음: {start_url}")
+        return "회사 정보를 찾을 수 없습니다."
 
 # 테스트 코드
 if __name__ == "__main__":
     # 테스트용 회사 URL
     test_url = "https://www.samsung.com/"
     result = fetch_company_info(test_url)
-    print(f"크롤링 결과 길이: {len(result)}")
-    print(result[:500] + "...")  # 결과 앞부분만 출력
+    logger.info(f"크롤링 결과 길이: {len(result)}")
+    logger.info(result[:500] + "...")  # 결과 앞부분만 출력

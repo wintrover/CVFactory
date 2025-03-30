@@ -6,14 +6,8 @@ from typing import Optional
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-#  로깅 설정 (콘솔 출력)
-logging.basicConfig(
-    level=logging.INFO,  # 기본 로깅 레벨 (INFO 이상)
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()  # 콘솔 출력
-    ]
-)
+# Django 로깅 설정 사용
+logger = logging.getLogger('crawlers')
 
 class WebScrapingError(Exception):
     """웹 스크래핑 관련 사용자 정의 예외"""
@@ -36,7 +30,7 @@ def fetch_job_description(url: str) -> Optional[str]:
     """ 주어진 URL에서 채용 공고 정보를 크롤링하여 텍스트로 반환"""
     session = create_session()
     try:
-        logging.info(f"채용 공고고 크롤링 시작: {url}")
+        logger.info(f"채용 공고고 크롤링 시작: {url}")
 
         #  HTTP 요청 헤더 설정 (User-Agent 지정)
         headers = {
@@ -51,45 +45,45 @@ def fetch_job_description(url: str) -> Optional[str]:
         #  응답 인코딩 설정
         response.encoding = response.apparent_encoding or 'utf-8'
         html_content = response.text
-        logging.info(" HTML 응답 데이터 수신 완료")
+        logger.info(" HTML 응답 데이터 수신 완료")
 
         #  HTML 파싱
         soup = BeautifulSoup(html_content, 'html.parser')
         raw_text = soup.get_text(separator='\n')
-        logging.info(" HTML 파싱 및 텍스트 추출 완료")
+        logger.info(" HTML 파싱 및 텍스트 추출 완료")
 
         #  텍스트 정제
         cleaned_text = clean_text(raw_text)
-        logging.info(" 텍스트 정제 완료")
+        logger.info(" 텍스트 정제 완료")
 
         return cleaned_text
 
     except requests.Timeout:
-        logging.error(f" [시간 초과] {url} 요청이 너무 오래 걸림", exc_info=True)
+        logger.error(f" [시간 초과] {url} 요청이 너무 오래 걸림", exc_info=True)
         raise WebScrapingError("시간 초과로 인해 요청이 실패했습니다.")
 
     except requests.ConnectionError:
-        logging.error(f" [네트워크 오류] {url} 요청 실패 - 인터넷 연결 확인 필요", exc_info=True)
+        logger.error(f" [네트워크 오류] {url} 요청 실패 - 인터넷 연결 확인 필요", exc_info=True)
         raise WebScrapingError("네트워크 연결 오류가 발생했습니다.")
 
     except requests.exceptions.RequestException as e:
-        logging.error(f" [HTTP 요청 오류] {url} - {str(e)}", exc_info=True)
+        logger.error(f" [HTTP 요청 오류] {url} - {str(e)}", exc_info=True)
         raise WebScrapingError(f"HTTP 요청 오류 발생: {str(e)}") from e
 
     except requests.exceptions.HTTPError as e:
-        logging.error(f" [HTTP 오류] {url} - 상태 코드: {response.status_code}", exc_info=True)
+        logger.error(f" [HTTP 오류] {url} - 상태 코드: {response.status_code}", exc_info=True)
         raise WebScrapingError(f"HTTP 오류 발생: {response.status_code} - {response.reason}") from e
 
     except re.error as e:
-        logging.error(f" [정규식 오류] 텍스트 정제 중 오류 발생 - {str(e)}", exc_info=True)
+        logger.error(f" [정규식 오류] 텍스트 정제 중 오류 발생 - {str(e)}", exc_info=True)
         raise WebScrapingError(f"정규식 처리 오류 발생: {str(e)}") from e
 
     except AttributeError as e:
-        logging.error(f" [HTML 파싱 오류] 필요한 요소를 찾을 수 없음 - {str(e)}", exc_info=True)
+        logger.error(f" [HTML 파싱 오류] 필요한 요소를 찾을 수 없음 - {str(e)}", exc_info=True)
         raise WebScrapingError("HTML 파싱 오류 발생: 필요한 요소를 찾을 수 없습니다") from e
 
     except Exception as e:
-        logging.error(f" [예기치 않은 오류 발생] {str(e)}", exc_info=True)
+        logger.error(f" [예기치 않은 오류 발생] {str(e)}", exc_info=True)
         raise WebScrapingError(f"예기치 않은 오류 발생: {str(e)}") from e
 
 def clean_text(text: str) -> str:
@@ -107,7 +101,7 @@ def clean_text(text: str) -> str:
 
         return text
     except re.error as e:
-        logging.error(f" [정규식 오류] 텍스트 정제 중 오류 발생 - {str(e)}")
+        logger.error(f" [정규식 오류] 텍스트 정제 중 오류 발생 - {str(e)}")
         raise
 
 def format_text_by_line(text: str, line_length: int = 50) -> str:
@@ -118,7 +112,7 @@ def format_text_by_line(text: str, line_length: int = 50) -> str:
         formatted_text = "\n".join(lines)
         return formatted_text
     except Exception as e:
-        logging.error(f" [텍스트 포맷팅 오류] - {str(e)}", exc_info=True)
+        logger.error(f" [텍스트 포맷팅 오류] - {str(e)}", exc_info=True)
         raise
 
 def save_to_file(text: str, filename: str = "output.txt"):
@@ -127,6 +121,6 @@ def save_to_file(text: str, filename: str = "output.txt"):
         formatted_text = format_text_by_line(text, line_length=50)
         with open(filename, "w", encoding="utf-8") as file:
             file.write(formatted_text)
-        logging.info(f" 결과가 파일에 저장됨: {filename}")
+        logger.info(f" 결과가 파일에 저장됨: {filename}")
     except Exception as e:
-        logging.error(f" [파일 저장 오류] {filename} 저장 실패 - {str(e)}", exc_info=True)
+        logger.error(f" [파일 저장 오류] {filename} 저장 실패 - {str(e)}", exc_info=True)

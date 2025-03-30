@@ -104,3 +104,47 @@ Contributions to the project are always welcome. Please follow these steps:
 ## License
 
 This project is distributed under the MIT license. See the `LICENSE` file for details.
+
+## Environment Configuration
+
+This project uses environment variables for configuration. Follow these steps to set up your environment:
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+2. Edit the `.env` file and set appropriate values for your environment:
+   - Set `DEBUG=True` for development, `DEBUG=False` for production
+   - Configure `ALLOWED_HOSTS` with your domain names
+   - Add your Google OAuth credentials
+   - Set your Groq API key
+   - Configure security settings as needed
+
+In Docker environments, these variables are automatically loaded from the `.env` file.
+
+## Logging and Maintenance
+
+The application uses a comprehensive logging system:
+
+- All logs are stored in the `logs/` directory
+- Log files are automatically rotated to prevent excessive disk usage
+- Different components log to different files:
+  - `app.log`: General application logs
+  - `api.log`: API service logs
+  - `crawlers.log`: Web crawler logs
+  - `requests.log`: HTTP request logs
+  - `error.log`: Error-level logs from all components
+
+To monitor the application:
+
+```bash
+# View general application logs
+tail -f logs/app.log
+
+# View error logs
+tail -f logs/error.log
+
+# View crawler logs
+tail -f logs/crawlers.log
+```

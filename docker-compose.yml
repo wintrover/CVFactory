@@ -7,8 +7,11 @@ services:
       - .:/app
     ports:
       - "8000:8000"
+    env_file:
+      - .env  # 환경 변수는 .env 파일에서 로드
     environment:
-      - DEBUG=True
+      # 기본 설정 (환경 변수가 없을 경우 사용)
+      - DEBUG=${DEBUG:-True}
       - PYTHONUNBUFFERED=1
       - SELENIUM_DRIVER_EXECUTABLE_PATH=/usr/bin/chromedriver
     restart: unless-stopped
@@ -18,4 +21,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s 
+      start_period: 30s
+    # 로그 설정
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 

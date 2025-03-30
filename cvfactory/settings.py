@@ -19,13 +19,19 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-7q@k&$)+32d7r8nvr!s
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-# Google OAuth 환경 변수 (하드코딩 추가)
-GOOGLE_CLIENT_ID = "967777378406-r0bl1nkk9tvgubspaimlth6b06l62loa.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
+# Google OAuth 환경 변수
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+# 환경 변수가 설정되지 않은 경우 경고 로그 출력
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    import logging
+    logger = logging.getLogger('app')
+    logger.warning("Google OAuth 자격 증명이 환경 변수로 설정되지 않았습니다. Google 로그인 기능이 작동하지 않을 수 있습니다.")
 
 # 자동 로그인 및 자동 계정 연결 허용
 ACCOUNT_ADAPTER = "data_management.adapters.MyAccountAdapter"
@@ -62,14 +68,18 @@ INSTALLED_APPS = [
     "data_management",
     "corsheaders",
 ]
-CSRF_USE_SESSIONS = False  # CSRF를 세션이 아닌 쿠키로 처리
-CSRF_COOKIE_HTTPONLY = False  # 쿠키에서 CSRF 토큰을 읽을 수 있도록 변경
-CSRF_COOKIE_SECURE = False  # HTTPS가 아닌 HTTP에서도 허용 (로컬 개발 환경)
-CSRF_COOKIE_SAMESITE = None  # CSRF 쿠키가 모든 요청에서 동작하도록 설정
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]  # CSRF 허용 도메인
 
-CORS_ALLOW_ALL_ORIGINS = True  # 모든 도메인에서 요청 허용
+# CSRF 설정
+CSRF_USE_SESSIONS = os.getenv("CSRF_USE_SESSIONS", "False") == "True"
+CSRF_COOKIE_HTTPONLY = os.getenv("CSRF_COOKIE_HTTPONLY", "False") == "True" 
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False" if DEBUG else "True") == "True"
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "None" if DEBUG else "Lax")
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8000,http://localhost:8000").split(",")
+
+# CORS 설정
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True" if DEBUG else "False") == "True"
 CORS_ALLOW_CREDENTIALS = True  # 인증된 요청 허용
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",") if not CORS_ALLOW_ALL_ORIGINS else []
 
 AUTH_USER_MODEL = "data_management.User" 
 
@@ -91,7 +101,14 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # "django.middleware.csrf.CsrfViewMiddleware",
+]
+
+# CSRF 미들웨어는 환경 변수로 제어 (개발 중에는 비활성화 가능)
+if os.getenv("ENABLE_CSRF_MIDDLEWARE", "True") == "True":
+    MIDDLEWARE.append("django.middleware.csrf.CsrfViewMiddleware")
+
+# 나머지 미들웨어 추가
+MIDDLEWARE += [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -181,27 +198,51 @@ LOGGING = {
     'handlers': {
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOG_DIR / 'app.log',
             'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
         },
         'api_file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOG_DIR / 'api.log',
             'formatter': 'detailed',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
         },
         'request_file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOG_DIR / 'requests.log',
             'formatter': 'detailed',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
         },
         'sql_file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOG_DIR / 'sql.log',
             'formatter': 'detailed',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
+        },
+        'crawlers_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'crawlers.log',
+            'formatter': 'detailed',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'error.log',
+            'formatter': 'detailed',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
         },
         'console': {
             'level': 'DEBUG',
@@ -211,12 +252,12 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['request_file', 'console'],
+            'handlers': ['request_file', 'console', 'error_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
@@ -236,14 +277,17 @@ LOGGING = {
             'propagate': False,
         },
         'api': {
-            'handlers': ['api_file', 'console'],
+            'handlers': ['api_file', 'console', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'crawlers': {
+            'handlers': ['crawlers_file', 'console', 'error_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
-
-print("LOGGING 설정 완료")
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -287,7 +331,5 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# 디버깅용 출력
-print("Google OAuth 설정 완료")
-print(f" GOOGLE_CLIENT_ID: {GOOGLE_CLIENT_ID}")
-print(f" GOOGLE_CLIENT_SECRET: {GOOGLE_CLIENT_SECRET}")
+# 디버깅용 print 문 제거
+# print("Google OAuth 설정 완료")

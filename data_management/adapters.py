@@ -3,8 +3,10 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth import get_user_model
 from allauth.socialaccount.models import SocialToken, SocialApp
 from django.core.exceptions import ObjectDoesNotExist
+import logging
 
 User = get_user_model()
+logger = logging.getLogger('app')
 
 
 class MyAccountAdapter(DefaultAccountAdapter):
@@ -31,7 +33,7 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
                 if existing_token:
                     existing_token.token = token.token  # 토큰 값 갱신
                     existing_token.save()
-                    print(" 기존 토큰 갱신 완료:", existing_token.token)
+                    logger.info("기존 토큰 갱신 완료: %s", existing_token.token)
                 else:
                     # 새로 생성
                     new_token = SocialToken.objects.create(
@@ -41,7 +43,7 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
                         token_secret=token.token_secret
                     )
                     new_token.save()
-                    print(" 새로운 토큰 저장 완료:", new_token.token)
+                    logger.info("새로운 토큰 저장 완료: %s", new_token.token)
 
         except ObjectDoesNotExist:
-            print(" SocialApp (Google) 설정이 없습니다.")
+            logger.warning("SocialApp (Google) 설정이 없습니다.")
