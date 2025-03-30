@@ -173,6 +173,10 @@ LOGGING = {
             'format': '[{levelname}] {asctime} {module} - {message}',
             'style': '{',
         },
+        'detailed': {
+            'format': '[{levelname}] {asctime} {name} {module} {pathname}:{lineno} - {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'file': {
@@ -180,6 +184,24 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': LOG_DIR / 'app.log',
             'formatter': 'verbose',
+        },
+        'api_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'api.log',
+            'formatter': 'detailed',
+        },
+        'request_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'requests.log',
+            'formatter': 'detailed',
+        },
+        'sql_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'sql.log',
+            'formatter': 'detailed',
         },
         'console': {
             'level': 'DEBUG',
@@ -193,8 +215,28 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'django.request': {
+            'handlers': ['request_file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['sql_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.template': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['request_file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'api': {
-            'handlers': ['console', 'file'],
+            'handlers': ['api_file', 'console'],
             'level': 'DEBUG',
             'propagate': False,
         },
