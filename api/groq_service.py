@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import groq
+import re
 
 # .env 파일 로드
 load_dotenv(dotenv_path="groq.env")
@@ -75,6 +76,10 @@ def generate_resume(job_description, user_story, company_info = ""):
         # Groq API 응답 처리
         if response and hasattr(response, 'choices') and len(response.choices) > 0:
             generated_resume = response.choices[0].message.content
+            
+            # <think></think> 태그와 그 내용 제거
+            generated_resume = re.sub(r'<think>.*?</think>', '', generated_resume, flags=re.DOTALL)
+            
             print("💡 Groq 응답:", generated_resume)  # 로그 확인
             return generated_resume
         else:
