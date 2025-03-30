@@ -1,0 +1,32 @@
+# 환경 설정 파일
+*.env
+.env
+.env.*
+cvfactory/*.env
+
+# 가상 환경
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 로그 및 DB
+logs/*.log
+*.sqlite3
+
+# 시스템 파일
+.DS_Store
+
+# IDE 설정
+.idea/
+.vscode/
+
+# 도커
+.docker/
+
+# 예제 환경 파일은 제외
+!.env.example
+!.env.*.example
+
+# Local Netlify folder
+.netlify

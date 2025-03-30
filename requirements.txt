@@ -1,0 +1,28 @@
+# Django 및 기본 패키지
+django==4.2.7
+python-dotenv==1.0.0
+
+# REST API
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0
+dj-rest-auth==4.0.1
+django-cors-headers==4.3.0
+
+# 인증 및 소셜 로그인
+django-allauth==0.54.0
+
+# 크롤링 관련
+beautifulsoup4==4.12.2
+requests==2.31.0
+selenium==4.14.0
+webdriver-manager==4.0.0
+
+# 데이터 처리
+numpy==1.24.3
+pandas==1.5.3
+
+# AI API
+# openai>=1.0.0  # OpenAI API 대신 Groq 사용
+
+# 유틸리티
+six==1.16.0 
