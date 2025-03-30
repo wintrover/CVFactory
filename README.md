@@ -1,17 +1,23 @@
 # CVFactory
 
-[![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.ko.md)
+<div align="center">
+  <img src="static/images/logo.png" alt="CVFactory Logo" style="width:200px; height:auto;"/>
+  <br>
+  
+  [![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.ko.md)
+</div>
 
+## 📖 Overview
 CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized cover letters based on job postings and applicant information using AI.
 
-## Key Features
+## ✨ Key Features
 
-- **Job Posting Crawler**: Automatically collects relevant job information when a recruitment site URL is entered
-- **Company Information Crawler**: Gathers company vision, mission, values, and other information through the company website URL
-- **Customized Cover Letter Generation**: Automatically generates personalized cover letters using Groq API
-- **Logging System**: Records server requests and responses, API calls, errors, etc. in log files
+- **📄 Job Posting Crawler**: Automatically collects relevant job information when a recruitment site URL is entered
+- **🏢 Company Information Crawler**: Gathers company vision, mission, values, and other information through the company website URL
+- **📝 Customized Cover Letter Generation**: Automatically generates personalized cover letters using Groq API
+- **📊 Logging System**: Records server requests and responses, API calls, errors, etc. in log files
 
-## Installation and Setup
+## 🚀 Installation and Setup
 
 ### Local Development Environment
 
@@ -55,7 +61,7 @@ docker-compose up --build
 
 2. Access in browser at `http://localhost:8000`
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 CVFactory/
@@ -74,7 +80,7 @@ CVFactory/
 └── README.md           # Project description
 ```
 
-## Technology Stack
+## 🛠 Technology Stack
 
 ### Backend
 - **Django**: Web backend framework
@@ -91,21 +97,17 @@ CVFactory/
 - **Docker**: Containerization and deployment
 - **Git**: Version control
 
-## Contributing
+## 🌐 API Endpoints
 
-Contributions to the project are always welcome. Please follow these steps:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/job-crawler/` | POST | Crawl job posting from URL |
+| `/api/company-info/` | POST | Retrieve company information |
+| `/api/generate-letter/` | POST | Generate cover letter |
+| `/api/user-letters/` | GET | Get user's saved letters |
+| `/api/user-profile/` | GET/PUT | Get or update user profile |
 
-1. Fork the project
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Submit a pull request
-
-## License
-
-This project is distributed under the MIT license. See the `LICENSE` file for details.
-
-## Environment Configuration
+## 🔧 Environment Configuration
 
 This project uses environment variables for configuration. Follow these steps to set up your environment:
 
@@ -123,7 +125,7 @@ cp .env.example .env
 
 In Docker environments, these variables are automatically loaded from the `.env` file.
 
-## Logging and Maintenance
+## 📊 Logging and Maintenance
 
 The application uses a comprehensive logging system:
 
@@ -148,3 +150,31 @@ tail -f logs/error.log
 # View crawler logs
 tail -f logs/crawlers.log
 ```
+
+## 🤝 Contributing
+
+Contributions to the project are always welcome. Please follow these steps:
+
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Submit a pull request
+
+## 📄 License
+
+This project is distributed under the MIT license. See the `LICENSE` file for details.
+
+## 👥 Team
+
+| Role | Member |
+|------|--------|
+| Project Lead | Lee Seungheon |
+| Backend Developer | Kim Garam |
+| Frontend Developer | Park Junhyeok |
+| AI Engineer | Yun Suhyok |
+
+## 📬 Contact
+
+For inquiries, please contact:  
+cvfactory.team@gmail.com
