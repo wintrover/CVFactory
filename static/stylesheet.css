@@ -34,8 +34,8 @@ h1 {
 
 /* 프롬프트 컨테이너 레이아웃 */
 .prompt-container {
-  width: 90%;
-  max-width: 800px;
+  width: 95%;
+  max-width: 1200px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -68,7 +68,7 @@ h1 {
   width: 100%;
   border: 1px solid #eee;
   border-radius: 10px;
-  padding: 15px;
+  padding: 12px;
   box-shadow: 0 2px 5px rgba(0,0,0,.05);
   box-sizing: border-box;
   display: flex;
