@@ -15,7 +15,6 @@ CVFactory는 구직자를 위한 맞춤형 자기소개서 자동 생성 시스�
 - **📄 채용 공고 크롤링**: 채용 사이트 URL을 입력하면 관련 채용 정보를 자동으로 수집
 - **🏢 기업 정보 크롤링**: 기업 홈페이지 URL을 통해 기업의 비전, 미션, 가치관 등 정보 수집
 - **📝 맞춤형 자기소개서 생성**: Groq API를 활용하여 개인화된 자기소개서 자동 생성
-- **📊 로깅 시스템**: 서버 요청 및 응답, API 호출, 오류 등을 로그 파일에 기록
 
 ## 🚀 설치 및 실행 방법
 
@@ -125,42 +124,6 @@ cp .env.example .env
 
 도커 환경에서는 이러한 변수들이 `.env` 파일에서 자동으로 로드됩니다.
 
-## 📊 로깅 및 유지보수
-
-애플리케이션은 포괄적인 로깅 시스템을 사용합니다:
-
-- 모든 로그는 `logs/` 디렉토리에 저장됩니다
-- 로그 파일은 과도한 디스크 사용을 방지하기 위해 자동으로 순환됩니다
-- 다양한 구성 요소가 다른 파일에 로깅됩니다:
-  - `app.log`: 일반 애플리케이션 로그
-  - `api.log`: API 서비스 로그
-  - `crawlers.log`: 웹 크롤러 로그
-  - `requests.log`: HTTP 요청 로그
-  - `error.log`: 모든 구성 요소의 오류 수준 로그
-
-애플리케이션 모니터링:
-
-```bash
-# 일반 애플리케이션 로그 보기
-tail -f logs/app.log
-
-# 오류 로그 보기
-tail -f logs/error.log
-
-# 크롤러 로그 보기
-tail -f logs/crawlers.log
-```
-
-## 🤝 기여하기
-
-프로젝트 기여는 언제나 환영합니다. 다음 단계를 따라주세요:
-
-1. 프로젝트 포크
-2. 기능 브랜치 생성 (`git checkout -b feature/amazing-feature`)
-3. 변경사항 커밋 (`git commit -m 'Add amazing feature'`)
-4. 브랜치에 푸시 (`git push origin feature/amazing-feature`)
-5. 풀 리퀘스트 제출
-
 ## 📄 라이센스
 
 이 프로젝트는 MIT 라이센스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
@@ -177,4 +140,4 @@ tail -f logs/crawlers.log
 ## 📬 연락처
 
 문의 사항은 다음 주소로 연락주세요:  
-cvfactory.team@gmail.com 
+wintrover@gmail.com 

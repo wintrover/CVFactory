@@ -15,7 +15,6 @@ CVFactory is an automated resume and cover letter generation system for job seek
 - **📄 Job Posting Crawler**: Automatically collects relevant job information when a recruitment site URL is entered
 - **🏢 Company Information Crawler**: Gathers company vision, mission, values, and other information through the company website URL
 - **📝 Customized Cover Letter Generation**: Automatically generates personalized cover letters using Groq API
-- **📊 Logging System**: Records server requests and responses, API calls, errors, etc. in log files
 
 ## 🚀 Installation and Setup
 
@@ -125,42 +124,6 @@ cp .env.example .env
 
 In Docker environments, these variables are automatically loaded from the `.env` file.
 
-## 📊 Logging and Maintenance
-
-The application uses a comprehensive logging system:
-
-- All logs are stored in the `logs/` directory
-- Log files are automatically rotated to prevent excessive disk usage
-- Different components log to different files:
-  - `app.log`: General application logs
-  - `api.log`: API service logs
-  - `crawlers.log`: Web crawler logs
-  - `requests.log`: HTTP request logs
-  - `error.log`: Error-level logs from all components
-
-To monitor the application:
-
-```bash
-# View general application logs
-tail -f logs/app.log
-
-# View error logs
-tail -f logs/error.log
-
-# View crawler logs
-tail -f logs/crawlers.log
-```
-
-## 🤝 Contributing
-
-Contributions to the project are always welcome. Please follow these steps:
-
-1. Fork the project
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Submit a pull request
-
 ## 📄 License
 
 This project is distributed under the MIT license. See the `LICENSE` file for details.
@@ -177,4 +140,4 @@ This project is distributed under the MIT license. See the `LICENSE` file for de
 ## 📬 Contact
 
 For inquiries, please contact:  
-cvfactory.team@gmail.com
+wintrover@gmail.com
