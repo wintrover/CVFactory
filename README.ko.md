@@ -1,6 +1,6 @@
 # CVFactory
 
-*[English](README.md)로 읽기*
+[![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.ko.md)
 
 CVFactory는 구직자를 위한 맞춤형 자기소개서 자동 생성 시스템입니다. 채용 공고와 지원자 정보를 기반으로 AI가 개인화된 자기소개서를 생성합니다.
 

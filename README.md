@@ -1,6 +1,6 @@
 # CVFactory
 
-*Read this in [Korean](README.ko.md)*
+[![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.ko.md)
 
 CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized cover letters based on job postings and applicant information using AI.
 
