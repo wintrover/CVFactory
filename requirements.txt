@@ -23,6 +23,7 @@ pandas==1.5.3
 
 # AI API
 # openai>=1.0.0  # OpenAI API 대신 Groq 사용
+groq>=0.4.0  # Adding Groq API client
 
 # 유틸리티
 six==1.16.0 
