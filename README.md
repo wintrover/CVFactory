@@ -126,7 +126,12 @@ In Docker environments, these variables are automatically loaded from the `.env`
 
 ## 📄 License
 
-This project is distributed under the MIT license. See the `LICENSE` file for details.
+This project is distributed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0). This means:
+
+- You are free to share and adapt the material for non-commercial purposes as long as you give appropriate credit.
+- You may NOT use this material for commercial purposes.
+
+See the `LICENSE` file for details or visit [Creative Commons BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/).
 
 ## 👥 Team
 

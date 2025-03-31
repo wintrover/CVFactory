@@ -6,12 +6,11 @@ from .models import Resume
 from .groq_service import generate_resume
 from crawlers.Job_Post_Crawler import fetch_job_description
 from django.views.decorators.csrf import csrf_exempt
-from django.middleware.csrf import CsrfViewMiddleware
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.middleware.csrf import CsrfViewMiddleware, get_token
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 import json
 from django.http import JsonResponse
 from crawlers.Target_Company_Crawler import fetch_company_info
-from django.views.decorators.csrf import csrf_protect
 # from django.utils.decorators import method_decorator
 
 # 로깅 설정
@@ -80,7 +79,7 @@ def fetch_company_info_api(request):
 
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
 @permission_classes([AllowAny])  #  로그인 없이도 API 호출 가능하도록 설정
-@csrf_exempt
+@csrf_protect  # @csrf_exempt 대신 @csrf_protect 사용
 @ensure_csrf_cookie  
 def create_resume(request):
     logger.debug("===== create_resume 요청 시작 =====")
@@ -88,6 +87,8 @@ def create_resume(request):
     
     if request.method == "GET":
         logger.debug("GET 요청 처리: CSRF 쿠키 설정")
+        # CSRF 토큰 생성 및 쿠키에 설정
+        get_token(request)
         return Response({"message": "CSRF 쿠키 설정됨"}, status=200)
     
     logger.info(" API create_resume 요청 수신됨.")
@@ -96,8 +97,9 @@ def create_resume(request):
     logger.info(f" 현재 사용자: {request.user} (인증됨 여부: {request.user.is_authenticated})")
 
     #  CSRF 정보 확인
+    csrf_token = get_token(request)  # 올바른 방법으로 토큰 가져오기
     logger.debug(f" CSRF 쿠키: {request.COOKIES.get('csrftoken')}")
-    logger.debug(f" CSRF 세션 토큰: {request.session.get('csrftoken')}")
+    logger.debug(f" CSRF 토큰: {csrf_token}")
 
     #  403 Forbidden 발생 원인 추적
     if request.user.is_authenticated is False:
@@ -105,14 +107,6 @@ def create_resume(request):
 
     if "csrftoken" not in request.COOKIES:
         logger.warning(" CSRF 토큰 없음 (403 가능성 높음)")
-
-    #  Django 내부에서 CSRF 보호로 인해 403이 발생하는지 확인
-    try:
-        reason = CsrfViewMiddleware().process_view(request, None, (), {})
-        if reason:
-            logger.error(f" CSRF 보호로 인해 403 발생: {reason}")
-    except Exception as e:
-        logger.error(f" CSRF 검사 중 오류 발생: {str(e)}")
 
     try:
         # 요청 데이터 가져오기
