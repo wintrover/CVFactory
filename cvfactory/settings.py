@@ -115,6 +115,7 @@ MIDDLEWARE += [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",  # 로깅을 위해 추가
     "allauth.account.middleware.AccountMiddleware",  # django-allauth 미들웨어 추가
+    "cvfactory.middleware.RequestLoggingMiddleware",  # 자동 로깅 미들웨어 추가
 ]
 
 
@@ -203,6 +204,10 @@ LOGGING = {
             'format': '[{levelname}] {asctime} {name} {module} - Response: {message}',
             'style': '{',
         },
+        'sql': {
+            'format': '[{levelname}] {asctime} - {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'file': {
@@ -223,25 +228,41 @@ LOGGING = {
             'filename': LOG_DIR / 'response.log',
             'formatter': 'response',
         },
+        'sql_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'sql.log',
+            'formatter': 'sql',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['request_file'],
+            'handlers': ['request_file', 'console'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'django.response': {
-            'handlers': ['response_file'],
+            'handlers': ['response_file', 'console'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'django.server': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['sql_file'],
             'level': 'DEBUG',
             'propagate': False,
         },

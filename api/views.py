@@ -122,6 +122,7 @@ def fetch_company_info_api(request):
 @permission_classes([AllowAny])  #  로그인 없이도 API 호출 가능하도록 설정
 @csrf_protect  # @csrf_exempt 대신 @csrf_protect 사용
 @ensure_csrf_cookie  
+@csrf_exempt
 def create_resume(request):
     logger.debug("===== create_resume 요청 시작 =====")
     logger.debug(f"요청 메서드: {request.method}")
