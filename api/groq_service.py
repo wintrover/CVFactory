@@ -86,7 +86,7 @@ def create_resume_draft(job_analysis, user_story):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.5,
-            max_tokens=2000
+            max_tokens=10000
         )
         
         if response and hasattr(response, 'choices') and len(response.choices) > 0:
@@ -126,7 +126,7 @@ def finalize_resume(resume_draft):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.5,
-            max_tokens=2000
+            max_tokens=10000
         )
         
         if response and hasattr(response, 'choices') and len(response.choices) > 0:
