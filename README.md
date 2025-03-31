@@ -133,15 +133,6 @@ This project is distributed under the Creative Commons Attribution-NonCommercial
 
 See the `LICENSE` file for details or visit [Creative Commons BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/).
 
-## 👥 Team
-
-| Role | Member |
-|------|--------|
-| Project Lead | Lee Seungheon |
-| Backend Developer | Kim Garam |
-| Frontend Developer | Park Junhyeok |
-| AI Engineer | Yun Suhyok |
-
 ## 📬 Contact
 
 For inquiries, please contact:  
