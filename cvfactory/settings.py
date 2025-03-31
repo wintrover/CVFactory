@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-7q@k&$)+32d7r8nvr!s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,0.0.0.0").split(",")
 
 # Google OAuth 환경 변수
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
@@ -112,8 +112,8 @@ MIDDLEWARE += [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",  # 로깅을 위해 추가
 ]
 
 
@@ -194,95 +194,53 @@ LOGGING = {
             'format': '[{levelname}] {asctime} {name} {module} {pathname}:{lineno} - {message}',
             'style': '{',
         },
+        'request': {
+            'format': '[{levelname}] {asctime} {name} {module} - Request: {message}',
+            'style': '{',
+        },
+        'response': {
+            'format': '[{levelname}] {asctime} {name} {module} - Response: {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'app.log',
-            'formatter': 'verbose',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
-        },
-        'api_file': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'api.log',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'django.log',
             'formatter': 'detailed',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
         },
         'request_file': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'requests.log',
-            'formatter': 'detailed',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'request.log',
+            'formatter': 'request',
         },
-        'sql_file': {
+        'response_file': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'sql.log',
-            'formatter': 'detailed',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
-        },
-        'crawlers_file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'crawlers.log',
-            'formatter': 'detailed',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'error.log',
-            'formatter': 'detailed',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'response.log',
+            'formatter': 'response',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',
+            'handlers': ['file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['request_file', 'console', 'error_file'],
+            'handlers': ['request_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'django.db.backends': {
-            'handlers': ['sql_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'django.template': {
-            'handlers': ['file'],
+        'django.response': {
+            'handlers': ['response_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'django.server': {
-            'handlers': ['request_file', 'console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'api': {
-            'handlers': ['api_file', 'console', 'error_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'crawlers': {
-            'handlers': ['crawlers_file', 'console', 'error_file'],
+            'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': False,
         },
