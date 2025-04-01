@@ -114,7 +114,6 @@ MIDDLEWARE += [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",  # 로깅을 위해 추가
-    "allauth.account.middleware.AccountMiddleware",  # django-allauth 미들웨어 추가
     "cvfactory.middleware.RequestLoggingMiddleware",  # 자동 로깅 미들웨어 추가
 ]
 
