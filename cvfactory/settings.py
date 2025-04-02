@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-7q@k&$)+32d7r8nvr!s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,0.0.0.0").split(",")
+ALLOWED_HOSTS = ['localhost', 'localhost:8000', '127.0.0.1', '127.0.0.1:8000']
 
 # Google OAuth 환경 변수
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
@@ -188,23 +188,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '[{levelname}] {asctime} {module} - {message}',
-            'style': '{',
-        },
-        'detailed': {
-            'format': '[{levelname}] {asctime} {name} {module} {pathname}:{lineno} - {message}',
-            'style': '{',
-        },
-        'request': {
-            'format': '[{levelname}] {asctime} {name} {module} - Request: {message}',
-            'style': '{',
-        },
-        'response': {
-            'format': '[{levelname}] {asctime} {name} {module} - Response: {message}',
-            'style': '{',
-        },
-        'sql': {
-            'format': '[{levelname}] {asctime} - {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
     },
@@ -212,58 +196,15 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_DIR / 'django.log',
-            'formatter': 'detailed',
-        },
-        'request_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_DIR / 'request.log',
-            'formatter': 'request',
-        },
-        'response_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_DIR / 'response.log',
-            'formatter': 'response',
-        },
-        'sql_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_DIR / 'sql.log',
-            'formatter': 'sql',
-        },
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
             'formatter': 'verbose',
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['file', 'console'],
+        'api': {
+            'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['request_file', 'console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'django.response': {
-            'handlers': ['response_file', 'console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'django.server': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'django.db.backends': {
-            'handlers': ['sql_file'],
-            'level': 'DEBUG',
-            'propagate': False,
         },
     },
 }

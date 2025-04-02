@@ -15,8 +15,9 @@ import os
 from datetime import datetime
 # from django.utils.decorators import method_decorator
 
-# 로깅 설정
-logger = logging.getLogger("api")
+# 로거 설정
+logger = logging.getLogger('api')
+logger.setLevel(logging.DEBUG)
 
 # 자기소개서 전용 로거 설정
 resume_logger = logging.getLogger("resume")
