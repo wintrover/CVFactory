@@ -115,6 +115,7 @@ MIDDLEWARE += [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",  # 로깅을 위해 추가
     "cvfactory.middleware.RequestLoggingMiddleware",  # 자동 로깅 미들웨어 추가
+    "allauth.account.middleware.AccountMiddleware",  # allauth 미들웨어 추가
 ]
 
 
@@ -191,6 +192,10 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
+        'json': {
+            'format': '[%(asctime)s] %(levelname)s [%(name)s] - %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
     },
     'handlers': {
         'file': {
@@ -199,12 +204,23 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
             'formatter': 'verbose',
         },
+        'groq_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'groq_service.log'),
+            'formatter': 'json',
+        },
     },
     'loggers': {
         'api': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'groq_service': {
+            'handlers': ['groq_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }

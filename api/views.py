@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 import logging
 from .models import Resume
-from .groq_service import generate_resume
+from .groq_service import generate_resume, extract_job_keypoints, log_function_call
 from crawlers.Job_Post_Crawler import fetch_job_description
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import CsrfViewMiddleware, get_token
@@ -257,3 +257,26 @@ def create_resume(request):
         logger.critical(f" 서버 내부 오류 발생: {str(e)}", exc_info=True)
         logger.debug("===== create_resume 요청 실패 =====")
         return Response({"error": "서버에서 오류가 발생했습니다."}, status=500)
+
+@api_view(['POST'])
+def test_groq_logging(request):
+    """
+    테스트 목적의 API 엔드포인트
+    """
+    try:
+        # 간단한 로깅 테스트
+        log_function_call('test_function', {'test_input': request.data}, {'test_output': 'success'})
+        
+        # 실제 groq_service 함수 호출 테스트
+        result = extract_job_keypoints('소프트웨어 개발자 모집. 주요 업무는 웹 개발입니다. 필수 자격요건은 Python, JavaScript 경험입니다.')
+        
+        return Response({
+            'status': 'success',
+            'message': '로깅 테스트 완료',
+            'result': result
+        })
+    except Exception as e:
+        return Response({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
