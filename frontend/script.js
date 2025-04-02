@@ -54,18 +54,27 @@ function fetchCompanyInfo() {
     });
     
     // CSRF 토큰 가져오기
-    const csrftoken = getCookie("csrftoken");
-    
-    fetch("http://127.0.0.1:8000/api/fetch_company_info/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrftoken
-        },
-        body: JSON.stringify({
-            company_url: company_url
-        }),
+    fetch("http://127.0.0.1:8000/api/create_resume/", {
+        method: "GET",
         credentials: "include"
+    })
+    .then(response => response.json())
+    .then(() => {
+        // CSRF 토큰 가져오기 (GET 요청 후 쿠키에서)
+        const csrftoken = getCookie("csrftoken");
+        
+        // 실제 회사 정보 크롤링 요청
+        return fetch("http://127.0.0.1:8000/api/fetch_company_info/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify({
+                company_url: company_url
+            }),
+            credentials: "include"
+        });
     })
     .then(response => response.json())
     .then(data => {
@@ -129,20 +138,29 @@ function generateResume() {
     });
 
     // CSRF 토큰 가져오기
-    const csrftoken = getCookie("csrftoken");
-
     fetch("http://127.0.0.1:8000/api/create_resume/", {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrftoken  // CSRF 토큰 추가
-        },
-        body: JSON.stringify({
-            recruitment_notice_url: job_url,
-            target_company_url: company_url,
-            user_story: user_story
-        }),
-        credentials: "include"  // 쿠키 인증 포함
+        method: "GET",
+        credentials: "include"
+    })
+    .then(response => response.json())
+    .then(() => {
+        // CSRF 토큰 가져오기 (GET 요청 후 쿠키에서)
+        const csrftoken = getCookie("csrftoken");
+        
+        // 실제 자기소개서 생성 요청
+        return fetch("http://127.0.0.1:8000/api/create_resume/", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify({
+                recruitment_notice_url: job_url,
+                target_company_url: company_url,
+                user_story: user_story
+            }),
+            credentials: "include"
+        });
     })
     .then(response => response.json())
     .then(data => {

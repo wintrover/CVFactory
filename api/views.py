@@ -121,9 +121,8 @@ def fetch_company_info_api(request):
 
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
 @permission_classes([AllowAny])  #  로그인 없이도 API 호출 가능하도록 설정
-@csrf_protect  # @csrf_exempt 대신 @csrf_protect 사용
-@ensure_csrf_cookie  
-@csrf_exempt
+@ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
+@csrf_exempt  # CSRF 보호를 비활성화 (개발 환경에서만 사용)
 def create_resume(request):
     logger.debug("===== create_resume 요청 시작 =====")
     logger.debug(f"요청 메서드: {request.method}")
@@ -158,9 +157,29 @@ def create_resume(request):
         company_url = request.data.get("target_company_url", "")  # 선택값 (기본값: 빈 문자열)
         user_story = request.data.get("user_story")
 
+        # 입력값 타입 검사 및 처리
+        if user_story is not None:
+            if isinstance(user_story, dict):
+                logger.debug("user_story가 딕셔너리 형식입니다.")
+            elif isinstance(user_story, str):
+                logger.debug(f"user_story가 문자열입니다: 길이={len(user_story)}")
+                # 문자열로 입력된 경우 그대로 진행 (groq_service.py에서 처리)
+            else:
+                logger.error(f"user_story 타입 오류: {type(user_story)}, 값: {user_story}")
+                return Response({"error": "user_story는 텍스트 또는 JSON 객체 형식이어야 합니다."}, status=400)
+        
         logger.info(f"받은 recruitment_notice_url: {job_url}")
         logger.info(f"받은 target_company_url: {company_url}")
-        logger.debug(f"받은 user_story: {user_story[:100]}...")
+        
+        # 안전한 로깅을 위한 체크
+        if user_story is not None:
+            if isinstance(user_story, dict):
+                first_100 = str(user_story)[:100]
+            else:
+                first_100 = str(user_story)[:100]
+            logger.debug(f"받은 user_story: {first_100}...")
+        else:
+            logger.debug(f"받은 user_story: {user_story}")
 
         # 필수 값 체크
         if not job_url or not user_story:
@@ -203,9 +222,16 @@ def create_resume(request):
         logger.debug("GPT API 호출 준비")
         try:
             logger.info("GPT 호출 직전 데이터:")
-            logger.debug(f"🔹 job_description: {job_description}")
-            logger.debug(f"🔹 user_story: {user_story}")
-            logger.debug(f"🔹 company_info: {company_info}")
+            logger.debug(f"🔹 job_description: {job_description[:100]}...")
+            
+            # 안전한 로깅을 위해 객체 타입 확인
+            if isinstance(user_story, dict):
+                safe_user_story = str(user_story)[:100]
+            else:
+                safe_user_story = str(user_story)[:100] if user_story else "None"
+                
+            logger.debug(f"🔹 user_story: {safe_user_story}...")
+            logger.debug(f"🔹 company_info: {company_info[:100]}...")
             
             logger.debug("GPT API 호출 시작")
             generated_resume = generate_resume(job_description, user_story, company_info)

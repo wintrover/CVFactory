@@ -46,8 +46,24 @@ def log_function_call(func_name, inputs, outputs=None, additional_info=None):
         
     if additional_info:
         log_entry["additional_info"] = additional_info
-        
-    groq_logger.info(json.dumps(log_entry, ensure_ascii=False, default=str))
+    
+    # 안전한 직렬화를 위해 기본 처리
+    try:    
+        groq_logger.info(json.dumps(log_entry, ensure_ascii=False, default=str))
+    except TypeError as e:
+        # 직렬화 불가능한 객체가 있는 경우 str()로 변환
+        groq_logger.error(f"로깅 중 직렬화 오류: {e}")
+        # 입력을 안전하게 문자열로 변환
+        safe_log_entry = {
+            "function": str(func_name),
+            "timestamp": str(datetime.now().isoformat()),
+            "inputs": str(inputs),
+        }
+        if outputs:
+            safe_log_entry["outputs"] = str(outputs)
+        if additional_info:
+            safe_log_entry["additional_info"] = str(additional_info)
+        groq_logger.info(json.dumps(safe_log_entry, ensure_ascii=False))
 
 def analyze_job_description(job_description):
     """
@@ -281,8 +297,18 @@ def extract_job_keypoints(job_description):
     func_name = "extract_job_keypoints"
     groq_logger.info(f"===== {func_name} 함수 시작 =====")
     
-    # 입력 로깅
-    inputs = {"job_description_length": len(job_description), "job_description_preview": job_description[:100] + "..."}
+    # 안전한 입력 준비
+    if job_description is None:
+        job_description = ""
+        
+    # 문자열 확인 및 변환
+    if not isinstance(job_description, str):
+        logger.warning(f"job_description이 문자열이 아닙니다: {type(job_description)}")
+        job_description = str(job_description)
+    
+    # 입력 로깅 - 안전한 슬라이싱
+    job_desc_preview = job_description[:100] + "..." if len(job_description) > 100 else job_description
+    inputs = {"job_description_length": len(job_description), "job_description_preview": job_desc_preview}
     log_function_call(func_name, inputs)
     
     try:
@@ -348,21 +374,52 @@ def create_resume_draft(job_keypoints, company_info, user_story):
     func_name = "create_resume_draft"
     groq_logger.info(f"===== {func_name} 함수 시작 =====")
     
+    # 입력 타입 검증 및 변환
+    if not isinstance(job_keypoints, str):
+        job_keypoints = str(job_keypoints)
+    
+    if not isinstance(company_info, str):
+        company_info = str(company_info)
+        
+    # user_story 처리 개선
+    user_story_dict = {}
+    if isinstance(user_story, dict):
+        user_story_dict = user_story
+    elif isinstance(user_story, str):
+        logger.warning(f"user_story가 문자열입니다: {type(user_story)}")
+        # 문자열을 분석하여 기본 정보 추출 시도
+        user_story_dict = {
+            '성격의 장단점': user_story,
+            '지원 동기': user_story,
+            '입사 후 포부': user_story
+        }
+    else:
+        logger.warning(f"user_story가 예상치 못한 타입입니다: {type(user_story)}")
+        user_story_dict = {
+            '성격의 장단점': str(user_story),
+            '지원 동기': str(user_story),
+            '입사 후 포부': str(user_story)
+        }
+    
+    # 안전한 슬라이싱을 위한 프리뷰 생성
+    job_preview = job_keypoints[:100] + "..." if len(job_keypoints) > 100 else job_keypoints
+    company_preview = company_info[:100] + "..." if len(company_info) > 100 else company_info
+    
     # 입력 로깅
     inputs = {
         "job_keypoints_length": len(job_keypoints),
         "company_info_length": len(company_info),
-        "user_story_keys": list(user_story.keys()),
-        "job_keypoints_preview": job_keypoints[:100] + "...",
-        "company_info_preview": company_info[:100] + "..."
+        "user_story_keys": list(user_story_dict.keys()),
+        "job_keypoints_preview": job_preview,
+        "company_info_preview": company_preview
     }
     log_function_call(func_name, inputs)
     
     # 성장과정과 학교생활 제거
     filtered_story = {
-        '성격의 장단점': user_story.get('성격의 장단점', ''),
-        '지원 동기': user_story.get('지원 동기', ''),
-        '입사 후 포부': user_story.get('입사 후 포부', '')
+        '성격의 장단점': user_story_dict.get('성격의 장단점', ''),
+        '지원 동기': user_story_dict.get('지원 동기', ''),
+        '입사 후 포부': user_story_dict.get('입사 후 포부', '')
     }
     
     groq_logger.debug(f"필터링된 user_story 키: {list(filtered_story.keys())}")
@@ -679,8 +736,16 @@ def finalize_resume(resume_draft):
     func_name = "finalize_resume"
     groq_logger.info(f"===== {func_name} 함수 시작 =====")
     
+    # 입력 타입 검증
+    if not isinstance(resume_draft, str):
+        logger.warning(f"resume_draft가 문자열이 아닙니다: {type(resume_draft)}")
+        resume_draft = str(resume_draft)
+    
+    # 안전한 프리뷰 생성
+    draft_preview = resume_draft[:100] + "..." if len(resume_draft) > 100 else resume_draft
+    
     # 입력 로깅
-    inputs = {"resume_draft_length": len(resume_draft), "resume_draft_preview": resume_draft[:100] + "..."}
+    inputs = {"resume_draft_length": len(resume_draft), "resume_draft_preview": draft_preview}
     log_function_call(func_name, inputs)
     
     try:
@@ -722,20 +787,53 @@ def finalize_resume(resume_draft):
         groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
         return "자기소개서 최종 완성 중 오류가 발생했습니다."
 
-def generate_resume(job_description, company_info, user_story):
+def generate_resume(job_description, user_story, company_info):
     """
     자기소개서 생성 - 전체 과정
     """
     func_name = "generate_resume"
     groq_logger.info(f"===== {func_name} 함수 시작 =====")
     
+    # 입력 타입 검증
+    if not isinstance(job_description, str):
+        logger.warning(f"job_description이 문자열이 아닙니다: {type(job_description)}")
+        job_description = str(job_description)
+        
+    if not isinstance(company_info, str):
+        logger.warning(f"company_info가 문자열이 아닙니다: {type(company_info)}")
+        company_info = str(company_info)
+    
+    # user_story 처리 개선
+    user_story_dict = {}
+    if isinstance(user_story, dict):
+        user_story_dict = user_story
+    elif isinstance(user_story, str):
+        logger.warning(f"user_story가 문자열입니다: {type(user_story)}")
+        # 문자열을 분석하여 기본 정보 추출 시도
+        user_story_dict = {
+            '성격의 장단점': user_story,
+            '지원 동기': user_story,
+            '입사 후 포부': user_story
+        }
+    else:
+        logger.warning(f"user_story가 예상치 못한 타입입니다: {type(user_story)}")
+        user_story_dict = {
+            '성격의 장단점': str(user_story),
+            '지원 동기': str(user_story),
+            '입사 후 포부': str(user_story)
+        }
+    
+    # 안전한 프리뷰 생성
+    job_preview = job_description[:100] + "..." if len(job_description) > 100 else job_description
+    company_preview = company_info[:100] + "..." if len(company_info) > 100 else company_info
+    
     # 입력 로깅
     inputs = {
         "job_description_length": len(job_description),
         "company_info_length": len(company_info),
-        "user_story_keys": list(user_story.keys()),
-        "job_description_preview": job_description[:100] + "...",
-        "company_info_preview": company_info[:100] + "..."
+        "user_story_keys": list(user_story_dict.keys()),
+        "job_description_preview": job_preview,
+        "company_info_preview": company_preview
     }
     log_function_call(func_name, inputs)
     
@@ -747,7 +845,7 @@ def generate_resume(job_description, company_info, user_story):
         
         # 2단계: 자기소개서 초안 작성
         groq_logger.info("2단계: 자기소개서 초안 작성 시작")
-        resume_draft = create_resume_draft(job_keypoints, company_info, user_story)
+        resume_draft = create_resume_draft(job_keypoints, company_info, user_story_dict)
         groq_logger.debug(f"자기소개서 초안 길이: {len(resume_draft)}")
         
         # 3단계: 자기소개서 최종 완성
