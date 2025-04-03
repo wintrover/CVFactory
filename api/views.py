@@ -14,6 +14,7 @@ from crawlers.Target_Company_Crawler import fetch_company_info
 import os
 from datetime import datetime
 # from django.utils.decorators import method_decorator
+import re
 
 # 로거 설정
 logger = logging.getLogger('api')
@@ -151,43 +152,30 @@ def create_resume(request):
         logger.warning(" CSRF 토큰 없음 (403 가능성 높음)")
 
     try:
-        # 요청 데이터 가져오기
+        # 클라이언트 요청 데이터 파싱
         logger.debug("클라이언트 요청 데이터 파싱 시작")
-        job_url = request.data.get("recruitment_notice_url")
-        company_url = request.data.get("target_company_url", "")  # 선택값 (기본값: 빈 문자열)
-        user_story = request.data.get("user_story")
-
-        # 입력값 타입 검사 및 처리
-        if user_story is not None:
-            if isinstance(user_story, dict):
-                logger.debug("user_story가 딕셔너리 형식입니다.")
-            elif isinstance(user_story, str):
-                logger.debug(f"user_story가 문자열입니다: 길이={len(user_story)}")
-                # 문자열로 입력된 경우 그대로 진행 (groq_service.py에서 처리)
-            else:
-                logger.error(f"user_story 타입 오류: {type(user_story)}, 값: {user_story}")
-                return Response({"error": "user_story는 텍스트 또는 JSON 객체 형식이어야 합니다."}, status=400)
         
+        # 채용 공고 URL 파싱
+        job_url = request.data.get("recruitment_notice_url", "")
         logger.info(f"받은 recruitment_notice_url: {job_url}")
+        
+        # 회사 URL 파싱
+        company_url = request.data.get("target_company_url", "")
         logger.info(f"받은 target_company_url: {company_url}")
         
-        # 안전한 로깅을 위한 체크
-        if user_story is not None:
-            if isinstance(user_story, dict):
-                first_100 = str(user_story)[:100]
-            else:
-                first_100 = str(user_story)[:100]
-            logger.debug(f"받은 user_story: {first_100}...")
+        # 사용자 스토리 파싱
+        user_story = request.data.get("user_story", "")
+        
+        # 안전한 로깅을 위해 객체 타입 확인 및 처리
+        if isinstance(user_story, dict):
+            logger.debug(f"user_story가 딕셔너리입니다: 키={list(user_story.keys())}")
         else:
-            logger.debug(f"받은 user_story: {user_story}")
-
-        # 필수 값 체크
-        if not job_url or not user_story:
-            logger.error(" 필수 입력값 누락")
-            return Response({"error": "공고 URL과 자기소개 내용은 필수 입력 사항입니다."}, status=400)
-
-        # 🔹 크롤링 실행 (채용 공고 데이터 가져오기)
+            logger.debug(f"user_story가 문자열입니다: 길이={len(str(user_story))}")
+            logger.debug(f"받은 user_story: {str(user_story)[:100]}...")
+        
+        # 🔹 채용 공고 크롤링
         logger.debug("채용 공고 크롤링 시작")
+        
         try:
             job_description = fetch_job_description(job_url)
             logger.info(f"채용 공고 크롤링 성공: {job_description[:100]}...")
@@ -236,6 +224,18 @@ def create_resume(request):
             logger.debug("GPT API 호출 시작")
             generated_resume = generate_resume(job_description, user_story, company_info)
             logger.debug("GPT API 호출 완료")
+            
+            # <think> 태그 제거 (실제 응답에서 제거)
+            logger.debug(f"<think> 태그 제거 전 자기소개서 길이: {len(generated_resume)}")
+            cleaned_resume = re.sub(r'<think>[\s\S]*?</think>', '', generated_resume, flags=re.DOTALL)
+            # 혹시 남아있는 태그 추가 제거
+            cleaned_resume = re.sub(r'<think>', '', cleaned_resume)
+            cleaned_resume = re.sub(r'</think>', '', cleaned_resume)
+            logger.debug(f"<think> 태그 제거 후 자기소개서 길이: {len(cleaned_resume)}")
+            
+            # 깨끗한 버전을 사용
+            generated_resume = cleaned_resume
+            
             logger.info(f"GPT 자기소개서 생성 성공: {generated_resume[:100]}...")
             logger.debug(f"생성된 자기소개서 전체: {generated_resume}")
         except Exception as e:
