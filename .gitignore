@@ -2,6 +2,10 @@
 *.env
 .env
 .env.*
+secretkey.env
+groq.env
+*secret*.env
+*api_key*.env
 cvfactory/*.env
 
 # 가상 환경

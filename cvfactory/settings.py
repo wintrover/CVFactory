@@ -12,14 +12,13 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # .env 파일 로드
-load_dotenv(dotenv_path=BASE_DIR / "secretkey.env")
+load_dotenv(dotenv_path=BASE_DIR / ".env")
 
-# 환경 변수 로드 실패 시 기본값 (하드코딩)
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-7q@k&$)+32d7r8nvr!sy3em4y^m19)58yf8)&_je+e&2f)parw")
-
+# 환경 변수 로드
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', 'localhost:8000', '127.0.0.1', '127.0.0.1:8000']
 
@@ -72,12 +71,12 @@ INSTALLED_APPS = [
 # CSRF 설정
 CSRF_USE_SESSIONS = os.getenv("CSRF_USE_SESSIONS", "False") == "True"
 CSRF_COOKIE_HTTPONLY = os.getenv("CSRF_COOKIE_HTTPONLY", "False") == "True" 
-CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False" if DEBUG else "True") == "True"
+CSRF_COOKIE_SECURE = False  # 개발 환경에서는 False로 설정
 CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "None" if DEBUG else "Lax")
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8000,http://localhost:8000").split(",")
 
 # CORS 설정
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True" if DEBUG else "False") == "True"
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True  # 인증된 요청 허용
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",") if not CORS_ALLOW_ALL_ORIGINS else []
 
@@ -139,12 +138,12 @@ TEMPLATES = [
 ]
 
 # 정적 파일 설정
-STATIC_URL = "/static/"
-
-if DEBUG:
-    STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "frontend"]
-else:
-    STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    BASE_DIR / "frontend",
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 WSGI_APPLICATION = "cvfactory.wsgi.application"
 
@@ -269,3 +268,8 @@ SOCIALACCOUNT_PROVIDERS = {
 
 # 디버깅용 print 문 제거
 # print("Google OAuth 설정 완료")
+
+# 헤더 보안 설정
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'

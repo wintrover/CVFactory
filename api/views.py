@@ -123,16 +123,19 @@ def fetch_company_info_api(request):
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
 @permission_classes([AllowAny])  #  로그인 없이도 API 호출 가능하도록 설정
 @ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
-@csrf_exempt  # CSRF 보호를 비활성화 (개발 환경에서만 사용)
+@csrf_protect  # CSRF 보호 활성화
 def create_resume(request):
     logger.debug("===== create_resume 요청 시작 =====")
     logger.debug(f"요청 메서드: {request.method}")
     
     if request.method == "GET":
         logger.debug("GET 요청 처리: CSRF 쿠키 설정")
-        # CSRF 토큰 생성 및 쿠키에 설정
-        get_token(request)
-        return Response({"message": "CSRF 쿠키 설정됨"}, status=200)
+        # 명시적으로 CSRF 토큰 설정
+        csrf_token = get_token(request)
+        logger.debug(f"설정된 CSRF 토큰: {csrf_token}")
+        response = Response({"message": "CSRF 쿠키 설정됨", "csrf_token": csrf_token}, status=200)
+        response.set_cookie("csrftoken", csrf_token)
+        return response
     
     logger.info(" API create_resume 요청 수신됨.")
     logger.debug(f" 요청 헤더: {request.headers}")

@@ -20,6 +20,8 @@ from django.views.generic import TemplateView
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from django.conf import settings
+from django.conf.urls.static import static
 
 class GoogleLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
@@ -39,3 +41,7 @@ urlpatterns = [
     path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),  # Google OAuth 추가
     path("", TemplateView.as_view(template_name="index.html")),
 ]
+
+# 디버그 모드에서 정적 파일 제공
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
