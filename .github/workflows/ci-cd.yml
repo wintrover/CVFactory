@@ -7,6 +7,12 @@ on:
     branches: [main, develop]
   workflow_dispatch:  # 수동 실행 옵션
 
+# 권한 설정 추가
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -42,7 +48,10 @@ jobs:
       
       - name: Run tests
         run: |
-          python manage.py test
+          # 테스트 디버깅 정보 추가
+          echo "Running Django tests..."
+          python manage.py test -v 2
+        continue-on-error: false
   
   build:
     needs: test
@@ -166,17 +175,24 @@ jobs:
             const { repo, owner } = context.repo;
             const run_id = context.runId;
             
-            github.rest.issues.create({
-              owner,
-              repo,
-              title: `🚨 워크플로우 실패: ${context.workflow}`,
-              body: `**워크플로우가 실패했습니다.**
-              
-              - **저장소:** ${owner}/${repo}
-              - **워크플로우:** ${context.workflow}
-              - **커밋:** ${context.sha}
-              - **브랜치:** ${context.ref}
-              - **상세 정보:** https://github.com/${owner}/${repo}/actions/runs/${run_id}
-              
-              이 이슈는 자동으로 생성되었습니다.`
-            }); 
+            try {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: `🚨 워크플로우 실패: ${context.workflow}`,
+                body: `**워크플로우가 실패했습니다.**
+                
+                - **저장소:** ${owner}/${repo}
+                - **워크플로우:** ${context.workflow}
+                - **커밋:** ${context.sha}
+                - **브랜치:** ${context.ref}
+                - **상세 정보:** https://github.com/${owner}/${repo}/actions/runs/${run_id}
+                
+                이 이슈는 자동으로 생성되었습니다.`
+              });
+              console.log('알림 이슈가 성공적으로 생성되었습니다.');
+            } catch (error) {
+              console.error('이슈 생성 중 오류 발생:', error);
+              // 이슈 생성 실패시 워크플로우 진행을 위한 예외 처리
+              return; 
+            } 
