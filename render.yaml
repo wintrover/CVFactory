@@ -1,0 +1,62 @@
+services:
+  # 개발 환경 웹 서비스
+  - type: web
+    name: cvfactory-dev
+    env: python
+    region: seoul
+    plan: free
+    branch: develop
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn cvfactory.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: cvfactory-dev.onrender.com
+      - key: DEBUG
+        value: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://cvfactory-dev.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://cvfactory-dev.onrender.com
+
+  # 프로덕션 환경 웹 서비스
+  - type: web
+    name: cvfactory-prod
+    env: python
+    region: seoul
+    plan: starter
+    branch: main
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn cvfactory.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: cvfactory.onrender.com
+      - key: DEBUG
+        value: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://cvfactory.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://cvfactory.onrender.com 

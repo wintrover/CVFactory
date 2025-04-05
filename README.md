@@ -93,8 +93,46 @@ CVFactory/
 - **Bootstrap**: Responsive design
 
 ### Deployment and Development Environment
-- **Docker**: Containerization and deployment
+- **Docker**: Containerization and development
 - **Git**: Version control
+- **Render.com**: Cloud hosting platform
+- **GitHub Actions**: CI/CD automation
+
+### 🚢 Deployment with Render.com
+
+This project is configured for deployment to Render.com. The deployment process is automated using GitHub Actions.
+
+1. Create accounts and services on Render.com:
+   - Sign up for Render.com if you don't have an account
+   - Create a new Web Service for each environment (development and production)
+   - Link your GitHub repository
+
+2. Set up environment variables in Render.com dashboard:
+   - All required environment variables mentioned in the `.env.example` file
+   - Add your Groq API key and other secrets
+
+3. Deployment happens automatically when code is pushed to:
+   - `develop` branch (development environment)
+   - `main` branch (production environment)
+
+### 🔄 CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+1. **Testing**: Runs Django tests to ensure code quality
+2. **Building**: Prepares the application for deployment
+3. **Deployment**: Automatically deploys to Render.com when tests pass
+
+To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
+
+To set up CI/CD with GitHub Actions:
+1. Add the following secrets to your GitHub repository:
+   - `RENDER_API_KEY`: Your Render.com API key
+   - `RENDER_DEV_SERVICE_ID`: The service ID for your development environment
+   - `RENDER_PROD_SERVICE_ID`: The service ID for your production environment
+   - All environment variables needed for your application
+
+For more details on deployment configuration, see the `render.yaml` file.
 
 ## 🌐 API Endpoints
 

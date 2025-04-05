@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12.7'
           
       - name: Install dependencies
         run: |
@@ -27,10 +27,12 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "Setting production environment"
-            cp .env.production .env
+            cp .env.example .env
+            echo "DEBUG=False" >> .env
           else
             echo "Setting development environment"
-            cp .env.development .env
+            cp .env.example .env
+            echo "DEBUG=True" >> .env
           fi
       
       - name: Run tests
@@ -46,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12.7'
       
       - name: Install dependencies
         run: |
@@ -57,23 +59,27 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "Setting production environment"
-            cp .env.production .env
+            cp .env.example .env
             # 배포 환경에서는 실제 API 키 등을 GitHub Secrets에서 가져와 설정
-            sed -i "s|\${SECRET_KEY}|${{ secrets.DJANGO_SECRET_KEY }}|g" .env
-            sed -i "s|\${ALLOWED_HOSTS}|${{ secrets.ALLOWED_HOSTS }}|g" .env
-            sed -i "s|\${GOOGLE_CLIENT_ID}|${{ secrets.GOOGLE_CLIENT_ID }}|g" .env
-            sed -i "s|\${GOOGLE_CLIENT_SECRET}|${{ secrets.GOOGLE_CLIENT_SECRET }}|g" .env
-            sed -i "s|\${GROQ_API_KEY}|${{ secrets.GROQ_API_KEY }}|g" .env
-            sed -i "s|\${API_KEY}|${{ secrets.API_KEY }}|g" .env
-            sed -i "s|\${CSRF_TRUSTED_ORIGINS}|${{ secrets.CSRF_TRUSTED_ORIGINS }}|g" .env
-            sed -i "s|\${CORS_ALLOWED_ORIGINS}|${{ secrets.CORS_ALLOWED_ORIGINS }}|g" .env
+            echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
+            echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+            echo "API_KEY=${{ secrets.API_KEY }}" >> .env
+            echo "CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}" >> .env
+            echo "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" >> .env
+            echo "DEBUG=False" >> .env
           else
             echo "Setting development environment"
-            cp .env.development .env
-            # 개발 환경에서는 더미 API 키 설정
-            sed -i "s|your-google-client-id-here|dummy-dev-client-id|g" .env
-            sed -i "s|your-google-client-secret-here|dummy-dev-client-secret|g" .env
-            sed -i "s|your-groq-api-key-here|dummy-dev-groq-api-key|g" .env
+            cp .env.example .env
+            echo "DJANGO_SECRET_KEY=${{ secrets.DEV_DJANGO_SECRET_KEY }}" >> .env
+            echo "ALLOWED_HOSTS=${{ secrets.DEV_ALLOWED_HOSTS }}" >> .env
+            echo "DEBUG=True" >> .env
+            # 개발 환경 설정
+            echo "GOOGLE_CLIENT_ID=dummy-dev-client-id" >> .env
+            echo "GOOGLE_CLIENT_SECRET=dummy-dev-client-secret" >> .env
+            echo "GROQ_API_KEY=dummy-dev-groq-api-key" >> .env
           fi
       
       - name: Collect static files
@@ -107,13 +113,12 @@ jobs:
           name: build-artifacts
           path: .
       
-      - name: Deploy to Development Environment
-        uses: serverless/github-action@v3
+      - name: Deploy to Render.com Development Environment
+        uses: JorgeLNJunior/render-deploy@v1.4.3
         with:
-          args: deploy --stage dev
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          service_id: ${{ secrets.RENDER_DEV_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          wait: true
   
   deploy-prod:
     if: github.ref == 'refs/heads/main'
@@ -126,10 +131,9 @@ jobs:
           name: build-artifacts
           path: .
       
-      - name: Deploy to Production Environment
-        uses: serverless/github-action@v3
+      - name: Deploy to Render.com Production Environment
+        uses: JorgeLNJunior/render-deploy@v1.4.3
         with:
-          args: deploy --stage prod
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+          service_id: ${{ secrets.RENDER_PROD_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          wait: true 
