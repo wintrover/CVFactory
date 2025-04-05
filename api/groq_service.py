@@ -6,35 +6,47 @@ import logging
 import json
 from datetime import datetime
 import traceback
+from django.conf import settings
 
 # 로거 설정
 logger = logging.getLogger("api")
-logger.setLevel(logging.DEBUG)
 
 # groq_service 전용 로거 설정
 groq_logger = logging.getLogger("groq_service")
-groq_logger.setLevel(logging.DEBUG)
 
-# 파일 핸들러 설정
-groq_handler = logging.FileHandler(os.path.join("logs", "groq_service.log"), encoding='utf-8')
-groq_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s] - %(message)s'))
-groq_logger.addHandler(groq_handler)
+# 개발 환경에서만 디버그 메시지 출력
+if settings.DEBUG:
+    # 파일 핸들러 설정
+    log_dir = os.path.join("logs")
+    os.makedirs(log_dir, exist_ok=True)  # 로그 디렉토리 확인
+    
+    groq_handler = logging.FileHandler(os.path.join(log_dir, "groq_service_debug.log"), encoding='utf-8')
+    groq_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s] - %(message)s'))
+    groq_logger.addHandler(groq_handler)
+    
+    groq_logger.debug("=== Groq 서비스 디버그 모드로 시작 ===")
+    groq_logger.debug(f"로그 레벨: {logging.getLevelName(groq_logger.level)}")
 
 # .env 파일 로드
-load_dotenv(dotenv_path="groq.env")
+load_dotenv()
 
 # Groq API 키 설정
-# api_key = os.getenv("GROQ_API_KEY")
-api_key = "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"
+api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    raise ValueError("Groq API Key가 설정되지 않았습니다.")
+    error_msg = "Groq API Key가 설정되지 않았습니다."
+    groq_logger.error(error_msg)
+    raise ValueError(error_msg)
 
 # Groq 클라이언트 초기화
 client = groq.Client(api_key=api_key)
 
 def log_function_call(func_name, inputs, outputs=None, additional_info=None):
     """함수 호출 정보를 로깅하는 유틸리티 함수"""
+    # 개발 환경에서만 상세 로깅
+    if not settings.DEBUG:
+        return
+        
     log_entry = {
         "function": func_name,
         "timestamp": datetime.now().isoformat(),
@@ -49,7 +61,7 @@ def log_function_call(func_name, inputs, outputs=None, additional_info=None):
     
     # 안전한 직렬화를 위해 기본 처리
     try:    
-        groq_logger.info(json.dumps(log_entry, ensure_ascii=False, default=str))
+        groq_logger.debug(json.dumps(log_entry, ensure_ascii=False, default=str))
     except TypeError as e:
         # 직렬화 불가능한 객체가 있는 경우 str()로 변환
         groq_logger.error(f"로깅 중 직렬화 오류: {e}")
@@ -63,7 +75,7 @@ def log_function_call(func_name, inputs, outputs=None, additional_info=None):
             safe_log_entry["outputs"] = str(outputs)
         if additional_info:
             safe_log_entry["additional_info"] = str(additional_info)
-        groq_logger.info(json.dumps(safe_log_entry, ensure_ascii=False))
+        groq_logger.debug(json.dumps(safe_log_entry, ensure_ascii=False))
 
 def analyze_job_description(job_description):
     """

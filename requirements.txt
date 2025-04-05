@@ -9,13 +9,13 @@ dj-rest-auth==4.0.1
 django-cors-headers==4.3.0
 
 # 인증 및 소셜 로그인
-django-allauth==0.54.0
+django-allauth==0.58.2
 
 # 크롤링 관련
 beautifulsoup4==4.12.2
 requests==2.31.0
-selenium==4.14.0
-webdriver-manager==4.0.0
+selenium==4.15.2
+webdriver-manager==4.0.1
 
 # 데이터 처리
 numpy==1.24.3
@@ -23,7 +23,20 @@ pandas==1.5.3
 
 # AI API
 # openai>=1.0.0  # OpenAI API 대신 Groq 사용
-groq>=0.4.0  # Adding Groq API client
+groq==0.4.1
 
 # 유틸리티
-six==1.16.0 
+six==1.16.0
+
+# 보안 관련 라이브러리
+psycopg2-binary==2.9.9
+pillow==10.1.0
+faker==20.0.3
+whitenoise==6.6.0
+gunicorn==21.2.0
+bleach==6.1.0
+validators==0.22.0
+django-rate-limit==0.11.0
+django-secure==1.0.2
+django-csp==3.7
+django-otp==1.2.2 

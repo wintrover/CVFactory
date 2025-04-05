@@ -5,13 +5,13 @@ services:
     build: .
     volumes:
       - .:/app
+      - ./logs:/app/logs
     ports:
       - "8000:8000"
     env_file:
       - .env  # 환경 변수는 .env 파일에서 로드
     environment:
       # 기본 설정 (환경 변수가 없을 경우 사용)
-      - DEBUG=${DEBUG:-True}
       - PYTHONUNBUFFERED=1
       - SELENIUM_DRIVER_EXECUTABLE_PATH=/usr/bin/chromedriver
     restart: unless-stopped
@@ -27,4 +27,9 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "3" 
+        max-file: "3"
+        tag: "{{.Name}}"
+    
+    # 보안 설정
+    security_opt:
+      - no-new-privileges:true 

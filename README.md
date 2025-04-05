@@ -34,8 +34,8 @@ pip install -r requirements.txt
 ```
 
 3. Environment variable setup:
-   - Create a `secretkey.env` file and set the Django security key
-   - Set up the Groq API key in the `groq.env` file
+   - Create a `.env` file from `.env.example` and configure settings
+   - Set up the Groq API key in your environment variables
 
 4. Database migration:
 ```bash

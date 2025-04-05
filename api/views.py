@@ -15,13 +15,62 @@ import os
 from datetime import datetime
 # from django.utils.decorators import method_decorator
 import re
+import validators  # URL 검증을 위한 라이브러리 추가
+import bleach  # 특수문자 필터링을 위한 라이브러리 추가
+from django.conf import settings
 
-# 로거 설정
+# 로거 설정 - 환경에 따른 로그 레벨 조정
 logger = logging.getLogger('api')
-logger.setLevel(logging.DEBUG)
+# DEBUG 환경에서는 추가 디버그 로깅
+if settings.DEBUG:
+    logger.debug("=== 디버그 모드에서 API 모듈 시작 ===")
 
 # 자기소개서 전용 로거 설정
 resume_logger = logging.getLogger("resume")
+
+# URL 검증 함수
+def validate_url(url):
+    """URL 유효성을 검증하는 함수"""
+    if not url:
+        return False, "URL이 비어있습니다"
+    
+    # URL 형식 검증
+    if not validators.url(url):
+        return False, "유효하지 않은 URL 형식입니다"
+    
+    # 허용된 도메인 목록 (예시)
+    allowed_domains = ['saramin.co.kr', 'jobkorea.co.kr', 'wanted.co.kr', 'linkedin.com']
+    
+    # 도메인 추출을 위한 정규식
+    domain_pattern = re.compile(r'^https?://(?:www\.)?([^/]+)')
+    match = domain_pattern.match(url)
+    
+    if not match:
+        return False, "도메인을 추출할 수 없습니다"
+    
+    domain = match.group(1)
+    
+    # 허용된 도메인인지 확인 (선택적)
+    # if not any(domain.endswith(allowed_domain) for allowed_domain in allowed_domains):
+    #     return False, f"허용되지 않은 도메인입니다: {domain}"
+    
+    return True, "유효한 URL입니다"
+
+# 사용자 입력 정제 함수
+def sanitize_input(text):
+    """사용자 입력에서 잠재적으로 위험한 HTML을 제거하는 함수"""
+    if not text:
+        return ""
+    
+    # HTML 태그 및 위험한 속성 제거
+    cleaned_text = bleach.clean(
+        text,
+        tags=[],  # 허용된 HTML 태그 없음
+        attributes={},  # 허용된 HTML 속성 없음
+        strip=True  # 허용되지 않은 태그 제거
+    )
+    
+    return cleaned_text
 
 # 자기소개서 로깅 함수
 def log_resume_to_file(resume_id, generated_resume):
@@ -40,12 +89,22 @@ def log_resume_to_file(resume_id, generated_resume):
         # 현재 시간
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
+        # 민감 정보 마스킹 처리
+        masked_resume = generated_resume
+        # 이메일 마스킹
+        email_pattern = re.compile(r'[\w\.-]+@[\w\.-]+')
+        masked_resume = email_pattern.sub('[MASKED_EMAIL]', masked_resume)
+        
+        # 전화번호 마스킹
+        phone_pattern = re.compile(r'\d{2,4}[-\s]?\d{3,4}[-\s]?\d{4}')
+        masked_resume = phone_pattern.sub('[MASKED_PHONE]', masked_resume)
+        
         # 로그 형식
         log_content = f"""
 ==================================================
 [RESUME ID: {resume_id}] - {now}
 ==================================================
-{generated_resume}
+{masked_resume}
 ==================================================
 """
         
@@ -67,10 +126,13 @@ def fetch_company_info_api(request):
     logger.debug("===== fetch_company_info_api 요청 시작 =====")
     if request.method == "POST":
         try:
-            # 요청 정보를 확인
-            logger.info(f"요청 헤더: {request.headers}")
-            logger.info(f"요청 쿠키: {request.COOKIES}")
-            logger.debug(f"요청 본문: {request.body}")    
+            # 요청 정보를 확인 (개발 환경에서만 상세 로깅)
+            if settings.DEBUG:
+                logger.debug(f"요청 헤더: {request.headers}")
+                logger.debug(f"요청 쿠키: {request.COOKIES}")
+                logger.debug(f"요청 본문: {request.body}")    
+            else:
+                logger.info(f"API 요청: {request.path} - {request.method}")
 
             # CSRF 토큰 확인
             csrf_cookie = request.COOKIES.get("csrftoken")
@@ -89,6 +151,12 @@ def fetch_company_info_api(request):
             if not company_url:
                 logger.error("회사 URL 누락")
                 return JsonResponse({"error": "회사 URL이 제공되지 않았습니다."}, status=400)
+
+            # URL 검증
+            is_valid, error_message = validate_url(company_url)
+            if not is_valid:
+                logger.error(f"URL 검증 실패: {error_message}")
+                return JsonResponse({"error": error_message}, status=400)
 
             # 크롤링 시작 로그
             logger.info(f"Fetching company info for URL: {company_url}")
@@ -162,12 +230,34 @@ def create_resume(request):
         job_url = request.data.get("recruitment_notice_url", "")
         logger.info(f"받은 recruitment_notice_url: {job_url}")
         
+        # URL 검증
+        is_valid, error_message = validate_url(job_url)
+        if not is_valid:
+            logger.error(f"채용 공고 URL 검증 실패: {error_message}")
+            return Response({"error": error_message}, status=400)
+        
         # 회사 URL 파싱
         company_url = request.data.get("target_company_url", "")
         logger.info(f"받은 target_company_url: {company_url}")
         
+        # 회사 URL 검증 (제공된 경우)
+        if company_url:
+            is_valid, error_message = validate_url(company_url)
+            if not is_valid:
+                logger.error(f"회사 URL 검증 실패: {error_message}")
+                return Response({"error": error_message}, status=400)
+        
         # 사용자 스토리 파싱
         user_story = request.data.get("user_story", "")
+        
+        # 사용자 스토리 검증 및 정제
+        if isinstance(user_story, str):
+            user_story = sanitize_input(user_story)
+        elif isinstance(user_story, dict):
+            # 딕셔너리 형태인 경우 각 값 정제
+            for key in user_story:
+                if isinstance(user_story[key], str):
+                    user_story[key] = sanitize_input(user_story[key])
         
         # 안전한 로깅을 위해 객체 타입 확인 및 처리
         if isinstance(user_story, dict):

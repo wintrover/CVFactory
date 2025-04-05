@@ -1,5 +1,13 @@
+// config.js 파일 추가 - 환경별 설정 불러오기
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8000' 
+    : window.location.origin;
+
+// API 키 설정 (실제 환경에서는 보안 저장소에서 가져와야 함)
+const API_KEY = 'default-dev-api-key-change-in-production';
+
 function loginWithGoogle() {
-    window.location.href = "http://127.0.0.1:8000/accounts/google/login/";
+    window.location.href = `${API_BASE_URL}/accounts/google/login/`;
 }
 
 function saveInput(id) {
@@ -25,6 +33,12 @@ function fetchCompanyInfo() {
     
     if (!company_url) {
         alert("회사 URL을 입력하세요.");
+        return;
+    }
+    
+    // 입력값 검증 - URL 형식 확인
+    if (!isValidUrl(company_url)) {
+        alert("유효한 URL 형식이 아닙니다. http:// 또는 https://로 시작하는 URL을 입력하세요.");
         return;
     }
     
@@ -54,7 +68,7 @@ function fetchCompanyInfo() {
     });
     
     // CSRF 토큰 가져오기
-    fetch("http://127.0.0.1:8000/api/create_resume/", {
+    fetch(`${API_BASE_URL}/api/create_resume/`, {
         method: "GET",
         credentials: "include"
     })
@@ -64,11 +78,12 @@ function fetchCompanyInfo() {
         const csrftoken = getCookie("csrftoken");
         
         // 실제 회사 정보 크롤링 요청
-        return fetch("http://127.0.0.1:8000/api/fetch_company_info/", {
+        return fetch(`${API_BASE_URL}/api/fetch_company_info/`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
+                "X-CSRFToken": csrftoken,
+                "X-Api-Key": API_KEY  // API 키 추가
             },
             body: JSON.stringify({
                 company_url: company_url
@@ -112,11 +127,30 @@ function generateResume() {
         return;
     }
 
+    // URL 검증
+    if (!isValidUrl(job_url)) {
+        alert("유효한 채용 공고 URL이 아닙니다.");
+        return;
+    }
+
     // URL 형식 검증 (http:// 또는 https://로 시작하는지)
+    if (!job_url.startsWith('http://') && !job_url.startsWith('https://')) {
+        job_url = 'https://' + job_url;
+        document.getElementById("job_url").value = job_url;
+    }
+
+    if (company_url && !isValidUrl(company_url)) {
+        alert("유효한 회사 URL이 아닙니다.");
+        return;
+    }
+
     if (company_url && !company_url.startsWith('http://') && !company_url.startsWith('https://')) {
         company_url = 'https://' + company_url;
         document.getElementById("company_url").value = company_url;
     }
+
+    // 사용자 입력 정제 (XSS 방지)
+    user_story = sanitizeInput(user_story);
 
     // 로딩 화면 표시
     document.getElementById("loading-overlay").style.display = "flex";
@@ -138,7 +172,7 @@ function generateResume() {
     });
 
     // CSRF 토큰 가져오기
-    fetch("http://127.0.0.1:8000/api/create_resume/", {
+    fetch(`${API_BASE_URL}/api/create_resume/`, {
         method: "GET",
         credentials: "include"
     })
@@ -148,11 +182,12 @@ function generateResume() {
         const csrftoken = getCookie("csrftoken");
         
         // 실제 자기소개서 생성 요청
-        return fetch("http://127.0.0.1:8000/api/create_resume/", {
+        return fetch(`${API_BASE_URL}/api/create_resume/`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
+                "X-CSRFToken": csrftoken,
+                "X-Api-Key": API_KEY  // API 키 추가
             },
             body: JSON.stringify({
                 recruitment_notice_url: job_url,
@@ -187,6 +222,25 @@ function generateResume() {
         animationContainer.lottieInstance.destroy();
       }
     });
+}
+
+// URL 유효성 검사 함수
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// 사용자 입력 정제 함수 (XSS 방지)
+function sanitizeInput(input) {
+    if (!input) return "";
+    
+    // HTML 태그 제거
+    const doc = new DOMParser().parseFromString(input, 'text/html');
+    return doc.body.textContent || "";
 }
 
 // CSRF 토큰을 가져오는 함수

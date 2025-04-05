@@ -1,0 +1,36 @@
+{
+  "name": "cvfactory",
+  "version": "1.0.0",
+  "description": "CVFactory 자기소개서 생성 서비스",
+  "main": "index.js",
+  "scripts": {
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove:dev": "serverless remove --stage dev",
+    "remove:prod": "serverless remove --stage prod",
+    "logs:dev": "serverless logs -f app -t --stage dev",
+    "logs:prod": "serverless logs -f app -t --stage prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/CVFactory.git"
+  },
+  "keywords": [
+    "django",
+    "serverless",
+    "aws",
+    "lambda"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yourusername/CVFactory/issues"
+  },
+  "homepage": "https://github.com/yourusername/CVFactory#readme",
+  "devDependencies": {
+    "serverless": "^3.33.0",
+    "serverless-domain-manager": "^7.1.2",
+    "serverless-python-requirements": "^6.0.0",
+    "serverless-wsgi": "^3.0.3"
+  }
+} 
