@@ -194,14 +194,6 @@ LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 LOG_TO_CONSOLE = os.getenv('LOG_TO_CONSOLE', 'False').lower() == 'true'
 LOG_SQL_QUERIES = os.getenv('LOG_SQL_QUERIES', 'False').lower() == 'true'
 
-# 개발 환경에서 SQL 쿼리 로깅 활성화
-if LOG_SQL_QUERIES and DEBUG:
-    LOGGING['loggers']['django.db.backends'] = {
-        'handlers': ['console', 'debug_file'],
-        'level': 'DEBUG',
-        'propagate': False,
-    }
-
 # 로그 설정 - 환경별 차별화
 LOGGING = {
     'version': 1,
@@ -321,6 +313,14 @@ LOGGING = {
         },
     },
 }
+
+# 개발 환경에서 SQL 쿼리 로깅 활성화
+if LOG_SQL_QUERIES and DEBUG:
+    LOGGING['loggers']['django.db.backends'] = {
+        'handlers': ['console', 'debug_file'],
+        'level': 'DEBUG',
+        'propagate': False,
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

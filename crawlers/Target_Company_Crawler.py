@@ -7,7 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
 import json
-import pandas as pd
 import logging
 from webdriver_manager.chrome import ChromeDriverManager
 from urllib.parse import urlparse
