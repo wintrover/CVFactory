@@ -36,7 +36,7 @@ whitenoise==6.6.0
 gunicorn==21.2.0
 bleach==6.1.0
 validators==0.22.0
-django-rate-limit==0.11.0
+django-ratelimit>=4.0.0  # django-rate-limit에서 수정
 django-secure==1.0.2
 django-csp==3.7
 django-otp==1.2.2 
