@@ -18,7 +18,7 @@ selenium==4.15.2
 webdriver-manager==4.0.1
 
 # 데이터 처리
-numpy==1.24.3
+numpy>=1.26.0  # Python 3.12 호환 버전으로 업데이트
 pandas==1.5.3
 
 # AI API
