@@ -19,7 +19,7 @@ webdriver-manager==4.0.1
 
 # AI API
 # openai>=1.0.0  # OpenAI API 대신 Groq 사용
-groq==0.4.0  # Python 3.9 호환 버전
+groq==0.3.0  # Python 3.9 호환 버전
 
 # 유틸리티
 six==1.16.0
