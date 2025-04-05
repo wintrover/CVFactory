@@ -9,7 +9,7 @@ dj-rest-auth==4.0.1
 django-cors-headers==4.3.0
 
 # 인증 및 소셜 로그인
-django-allauth==0.58.2
+django-allauth==0.52.0
 
 # 크롤링 관련
 beautifulsoup4==4.12.2
