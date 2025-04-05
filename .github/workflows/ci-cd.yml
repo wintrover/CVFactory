@@ -137,3 +137,41 @@ jobs:
           service_id: ${{ secrets.RENDER_PROD_SERVICE_ID }}
           api_key: ${{ secrets.RENDER_API_KEY }}
           wait: true 
+  
+  notify:
+    needs: [test, build, deploy-prod, deploy-dev]
+    runs-on: ubuntu-latest
+    if: always()  # 항상 실행
+    steps:
+      - name: Check workflow status
+        id: status
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "workflow_status=failure" >> $GITHUB_OUTPUT
+          else
+            echo "workflow_status=success" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Notify workflow status
+        if: steps.status.outputs.workflow_status == 'failure'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { repo, owner } = context.repo;
+            const run_id = context.runId;
+            
+            github.rest.issues.create({
+              owner,
+              repo,
+              title: `🚨 워크플로우 실패: ${context.workflow}`,
+              body: `**워크플로우가 실패했습니다.**
+              
+              - **저장소:** ${owner}/${repo}
+              - **워크플로우:** ${context.workflow}
+              - **커밋:** ${context.sha}
+              - **브랜치:** ${context.ref}
+              - **상세 정보:** https://github.com/${owner}/${repo}/actions/runs/${run_id}
+              
+              이 이슈는 자동으로 생성되었습니다.`
+            }); 
