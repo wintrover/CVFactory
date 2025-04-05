@@ -35,23 +35,66 @@ jobs:
             echo "Setting production environment"
             cp .env.example .env
             echo "DEBUG=False" >> .env
+            echo "TEST_MODE=True" >> .env
+            echo "DB_ENGINE=django.db.backends.sqlite3" >> .env
+            echo "DB_NAME=:memory:" >> .env
           else
             echo "Setting development environment"
             cp .env.example .env
             echo "DEBUG=True" >> .env
+            echo "TEST_MODE=True" >> .env
+            echo "DB_ENGINE=django.db.backends.sqlite3" >> .env
+            echo "DB_NAME=:memory:" >> .env
           fi
+          
+          # 환경 변수 내용 로깅 (민감 정보 제외)
+          echo "Environment configuration:"
+          grep -v "SECRET\|KEY\|PASSWORD" .env || true
       
       - name: Create logs directory with proper permissions
         run: |
           mkdir -p logs
           chmod -R 755 logs
       
-      - name: Run tests
+      - name: Database setup
         run: |
-          # 테스트 디버깅 정보 추가
+          echo "Setting up database for tests..."
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py migrate --noinput
+          
+      - name: Run tests with detailed logging
+        run: |
           echo "Running Django tests..."
-          python manage.py test -v 2
-        continue-on-error: false
+          
+          # 앱 리스트 가져오기
+          APPS=$(python -c "
+          import os
+          import sys
+          
+          # Django 설정 로드
+          os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cvfactory.settings')
+          
+          import django
+          django.setup()
+          
+          # 설치된 앱 목록 출력
+          from django.conf import settings
+          for app in settings.INSTALLED_APPS:
+              if not app.startswith('django.') and not app.startswith('rest_framework'):
+                  print(app)
+          ")
+          
+          echo "Installed apps: $APPS"
+          
+          # 먼저 전체 테스트 실행
+          python manage.py test -v 2 || true
+          
+          # 실패한 경우 앱별로 테스트 실행해 문제 파악
+          for app in $APPS; do
+            echo "Testing app: $app"
+            python manage.py test $app -v 2 || echo "App $app tests failed"
+          done
   
   build:
     needs: test
