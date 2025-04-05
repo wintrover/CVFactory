@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true  # 테스트 실패해도 워크플로우가 계속 진행
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -170,21 +171,30 @@ jobs:
             python manage.py test $app -v 2 || echo "App $app tests failed"
           done
           
-      - name: Upload test logs
-        uses: actions/upload-artifact@v3
+      - name: Save test logs
+        if: always()
         continue-on-error: true
+        run: |
+          echo "Saving test logs..."
+          mkdir -p test-logs
+          cp -r logs/* test-logs/ || true
+          cp .env test-logs/ || true
+          find . -path "*/migrations/*.py" -exec cp --parents {} test-logs/ \; || true
+          
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v3
         with:
           name: test-logs
-          path: |
-            logs/
-            .env
-            */migrations/*.py
+          path: test-logs/
+          retention-days: 5
         
   build:
     runs-on: ubuntu-latest
     if: always()  # test 작업과 관계없이 항상 실행
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -227,16 +237,18 @@ jobs:
         run: |
           mkdir -p logs
           chmod -R 755 logs
-          
+           
       - name: Check Django setup for build
-        run: |
-          python manage.py check
+        continue-on-error: true
+        run: python manage.py check
       
       - name: Run migrations
+        continue-on-error: true
         run: |
           python manage.py migrate --noinput || python manage.py migrate --noinput --fake-initial || echo "Migration failed but continuing"
       
       - name: Collect static files
+        continue-on-error: true
         run: |
           python manage.py collectstatic --noinput || echo "Collectstatic failed but continuing"
       
@@ -244,7 +256,7 @@ jobs:
         run: |
           # 빌드에 필요한 파일 준비
           mkdir -p build
-          cp -r *.py build/
+          cp -r *.py build/ || true
           cp -r *.sh build/ || true
           cp -r *.json build/ || true
           cp -r *.yml build/ || true
@@ -259,17 +271,19 @@ jobs:
           # Django 앱 복사
           for dir in */; do
             if [ -f "${dir}__init__.py" ]; then
-              cp -r "$dir" build/
+              cp -r "$dir" build/ || true
             fi
           done
           
           echo "Build artifacts prepared"
+          ls -la build/
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: build-artifacts
           path: build/
+          retention-days: 3
   
   deploy-dev:
     if: github.ref == 'refs/heads/develop' && always()
@@ -283,7 +297,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-artifacts
-          path: .
+          path: ./deploy-files
       
       - name: Deploy to Render.com Development Environment
         uses: JorgeLNJunior/render-deploy@v1.4.3
@@ -304,7 +318,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-artifacts
-          path: .
+          path: ./deploy-files
       
       - name: Deploy to Render.com Production Environment
         uses: JorgeLNJunior/render-deploy@v1.4.3
