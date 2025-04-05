@@ -10,6 +10,7 @@ on:
 # 기본 권한 설정
 permissions:
   contents: read
+  issues: write # 이슈 생성을 위한 권한 추가
 
 # 전역 환경 변수
 env:
@@ -75,11 +76,10 @@ jobs:
           ls -la debug-report/
       
       - name: Upload debug report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: debug-report
           path: debug-report
-          retention-days: 1
 
   # ======== Django 테스트 작업 ========
   test:
@@ -290,11 +290,10 @@ jobs:
       
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: test-results
-          retention-days: 5
 
   # ======== Django 빌드 작업 ========
   build:
@@ -449,11 +448,10 @@ jobs:
           echo "Build validation complete."
       
       - name: Upload build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: django-build
           path: build/
-          retention-days: 3
 
   # ======== Render.com 배포 작업 ========
   deploy:
@@ -473,7 +471,7 @@ jobs:
           echo "Deployment time: $(date)"
       
       - name: Download build
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: django-build
           path: deploy
@@ -560,11 +558,10 @@ jobs:
       
       - name: Upload deployment report
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-report
           path: deployment-report
-          retention-days: 1
 
   # ======== 결과 알림 작업 ========
   notify:
