@@ -35,6 +35,11 @@ jobs:
             echo "DEBUG=True" >> .env
           fi
       
+      - name: Create logs directory with proper permissions
+        run: |
+          mkdir -p logs
+          chmod -R 755 logs
+      
       - name: Run tests
         run: |
           python manage.py test
