@@ -3,7 +3,7 @@ django>=4.2.20
 python-dotenv==1.0.0
 
 # REST API
-djangorestframework==3.14.0
+djangorestframework>=3.15.2  # XSS 취약점(CVE-2024-21520) 패치
 djangorestframework-simplejwt==5.3.0
 dj-rest-auth==4.0.1
 django-cors-headers==4.3.0
