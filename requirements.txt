@@ -29,7 +29,7 @@ psycopg2-binary==2.9.9
 pillow>=10.3.0  # Python 3.9 호환 버전, 보안 취약점 패치
 faker==19.13.0  # Python 3.9 호환 버전
 whitenoise==6.5.0
-gunicorn==21.2.0
+gunicorn>=23.0.0  # TE.CL 요청 스머글링 취약점 패치 (CVE-2024-6827)
 bleach==6.0.0  # Python 3.9 호환 버전
 validators==0.22.0
 django-ratelimit>=4.0.0
