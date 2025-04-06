@@ -95,6 +95,56 @@ CVFactory/
 ### 배포 및 개발 환경
 - **Docker**: 컨테이너화 및 배포
 - **Git**: 버전 관리
+- **GitHub Actions**: CI/CD 자동화
+- **Render.com**: 클라우드 호스팅 플랫폼 (선택 사항)
+
+## 🔄 환경 전환
+
+이 프로젝트는 개발 환경과 배포 환경을 지원합니다. 제공된 스크립트를 사용하여 환경을 전환하세요:
+
+```bash
+# 개발 환경으로 전환 (기본값)
+./switch_env.sh development  # Linux/macOS
+.\switch_env.bat development  # Windows
+
+# 배포 환경으로 전환
+./switch_env.sh production  # Linux/macOS
+.\switch_env.bat production  # Windows
+```
+
+## 🚢 GitHub Actions를 통한 CI/CD 파이프라인
+
+CVFactory는 GitHub Actions를 사용한 CI/CD 파이프라인을 통해 자동으로 테스트, 빌드, 배포됩니다:
+
+1. **환경 디버깅**: 환경 설정을 확인하고 보고서 생성
+2. **테스트**: Django 테스트를 실행하여 코드 품질 확인
+3. **빌드**: 배포를 위한 애플리케이션 준비
+4. **배포**: 브랜치(develop 또는 main)에 따라 자동으로 배포
+
+CI/CD 설정을 확인하려면 `.github/workflows/ci-cd.yml` 파일을 참조하세요.
+
+### CI/CD 설정 방법
+
+GitHub Actions로 CI/CD를 설정하려면 GitHub 저장소에 다음 Secrets을 추가하세요:
+
+1. **공통 설정**
+   - `AWS_ACCESS_KEY_ID`: AWS 접근 키 (AWS를 사용하는 경우)
+   - `AWS_SECRET_ACCESS_KEY`: AWS 비밀 키 (AWS를 사용하는 경우)
+
+2. **배포 환경 변수**
+   - `DJANGO_SECRET_KEY`: Django 보안 키
+   - `ALLOWED_HOSTS`: 허용된 호스트 목록 (쉼표로 구분)
+   - `GOOGLE_CLIENT_ID`: Google OAuth 클라이언트 ID
+   - `GOOGLE_CLIENT_SECRET`: Google OAuth 클라이언트 시크릿
+   - `GROQ_API_KEY`: Groq API 키
+   - `API_KEY`: 백엔드 API 인증 키
+   - `CSRF_TRUSTED_ORIGINS`: CSRF 허용 출처
+   - `CORS_ALLOWED_ORIGINS`: CORS 허용 출처
+   - `DOMAIN_NAME`: 커스텀 도메인 이름 (선택사항)
+
+브랜치 관리:
+- `develop` 브랜치: 개발 환경으로 자동 배포
+- `main` 브랜치: 프로덕션 환경으로 자동 배포
 
 ## 🌐 API 엔드포인트
 
@@ -124,110 +174,11 @@ cp .env.example .env
 
 도커 환경에서는 이러한 변수들이 `.env` 파일에서 자동으로 로드됩니다.
 
-## 환경 설정
+## 📊 로깅 설정
 
-이 프로젝트는 개발 환경과 배포 환경을 분리하여 관리합니다.
-
-### 환경 전환하기
-
-환경을 전환하려면 제공된 스크립트를 사용하세요:
-
-```bash
-# 개발 환경으로 전환 (기본값)
-./switch_env.sh development
-
-# 배포 환경으로 전환
-./switch_env.sh production
-```
-
-### 환경 파일 설정
-
-1. 개발 환경:
-   - `.env.example` 파일을 복사하여 `.env`로 만들고 실제 API 키 등을 입력하세요.
-   
-2. 배포 환경:
-   - 프로덕션 환경에서는 서버의 시스템 환경변수에서 민감한 정보를 가져옵니다.
-   - 서버 환경에 다음 환경변수를 설정해야 합니다:
-     - `SECRET_KEY`: Django 보안 키
-     - `ALLOWED_HOSTS`: 허용할 호스트 목록 (쉼표로 구분)
-     - `GOOGLE_CLIENT_ID`: Google OAuth 클라이언트 ID
-     - `GOOGLE_CLIENT_SECRET`: Google OAuth 클라이언트 시크릿
-     - `GROQ_API_KEY`: Groq API 키
-     - `CSRF_TRUSTED_ORIGINS`: CSRF 허용 출처 (쉼표로 구분)
-     - `CORS_ALLOWED_ORIGINS`: CORS 허용 출처 (쉼표로 구분)
-
-### 보안 권장사항
-
-- API 키 등의 민감한 정보는 절대로 Git에 커밋하지 마세요.
-- 배포 환경에서는 항상 HTTPS를 사용하세요.
-- 로그 파일에 민감한 정보가 기록되지 않도록 로깅 레벨을 적절히 조정하세요.
-
-## 보안 가이드
-
-CVFactory를 안전하게 실행하기 위한 보안 가이드입니다.
-
-### API 키 인증
-
-API 엔드포인트를 호출할 때 API 키 인증이 필요합니다:
-
-```javascript
-// API 호출 예시
-fetch('/api/create_resume/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-Api-Key': 'your-api-key-here',  // API 키 헤더 추가
-    'X-CSRFToken': csrfToken
-  },
-  body: JSON.stringify(data)
-});
-```
-
-### 환경 변수 설정
-
-API 키 및 보안 설정을 위한 환경 변수:
-
-- `API_KEY`: API 호출 인증을 위한 키
-- `SESSION_COOKIE_SECURE`: HTTPS 연결에서만 세션 쿠키 전송 (프로덕션: True)
-- `CSRF_COOKIE_SECURE`: HTTPS 연결에서만 CSRF 쿠키 전송 (프로덕션: True)
-- `CSRF_COOKIE_HTTPONLY`: JavaScript에서 CSRF 쿠키 접근 제한 (프로덕션: True)
-
-### 로깅 및 민감 정보 처리
-
-- 로그에는 민감한 개인정보가 기록되지 않도록 마스킹 처리됩니다
-- 배포 환경에서는 로그 레벨을 INFO 이상으로 설정하세요
-
-### 개발 환경과 배포 환경 분리
-
-환경별 설정을 위해 다음 스크립트를 사용하세요:
-
-```bash
-# 개발 환경으로 전환
-./switch_env.sh development
-
-# 배포 환경으로 전환
-./switch_env.sh production
-```
-
-### 입력 데이터 검증
-
-모든 사용자 입력은 검증 및 정제됩니다:
-- URL 입력은 형식 및 도메인 검증
-- 텍스트 입력은 XSS 방지를 위한 HTML 태그 제거
-
-### 보안 취약점 발견 시
-
-보안 취약점을 발견한 경우 다음 주소로 연락해주세요:
-- wintrover@gmail.com
-
-## 환경별 로깅 설정
-
-CVFactory는 개발 환경과 배포 환경에 따라 로깅 설정이 다르게 적용됩니다.
+CVFactory는 개발 환경과 배포 환경에 따라 로깅 설정이 다르게 적용됩니다:
 
 ### 개발 환경 로깅
-
-개발 환경에서는 디버깅을 위해 더 상세한 로그가 생성됩니다:
-
 - **로그 레벨**: DEBUG (모든 로그 기록)
 - **콘솔 출력**: 활성화 (디버깅 용이)
 - **추가 로그 파일**:
@@ -237,9 +188,6 @@ CVFactory는 개발 환경과 배포 환경에 따라 로깅 설정이 다르게
 - **SQL 쿼리 로깅**: 활성화 (성능 최적화 용도)
 
 ### 배포 환경 로깅
-
-배포 환경에서는 보안과 성능을 위해 중요한 로그만 기록됩니다:
-
 - **로그 레벨**: INFO (정보성 로그 이상만 기록)
 - **콘솔 출력**: 비활성화
 - **필수 로그 파일**:
@@ -265,70 +213,30 @@ LOG_TO_CONSOLE=False
 LOG_SQL_QUERIES=False
 ```
 
-## CI/CD 배포 자동화
+## 🔒 보안 가이드
 
-CVFactory는 GitHub Actions를 사용한 CI/CD 파이프라인을 통해 자동으로 테스트, 빌드, 배포됩니다.
+CVFactory를 안전하게 실행하기 위한 보안 가이드입니다:
 
-### CI/CD 설정 방법
+- API 키 등의 민감한 정보는 절대로 Git에 커밋하지 마세요
+- 배포 환경에서는 항상 HTTPS를 사용하세요
+- 로그 파일에 민감한 정보가 기록되지 않도록 로깅 레벨을 적절히 조정하세요
+- `SECURITY_GUIDELINES.md`의 권장 사항을 따르세요
 
-1. GitHub 저장소에 다음 Secrets을 추가하세요:
+### API 키 인증
 
-   **공통 설정**
-   - `AWS_ACCESS_KEY_ID`: AWS 접근 키
-   - `AWS_SECRET_ACCESS_KEY`: AWS 비밀 키
+API 엔드포인트를 호출할 때 API 키 인증이 필요합니다:
 
-   **배포 환경 변수**
-   - `DJANGO_SECRET_KEY`: Django 보안 키
-   - `ALLOWED_HOSTS`: 허용된 호스트 목록 (쉼표로 구분)
-   - `GOOGLE_CLIENT_ID`: Google OAuth 클라이언트 ID
-   - `GOOGLE_CLIENT_SECRET`: Google OAuth 클라이언트 시크릿
-   - `GROQ_API_KEY`: Groq API 키
-   - `API_KEY`: 백엔드 API 인증 키
-   - `CSRF_TRUSTED_ORIGINS`: CSRF 허용 출처
-   - `CORS_ALLOWED_ORIGINS`: CORS 허용 출처
-   - `DOMAIN_NAME`: 커스텀 도메인 이름 (선택사항)
-
-2. GitHub 브랜치 관리:
-   - `develop` 브랜치: 개발 환경으로 자동 배포
-   - `main` 브랜치: 프로덕션 환경으로 자동 배포
-
-### GitHub Actions 워크플로우
-
-워크플로우는 다음 단계로 구성됩니다:
-
-1. **테스트**: 코드 품질과 기능 테스트
-2. **빌드**: 환경 설정 및 정적 파일 수집
-3. **배포-개발**: develop 브랜치 코드를 개발 환경에 배포
-4. **배포-프로덕션**: main 브랜치 코드를 프로덕션 환경에 배포
-
-### 수동 배포 방법
-
-서버리스 프레임워크를 사용한 수동 배포:
-
-```bash
-# 필요한 패키지 설치
-npm install
-
-# 개발 환경 배포
-npm run deploy:dev
-
-# 프로덕션 환경 배포
-npm run deploy:prod
-
-# 로그 확인 (개발 환경)
-npm run logs:dev
-```
-
-### 파일 권한 문제 해결
-
-배포 과정에서 파일 권한 문제가 발생할 경우:
-
-```bash
-# 로그 디렉토리 권한 설정
-chmod -R 755 logs/
-
-# 정적 파일 디렉토리 권한 설정
-chmod -R 755 staticfiles/
+```javascript
+// API 호출 예시
+fetch('/api/generate-letter/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Api-Key': 'your-api-key-here',  // API 키 헤더 추가
+    'X-CSRFToken': csrfToken
+  },
+  body: JSON.stringify(data)
+});
 ```
 
 ## 📄 라이센스

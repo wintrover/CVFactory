@@ -95,44 +95,56 @@ CVFactory/
 ### Deployment and Development Environment
 - **Docker**: Containerization and development
 - **Git**: Version control
-- **Render.com**: Cloud hosting platform
 - **GitHub Actions**: CI/CD automation
+- **Render.com**: Cloud hosting platform (optional)
 
-### 🚢 Deployment with Render.com
+## 🔄 Environment Switching
 
-This project is configured for deployment to Render.com. The deployment process is automated using GitHub Actions.
+This project supports both development and production environments. Use the provided scripts to switch between them:
 
-1. Create accounts and services on Render.com:
-   - Sign up for Render.com if you don't have an account
-   - Create a new Web Service for each environment (development and production)
-   - Link your GitHub repository
+```bash
+# Switch to development environment (default)
+./switch_env.sh development  # Linux/macOS
+.\switch_env.bat development  # Windows
 
-2. Set up environment variables in Render.com dashboard:
-   - All required environment variables mentioned in the `.env.example` file
-   - Add your Groq API key and other secrets
+# Switch to production environment
+./switch_env.sh production  # Linux/macOS
+.\switch_env.bat production  # Windows
+```
 
-3. Deployment happens automatically when code is pushed to:
-   - `develop` branch (development environment)
-   - `main` branch (production environment)
-
-### 🔄 CI/CD Pipeline
+## 🚢 CI/CD Pipeline with GitHub Actions
 
 This project uses GitHub Actions for continuous integration and deployment:
 
-1. **Testing**: Runs Django tests to ensure code quality
-2. **Building**: Prepares the application for deployment
-3. **Deployment**: Automatically deploys to Render.com when tests pass
+1. **Environment Debugging**: Verifies environment settings and creates reports
+2. **Testing**: Runs Django tests to ensure code quality
+3. **Building**: Prepares the application for deployment
+4. **Deployment**: Automatically deploys based on branch (develop or main)
 
 To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
 
-To set up CI/CD with GitHub Actions:
-1. Add the following secrets to your GitHub repository:
-   - `RENDER_API_KEY`: Your Render.com API key
-   - `RENDER_DEV_SERVICE_ID`: The service ID for your development environment
-   - `RENDER_PROD_SERVICE_ID`: The service ID for your production environment
-   - All environment variables needed for your application
+### Setting up CI/CD
 
-For more details on deployment configuration, see the `render.yaml` file.
+To set up CI/CD with GitHub Actions, add the following secrets to your GitHub repository:
+
+1. **Common Settings**
+   - `AWS_ACCESS_KEY_ID`: AWS access key (if using AWS)
+   - `AWS_SECRET_ACCESS_KEY`: AWS secret key (if using AWS)
+
+2. **Deployment Environment Variables**
+   - `DJANGO_SECRET_KEY`: Django security key
+   - `ALLOWED_HOSTS`: Allowed hosts list (comma-separated)
+   - `GOOGLE_CLIENT_ID`: Google OAuth client ID
+   - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+   - `GROQ_API_KEY`: Groq API key
+   - `API_KEY`: Backend API authentication key
+   - `CSRF_TRUSTED_ORIGINS`: CSRF allowed origins
+   - `CORS_ALLOWED_ORIGINS`: CORS allowed origins
+   - `DOMAIN_NAME`: Custom domain name (optional)
+
+Branch management:
+- `develop` branch: Automatically deploys to development environment
+- `main` branch: Automatically deploys to production environment
 
 ## 🌐 API Endpoints
 
@@ -161,6 +173,38 @@ cp .env.example .env
    - Configure security settings as needed
 
 In Docker environments, these variables are automatically loaded from the `.env` file.
+
+## 📊 Logging Configuration
+
+CVFactory has different logging settings for development and production environments:
+
+### Development Environment Logging
+- **Log Level**: DEBUG (all logs recorded)
+- **Console Output**: Enabled (for easier debugging)
+- **Additional Log Files**:
+  - `debug.log`: Detailed debug-level logs
+  - `groq_service_debug.log`: API call-related detailed logs
+  - `logs/crawling/`: Directory for crawling results
+- **SQL Query Logging**: Enabled (for performance optimization)
+
+### Production Environment Logging
+- **Log Level**: INFO (only informational logs and above recorded)
+- **Console Output**: Disabled
+- **Essential Log Files**:
+  - `django.log`: General application logs
+  - `api.log`: API call-related logs
+  - `error.log`: Error-level logs
+  - `security.log`: Security-related logs
+- **SQL Query Logging**: Disabled
+
+## 🔒 Security Guidelines
+
+For secure operation of CVFactory, follow these security guidelines:
+
+- API keys and sensitive information should never be committed to Git
+- Always use HTTPS in production environments
+- Adjust logging levels appropriately to prevent logging sensitive information
+- Follow the recommendations in `SECURITY_GUIDELINES.md`
 
 ## 📄 License
 
