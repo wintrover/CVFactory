@@ -7,6 +7,9 @@ import traceback
 from datetime import datetime
 import glob
 
+# logs 디렉토리 생성
+os.makedirs('logs', exist_ok=True)
+
 # 기본 로깅 설정
 logging.basicConfig(
     level=logging.DEBUG,
@@ -96,10 +99,6 @@ def main():
 
 if __name__ == "__main__":
     try:
-        # logs 디렉토리 생성
-        os.makedirs('logs', exist_ok=True)
-        logger.info("로그 디렉토리 확인 완료")
-        
         # 서버 실행 명령일 경우(runserver)에만 로그 파일 초기화
         if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
             clear_log_files()
