@@ -225,4 +225,34 @@ class SecurityHeadersMiddleware:
         ]
         response['Content-Security-Policy'] = '; '.join(csp_directives)
         
+        return response
+
+class JWTUserStatusMiddleware:
+    """
+    JWT 토큰을 사용하는 비활성화된 사용자 접근을 차단하는 미들웨어
+    
+    CVE-2024-22513 취약점 완화를 위한 임시 솔루션
+    djangorestframework-simplejwt의 for_user 메서드가 사용자 상태를 확인하지 않는 문제 대응
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+    def __call__(self, request):
+        # JWT 인증을 사용하는 요청만 확인
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header.startswith('Bearer '):
+            # 사용자가 인증되었고 JWT 토큰을 사용하는 경우
+            if hasattr(request, 'user') and request.user.is_authenticated:
+                # 사용자가 비활성화되었는지 확인
+                if not request.user.is_active:
+                    logger.warning(
+                        f"비활성화된 사용자 접근 차단: username={request.user.username}, "
+                        f"IP={request.META.get('REMOTE_ADDR')}, Path={request.path}"
+                    )
+                    return JsonResponse({
+                        'error': '계정이 비활성화되었습니다. 관리자에게 문의하세요.'
+                    }, status=403)
+        
+        response = self.get_response(request)
         return response 

@@ -127,6 +127,7 @@ MIDDLEWARE = [
     # "allauth.account.middleware.AccountMiddleware",  # allauth 미들웨어 주석 처리 (버전 호환성 문제)
     "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어
     "middleware.SecurityHeadersMiddleware",  # 보안 헤더 미들웨어
+    "middleware.JWTUserStatusMiddleware",  # JWT 사용자 상태 확인 미들웨어 (CVE-2024-22513 완화)
 ]
 
 ROOT_URLCONF = "cvfactory.urls"
@@ -183,11 +184,28 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # 1일에서 1시간으로 단축
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),  # 7일에서 1일로 단축
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "UPDATE_LAST_LOGIN": True,  # 마지막 로그인 시간 업데이트
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    # 토큰에 클레임 추가
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    # 클레임 검증 추가
+    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
 }
 
 # 환경변수에서 로그 레벨 가져오기

@@ -4,7 +4,7 @@ python-dotenv==1.0.0
 
 # REST API
 djangorestframework>=3.15.2  # XSS 취약점(CVE-2024-21520) 패치
-djangorestframework-simplejwt==5.3.0
+djangorestframework-simplejwt==5.3.0  # FIXME: 권한 관리 취약점(CVE-2024-22513) 존재, 패치 버전 없음, 커스텀 미들웨어로 완화
 dj-rest-auth==4.0.1
 django-cors-headers==4.3.0
 
