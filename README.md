@@ -207,6 +207,37 @@ For secure operation of CVFactory, follow these security guidelines:
 - Adjust logging levels appropriately to prevent logging sensitive information
 - Follow the recommendations in `SECURITY_GUIDELINES.md`
 
+### API Security Features
+
+CVFactory implements several security measures to protect API access:
+
+1. **Authentication Required**: All API endpoints require user authentication, except for public endpoints such as login and registration.
+
+2. **Referrer Checking**: API calls are restricted to requests originating from your website domain, preventing unauthorized external access.
+
+3. **Rate Limiting**: Requests are rate-limited to prevent abuse:
+   - IP-based rate limiting: Maximum 60 requests per minute
+   - User-based rate limiting: Maximum 120 requests per minute for authenticated users
+
+4. **Session Validation**: API requests require a valid session, ensuring only website visitors can use the service.
+
+### API Authentication Example
+
+API endpoints require authentication headers:
+
+```javascript
+// API call example
+fetch('/api/generate-letter/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Api-Key': 'your-api-key-here',  // API key header
+    'X-CSRFToken': csrfToken
+  },
+  body: JSON.stringify(data)
+});
+```
+
 ## 📄 License
 
 This project is distributed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0). This means:
