@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# 민감한 파일 체크
+echo "🔍 민감한 파일 검사중..."
+
+# .env 파일 체크
+if git diff --cached --name-only | grep -E "\.env$" | grep -v ".env.example"; then
+    echo "❌ 오류: .env 파일이 커밋되려고 합니다. 이 파일은 민감한 정보를 포함할 수 있습니다."
+    echo "    커밋을 취소하고 .gitignore에 해당 파일을 추가하세요."
+    exit 1
+fi
+
+# 민감한 토큰과 키 체크
+echo "🔍 민감한 키와 시크릿 검사중..."
+SENSITIVE_PATTERNS=(
+    "api[-_]?key['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_]+"
+    "secret['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_]+"
+    "password['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_]+"
+    "client[-_]?id['\"]?\s*[:=]\s*['\"]?[0-9]+-[A-Za-z0-9_]+"
+    "client[-_]?secret['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_-]+"
+    "token['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_.]+"
+    "access[-_]?token['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_.]+"
+    "['\"]?GOOGLE_CLIENT_ID['\"]?\s*[:=]\s*['\"]?[0-9]+-[A-Za-z0-9_.]+['\"]?"
+    "['\"]?GOOGLE_CLIENT_SECRET['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_-]+['\"]?"
+    "['\"]?GROQ_API_KEY['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9_]+['\"]?"
+)
+
+CHECK_FILES=$(git diff --cached --name-only | grep -E "\.(py|js|json|yml|yaml|sh|txt|ini|env|example)$")
+
+for FILE in $CHECK_FILES; do
+    if [ -f "$FILE" ]; then
+        for PATTERN in "${SENSITIVE_PATTERNS[@]}"; do
+            if git diff --cached "$FILE" | grep -E "$PATTERN" | grep -v "EXAMPLE|YOUR_|PLACEHOLDER|CHANGE_THIS|MASKED"; then
+                echo "❌ 오류: $FILE 파일에 민감한 정보가 포함되어 있습니다."
+                echo "    이 파일을 다시 검토하고 민감한 정보를 제거한 후 커밋하세요."
+                echo "    혹은 EXAMPLE_, YOUR_, PLACEHOLDER_, CHANGE_THIS_ 접두사를 사용하세요."
+                exit 1
+            fi
+        done
+    fi
+done
+
+echo "✅ 민감한 정보 검사 통과"
+exit 0 

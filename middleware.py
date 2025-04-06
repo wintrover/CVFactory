@@ -2,6 +2,7 @@ import logging
 import time
 import json
 import traceback
+import re
 from datetime import datetime
 from django.http import JsonResponse
 from django.conf import settings
@@ -11,6 +12,22 @@ from django.utils.deprecation import MiddlewareMixin
 logger = logging.getLogger('security')
 request_logger = logging.getLogger('django.request')
 debug_logger = logging.getLogger('debug')
+
+# 민감한 정보를 마스킹할 키워드 및 패턴
+SENSITIVE_KEYS = (
+    'password', 'token', 'key', 'secret', 'api_key', 'client_id', 'client_secret', 
+    'access_token', 'refresh_token', 'auth', 'credential', 'jwt', 'session', 'cookie',
+    'csrf', 'private', 'security', 'authentication'
+)
+
+# 민감한 정보를 마스킹하는 패턴
+SENSITIVE_PATTERNS = [
+    re.compile(r'(api[-_]?key|secret|token)["\']?\s*[=:]\s*["\']?([^"\'\s,}{]+)', re.IGNORECASE),
+    re.compile(r'(access[-_]?token|refresh[-_]?token)["\']?\s*[=:]\s*["\']?([^"\'\s,}{]+)', re.IGNORECASE),
+    re.compile(r'(password|pwd|passwd)["\']?\s*[=:]\s*["\']?([^"\'\s,}{]+)', re.IGNORECASE),
+    re.compile(r'(Authorization|Bearer)[\s:]+([A-Za-z0-9-._~+/]+=*)', re.IGNORECASE),
+    re.compile(r'(client[-_]?id|client[-_]?secret)["\']?\s*[=:]\s*["\']?([^"\'\s,}{]+)', re.IGNORECASE),
+]
 
 class RequestLoggingMiddleware:
     """
@@ -50,6 +67,31 @@ class RequestLoggingMiddleware:
             self._log_exception(request, e, start_time, request_id)
             raise
     
+    def _mask_sensitive_data(self, data):
+        """민감한 정보 마스킹 함수"""
+        if isinstance(data, dict):
+            masked_data = {}
+            for key, value in data.items():
+                # 키가 민감한 정보인 경우 마스킹
+                if isinstance(key, str) and any(sensitive_key in key.lower() for sensitive_key in SENSITIVE_KEYS):
+                    masked_data[key] = '***MASKED***'
+                # 재귀적으로 중첩된 딕셔너리 처리
+                elif isinstance(value, (dict, list)):
+                    masked_data[key] = self._mask_sensitive_data(value)
+                else:
+                    masked_data[key] = value
+            return masked_data
+        elif isinstance(data, list):
+            return [self._mask_sensitive_data(item) if isinstance(item, (dict, list)) else item for item in data]
+        elif isinstance(data, str):
+            # 문자열에서 민감한 패턴 마스킹
+            masked_str = data
+            for pattern in SENSITIVE_PATTERNS:
+                masked_str = pattern.sub(r'\1: ***MASKED***', masked_str)
+            return masked_str
+        else:
+            return data
+    
     def _log_error_response(self, request, response, duration, request_id):
         """오류 응답 정보를 상세하게 로깅"""
         error_data = {
@@ -69,7 +111,8 @@ class RequestLoggingMiddleware:
             try:
                 if response.get('Content-Type', '').startswith('application/json'):
                     if len(response.content) < 1000:  # 응답이 너무 크지 않은 경우만
-                        error_data['response_body'] = json.loads(response.content)
+                        content_json = json.loads(response.content)
+                        error_data['response_body'] = self._mask_sensitive_data(content_json)
             except Exception:
                 pass
         
@@ -103,11 +146,7 @@ class RequestLoggingMiddleware:
                 if request.content_type == 'application/json':
                     body = json.loads(request.body)
                     # 민감 정보 마스킹
-                    if isinstance(body, dict):
-                        for key in ('password', 'token', 'key', 'secret', 'api_key'):
-                            if key in body:
-                                body[key] = '***MASKED***'
-                    exc_data['request_body'] = body
+                    exc_data['request_body'] = self._mask_sensitive_data(body)
             except Exception:
                 pass
         
