@@ -26,7 +26,7 @@ six==1.16.0
 
 # 보안 관련 라이브러리
 psycopg2-binary==2.9.9
-pillow==10.0.0  # Python 3.9 호환 버전
+pillow==10.3.0  # Python 3.9 호환 버전
 faker==19.13.0  # Python 3.9 호환 버전
 whitenoise==6.5.0
 gunicorn==21.2.0
