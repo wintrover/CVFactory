@@ -18,12 +18,24 @@ load_dotenv(dotenv_path=BASE_DIR / ".env")
 load_dotenv()
 
 # 환경변수에서 설정 가져오기
-DEBUG = True  # 디버깅 모드 활성화
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'  # 기본값은 보안을 위해 False로 설정
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# API 키 설정 (간단한 API 인증을 위한 옵션)
-API_KEY = os.getenv('API_KEY', 'default-dev-api-key-change-in-production')
+# API 키 설정
+API_KEY = os.getenv('API_KEY')
+if not API_KEY and DEBUG:
+    # 개발 환경에서만 경고 로그와 임시 키 생성
+    import logging
+    import uuid
+    logger = logging.getLogger('app')
+    logger.warning("API_KEY가 설정되지 않았습니다. 임시 키를 생성합니다. 프로덕션 환경에서는 반드시 API_KEY를 설정하세요.")
+    API_KEY = f"dev-key-{uuid.uuid4().hex[:8]}"  # 개발용 임시 키 생성
+elif not API_KEY and not DEBUG:
+    # 프로덕션 환경에서 키가 없으면 경고
+    import logging
+    logger = logging.getLogger('app')
+    logger.error("프로덕션 환경에서 API_KEY가 설정되지 않았습니다. API 기능이 작동하지 않을 수 있습니다.")
 
 # Google OAuth 환경 변수
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")

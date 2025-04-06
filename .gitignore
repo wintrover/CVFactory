@@ -8,6 +8,12 @@ groq.env
 *api_key*.env
 cvfactory/*.env
 
+# 환경 템플릿 파일은 허용
+!.env.example
+!.env.*.example
+!.env.development.template
+!.env.production.template
+
 # 가상 환경
 venv/
 __pycache__/
@@ -27,10 +33,6 @@ logs/*.log
 
 # 도커
 .docker/
-
-# 예제 환경 파일은 제외
-!.env.example
-!.env.*.example
 
 # Local Netlify folder
 .netlify
