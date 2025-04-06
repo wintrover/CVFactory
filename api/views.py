@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 import logging
 from .models import Resume
 from .groq_service import generate_resume, extract_job_keypoints, log_function_call
@@ -119,7 +119,9 @@ def log_resume_to_file(resume_id, generated_resume):
         return False
 
 @csrf_protect
-def fetch_company_info_api(request):
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def fetch_company_info(request):
     """
     회사 정보를 크롤링하는 API 엔드포인트
     """
@@ -189,7 +191,7 @@ def fetch_company_info_api(request):
 
 
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
-@permission_classes([AllowAny])  #  로그인 없이도 API 호출 가능하도록 설정
+@permission_classes([IsAuthenticated])  # 인증된 사용자만 API 호출 가능하도록 설정
 @ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
 @csrf_protect  # CSRF 보호 활성화
 def create_resume(request):
@@ -378,6 +380,7 @@ def create_resume(request):
         return Response({"error": "서버에서 오류가 발생했습니다."}, status=500)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def test_groq_logging(request):
     """
     테스트 목적의 API 엔드포인트

@@ -254,5 +254,182 @@ class JWTUserStatusMiddleware:
                         'error': '계정이 비활성화되었습니다. 관리자에게 문의하세요.'
                     }, status=403)
         
+        # 다음 미들웨어로 요청 전달
         response = self.get_response(request)
-        return response 
+        return response
+
+class SecureApiAccessMiddleware:
+    """
+    API 접근을 직접 사이트를 방문한 인증된 사용자로 제한하는 미들웨어
+    
+    1. API 엔드포인트에 대한 요청이 인증된 사용자인지 확인
+    2. 직접 사이트에서 온 요청인지 확인 (Referer 헤더)
+    3. 세션이 있는지 확인
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+    def __call__(self, request):
+        # API 경로에 대한 요청만 처리
+        if request.path.startswith('/api/') and not request.path.startswith('/api/public/'):
+            # 로그인/인증 관련 API는 제외
+            if not any(path in request.path for path in ['/api/login/', '/api/register/', '/api/token/refresh/']):
+                # 1. 인증된 사용자인지 확인
+                if not request.user.is_authenticated:
+                    logger.warning(
+                        f"API 접근 거부: 인증되지 않은 사용자, IP={request.META.get('REMOTE_ADDR')}, "
+                        f"Path={request.path}, Method={request.method}"
+                    )
+                    return JsonResponse({
+                        'error': '이 API에 접근하려면 로그인이 필요합니다.'
+                    }, status=401)
+                
+                # 2. Referer 확인 - 같은 도메인에서 온 요청인지 확인
+                referer = request.META.get('HTTP_REFERER', '')
+                allowed_domains = getattr(settings, 'ALLOWED_HOSTS', [])
+                
+                # localhost도 허용
+                allowed_domains.extend(['localhost', '127.0.0.1'])
+                
+                valid_referer = False
+                if referer:
+                    # URL에서 도메인 추출
+                    from urllib.parse import urlparse
+                    referer_domain = urlparse(referer).netloc.split(':')[0]  # 포트 제거
+                    
+                    if any(domain in referer_domain for domain in allowed_domains):
+                        valid_referer = True
+                
+                if not valid_referer and not request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                    logger.warning(
+                        f"API 접근 거부: 유효하지 않은 Referer, IP={request.META.get('REMOTE_ADDR')}, "
+                        f"Path={request.path}, Referer={referer}"
+                    )
+                    return JsonResponse({
+                        'error': '이 API는 직접 사이트에서만 호출할 수 있습니다.'
+                    }, status=403)
+                
+                # 3. 세션 확인
+                if not request.session.session_key:
+                    logger.warning(
+                        f"API 접근 거부: 세션 없음, IP={request.META.get('REMOTE_ADDR')}, "
+                        f"Path={request.path}, User={request.user.username}"
+                    )
+                    return JsonResponse({
+                        'error': '유효한 세션이 필요합니다. 다시 로그인해주세요.'
+                    }, status=403)
+        
+        # 모든 검증을 통과하면 다음 미들웨어로 요청 전달
+        response = self.get_response(request)
+        return response
+
+class RateLimitMiddleware:
+    """
+    API 요청 속도 제한 미들웨어
+    
+    특정 IP나 사용자가 짧은 시간에 너무 많은 API 요청을 보내는 것을 방지
+    """
+    
+    # IP별 요청 카운터와 타임스탬프 저장
+    ip_requests = {}
+    # 사용자별 요청 카운터와 타임스탬프 저장
+    user_requests = {}
+    
+    # 기본 설정 (설정 파일에서 재정의 가능)
+    IP_RATE_LIMIT = getattr(settings, 'IP_RATE_LIMIT', 60)  # 분당 최대 요청 수
+    USER_RATE_LIMIT = getattr(settings, 'USER_RATE_LIMIT', 120)  # 분당 최대 요청 수
+    WINDOW_SIZE = 60  # 1분 (초 단위)
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        # API 엔드포인트에만 속도 제한 적용
+        if request.path.startswith('/api/'):
+            now = time.time()
+            client_ip = request.META.get('REMOTE_ADDR')
+            
+            # IP 기반 속도 제한
+            if self._is_ip_rate_limited(client_ip, now):
+                logger.warning(
+                    f"속도 제한 초과: IP={client_ip}, Path={request.path}"
+                )
+                return JsonResponse({
+                    'error': '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+                }, status=429)
+            
+            # 로그인한 사용자인 경우, 사용자 기반 속도 제한도 확인
+            if request.user.is_authenticated:
+                user_id = request.user.id
+                if self._is_user_rate_limited(user_id, now):
+                    logger.warning(
+                        f"속도 제한 초과: User={request.user.username}, IP={client_ip}, Path={request.path}"
+                    )
+                    return JsonResponse({
+                        'error': '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+                    }, status=429)
+        
+        # 속도 제한을 초과하지 않은 경우 정상 처리
+        response = self.get_response(request)
+        return response
+    
+    def _is_ip_rate_limited(self, ip, now):
+        """IP 주소 기반 속도 제한 검사"""
+        # 오래된 요청 데이터 정리
+        self._clean_old_data(now)
+        
+        # IP의 요청 기록 가져오기
+        ip_data = self.ip_requests.get(ip, {'count': 0, 'timestamps': []})
+        
+        # 요청 카운터 증가 및 타임스탬프 추가
+        ip_data['count'] += 1
+        ip_data['timestamps'].append(now)
+        self.ip_requests[ip] = ip_data
+        
+        # 속도 제한 확인
+        return ip_data['count'] > self.IP_RATE_LIMIT
+    
+    def _is_user_rate_limited(self, user_id, now):
+        """사용자 ID 기반 속도 제한 검사"""
+        # 오래된 요청 데이터 정리
+        self._clean_old_data(now)
+        
+        # 사용자의 요청 기록 가져오기
+        user_data = self.user_requests.get(user_id, {'count': 0, 'timestamps': []})
+        
+        # 요청 카운터 증가 및 타임스탬프 추가
+        user_data['count'] += 1
+        user_data['timestamps'].append(now)
+        self.user_requests[user_id] = user_data
+        
+        # 속도 제한 확인
+        return user_data['count'] > self.USER_RATE_LIMIT
+    
+    def _clean_old_data(self, now):
+        """시간 창(window) 밖의 오래된 요청 데이터 정리"""
+        cutoff = now - self.WINDOW_SIZE
+        
+        # IP 데이터 정리
+        for ip in list(self.ip_requests.keys()):
+            data = self.ip_requests[ip]
+            new_timestamps = [ts for ts in data['timestamps'] if ts > cutoff]
+            
+            if not new_timestamps:
+                del self.ip_requests[ip]
+            else:
+                data['timestamps'] = new_timestamps
+                data['count'] = len(new_timestamps)
+                self.ip_requests[ip] = data
+        
+        # 사용자 데이터 정리
+        for user_id in list(self.user_requests.keys()):
+            data = self.user_requests[user_id]
+            new_timestamps = [ts for ts in data['timestamps'] if ts > cutoff]
+            
+            if not new_timestamps:
+                del self.user_requests[user_id]
+            else:
+                data['timestamps'] = new_timestamps
+                data['count'] = len(new_timestamps)
+                self.user_requests[user_id] = data 

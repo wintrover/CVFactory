@@ -140,6 +140,8 @@ MIDDLEWARE = [
     "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어
     "middleware.SecurityHeadersMiddleware",  # 보안 헤더 미들웨어
     "middleware.JWTUserStatusMiddleware",  # JWT 사용자 상태 확인 미들웨어 (CVE-2024-22513 완화)
+    "middleware.SecureApiAccessMiddleware",  # API 접근 제한 미들웨어 (인증 사용자 및 사이트 방문자)
+    "middleware.RateLimitMiddleware",  # API 요청 속도 제한 미들웨어
 ]
 
 ROOT_URLCONF = "cvfactory.urls"
@@ -191,7 +193,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",  # AllowAny에서 IsAuthenticated로 변경
     ),
 }
 
