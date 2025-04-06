@@ -13,7 +13,7 @@ django-allauth==0.52.0
 
 # 크롤링 관련
 beautifulsoup4==4.12.2
-requests==2.31.0
+requests>=2.32.0  # Session 객체 인증서 검증 취약점 패치 (CVE-2024-35195)
 selenium==4.15.2
 webdriver-manager==4.0.1
 
