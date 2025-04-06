@@ -35,7 +35,7 @@ services:
     name: cvfactory-prod
     env: python
     region: seoul
-    plan: starter
+    plan: free
     branch: main
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
     startCommand: gunicorn cvfactory.wsgi:application
