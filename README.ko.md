@@ -127,11 +127,12 @@ CI/CD 설정을 확인하려면 `.github/workflows/ci-cd.yml` 파일을 참조�
 
 GitHub Actions로 CI/CD를 설정하려면 GitHub 저장소에 다음 Secrets을 추가하세요:
 
-1. **공통 설정**
-   - `AWS_ACCESS_KEY_ID`: AWS 접근 키 (AWS를 사용하는 경우)
-   - `AWS_SECRET_ACCESS_KEY`: AWS 비밀 키 (AWS를 사용하는 경우)
+1. **배포 자격 증명**
+   - `RENDER_API_KEY`: Render.com API 키
+   - `RENDER_DEV_SERVICE_ID`: 개발 환경 서비스 ID
+   - `RENDER_PROD_SERVICE_ID`: 프로덕션 환경 서비스 ID
 
-2. **배포 환경 변수**
+2. **환경 변수**
    - `DJANGO_SECRET_KEY`: Django 보안 키
    - `ALLOWED_HOSTS`: 허용된 호스트 목록 (쉼표로 구분)
    - `GOOGLE_CLIENT_ID`: Google OAuth 클라이언트 ID

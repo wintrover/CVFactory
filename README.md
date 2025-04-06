@@ -127,11 +127,12 @@ To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
 
 To set up CI/CD with GitHub Actions, add the following secrets to your GitHub repository:
 
-1. **Common Settings**
-   - `AWS_ACCESS_KEY_ID`: AWS access key (if using AWS)
-   - `AWS_SECRET_ACCESS_KEY`: AWS secret key (if using AWS)
+1. **Deployment Credentials**
+   - `RENDER_API_KEY`: Your Render.com API key
+   - `RENDER_DEV_SERVICE_ID`: The service ID for your development environment
+   - `RENDER_PROD_SERVICE_ID`: The service ID for your production environment
 
-2. **Deployment Environment Variables**
+2. **Environment Variables**
    - `DJANGO_SECRET_KEY`: Django security key
    - `ALLOWED_HOSTS`: Allowed hosts list (comma-separated)
    - `GOOGLE_CLIENT_ID`: Google OAuth client ID
