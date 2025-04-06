@@ -18,7 +18,7 @@ load_dotenv(dotenv_path=BASE_DIR / ".env")
 load_dotenv()
 
 # 환경변수에서 설정 가져오기
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = True  # 디버깅 모드 활성화
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
@@ -115,6 +115,7 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 MIDDLEWARE = [
+    "middleware.RequestLoggingMiddleware",  # 요청 로깅 미들웨어 (최상단에 배치)
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -123,7 +124,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",  # allauth 미들웨어 추가
+    # "allauth.account.middleware.AccountMiddleware",  # allauth 미들웨어 주석 처리 (버전 호환성 문제)
     "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어
     "middleware.SecurityHeadersMiddleware",  # 보안 헤더 미들웨어
 ]
@@ -190,9 +191,9 @@ SIMPLE_JWT = {
 }
 
 # 환경변수에서 로그 레벨 가져오기
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-LOG_TO_CONSOLE = os.getenv('LOG_TO_CONSOLE', 'False').lower() == 'true'
-LOG_SQL_QUERIES = os.getenv('LOG_SQL_QUERIES', 'False').lower() == 'true'
+LOG_LEVEL = 'INFO'  # 로그 레벨을 INFO로 변경 (DEBUG에서 변경)
+LOG_TO_CONSOLE = True  # 콘솔 로깅 활성화
+LOG_SQL_QUERIES = False  # SQL 쿼리 로깅 비활성화 (True에서 변경)
 
 # 로그 설정 - 환경별 차별화
 LOGGING = {
@@ -206,8 +207,8 @@ LOGGING = {
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
-        'detailed': {
-            'format': '=' * 80 + '\n[%(asctime)s] %(levelname)s [%(name)s]\n%(message)s\n' + '=' * 80,
+        'error_focused': {
+            'format': '\n******** ERROR ********\n[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s]\n%(message)s\n%(exc_info)s\n************************',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
     },
@@ -221,50 +222,49 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG' if DEBUG else 'INFO',  # 개발 환경에서는 DEBUG, 배포 환경에서는 INFO
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
         'file': {
-            'level': LOG_LEVEL,
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'django.log'),
-            'maxBytes': 10 * 1024 * 1024 if DEBUG else 5 * 1024 * 1024,  # 개발 환경에서는 10MB, 배포 환경에서는 5MB
-            'backupCount': 10 if DEBUG else 5,  # 개발 환경에서는 10개, 배포 환경에서는 5개
-            'formatter': 'detailed' if DEBUG else 'verbose',  # 개발 환경에서는 상세 로그
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'verbose',
         },
         'api_file': {
-            'level': 'DEBUG' if DEBUG else 'INFO',  # 개발 환경에서는 DEBUG, 배포 환경에서는 INFO
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'api.log'),
-            'maxBytes': 10 * 1024 * 1024 if DEBUG else 5 * 1024 * 1024,
-            'backupCount': 10 if DEBUG else 5,
-            'formatter': 'detailed' if DEBUG else 'verbose',
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'verbose',
         },
         'security_file': {
-            'level': 'INFO',  # 보안 로그는 항상 INFO 이상의 레벨로 설정
+            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'security.log'),
-            'maxBytes': 5 * 1024 * 1024,  # 5MB
-            'backupCount': 10,  # 보안 로그는 중요하므로 더 많은 백업 유지
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
             'formatter': 'verbose',
         },
         'error_file': {
-            'level': 'ERROR',
+            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'error.log'),
-            'maxBytes': 5 * 1024 * 1024,
+            'maxBytes': 10 * 1024 * 1024,
             'backupCount': 10,
-            'formatter': 'detailed',
+            'formatter': 'error_focused',  # 새로운 포맷터 적용
         },
         'debug_file': {
-            'level': 'DEBUG',
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'debug.log'),
-            'maxBytes': 20 * 1024 * 1024,  # 디버그 로그는 더 큰 용량
+            'maxBytes': 20 * 1024 * 1024,
             'backupCount': 10,
-            'formatter': 'detailed',
-            'filters': ['require_debug_true'],  # 개발 환경에서만 사용
+            'formatter': 'verbose',
         },
         'null': {
             'class': 'logging.NullHandler',
@@ -273,54 +273,65 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'file', 'error_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['file', 'error_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': False,
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'propagate': True,
         },
         'django.server': {
-            'handlers': ['file', 'error_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'propagate': True,
+        },
+        'django.template': {
+            'handlers': ['error_file'],  # 불필요한 핸들러 제거
+            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['error_file'],  # 불필요한 핸들러 제거
+            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
             'propagate': False,
         },
         'django.security': {
-            'handlers': ['security_file', 'error_file'],
-            'level': 'INFO',
-            'propagate': False,
+            'handlers': ['console', 'security_file', 'error_file'],
+            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'propagate': True,
         },
         'api': {
-            'handlers': ['console', 'api_file', 'error_file', 'debug_file'] if DEBUG else ['api_file', 'error_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': False,
+            'handlers': ['console', 'api_file', 'error_file'],
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'propagate': True,
         },
         'groq_service': {
-            'handlers': ['api_file', 'debug_file'] if DEBUG else ['api_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': False,
+            'handlers': ['console', 'api_file', 'error_file'],
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'propagate': True,
         },
         'security': {
-            'handlers': ['security_file', 'console'] if DEBUG else ['security_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': False,
+            'handlers': ['console', 'security_file', 'error_file'],
+            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'propagate': True,
         },
         'crawlers': {
-            'handlers': ['console', 'debug_file'] if DEBUG else ['file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'propagate': True,
+        },
+        '': {  # 루트 로거
+            'handlers': ['console', 'error_file'],
+            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'propagate': True,
+        },
+        'django.utils.autoreload': {  # autoreload 로거 추가
+            'handlers': ['null'],  # 아무것도 로깅하지 않음
             'propagate': False,
         },
     },
 }
-
-# 개발 환경에서 SQL 쿼리 로깅 활성화
-if LOG_SQL_QUERIES and DEBUG:
-    LOGGING['loggers']['django.db.backends'] = {
-        'handlers': ['console', 'debug_file'],
-        'level': 'DEBUG',
-        'propagate': False,
-    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
