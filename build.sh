@@ -2,8 +2,15 @@
 # 오류 발생 시 스크립트 종료
 set -o errexit
 
+# logs 디렉토리 생성
+mkdir -p logs
+mkdir -p static
+mkdir -p frontend
+mkdir -p staticfiles
+
 # 파이썬 의존성 설치
 pip install -r requirements.txt
+pip install 'whitenoise[brotli]'
 
 # 정적 파일 수집
 python manage.py collectstatic --no-input
