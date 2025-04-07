@@ -10,9 +10,14 @@ echo "실행 환경: $ENVIRONMENT"
 echo "Django 디버그 모드: $DEBUG"
 echo "허용 호스트: $ALLOWED_HOSTS"
 
-# 데이터베이스 연결 대기
-echo "데이터베이스 연결 확인 중..."
-python << END
+# DATABASE_URL 환경 변수가 설정되어 있는지 확인
+if [ -z "${DATABASE_URL:-}" ]; then
+    echo "경고: DATABASE_URL 환경 변수가 설정되지 않았습니다. 데이터베이스 연결 확인을 건너뜁니다."
+    DATABASE_AVAILABLE=false
+else
+    # 데이터베이스 연결 대기
+    echo "데이터베이스 연결 확인 중..."
+    python << END
 import sys
 import time
 import psycopg2
@@ -54,14 +59,20 @@ while retry_count < max_retries:
             print("최대 재시도 횟수 초과. 데이터베이스에 연결할 수 없습니다.")
             sys.exit(1)
 END
+    DATABASE_AVAILABLE=true
+fi
 
 # 마이그레이션 실행
-echo "데이터베이스 마이그레이션 실행 중..."
-python manage.py migrate --no-input
+if [ "${DATABASE_AVAILABLE:-false}" = "true" ]; then
+    echo "데이터베이스 마이그레이션 실행 중..."
+    python manage.py migrate --no-input || echo "마이그레이션 실패, 계속 진행합니다."
+else
+    echo "경고: 데이터베이스 연결을 사용할 수 없어 마이그레이션을 건너뜁니다."
+fi
 
 # 정적 파일 수집
 echo "정적 파일 수집 중..."
-python manage.py collectstatic --no-input
+python manage.py collectstatic --no-input --noinput || echo "정적 파일 수집 실패, 계속 진행합니다."
 
 # Gunicorn으로 서버 시작
 echo "Gunicorn으로 서버 시작 중..."
