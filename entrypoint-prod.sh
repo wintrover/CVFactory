@@ -10,6 +10,51 @@ echo "실행 환경: $ENVIRONMENT"
 echo "Django 디버그 모드: $DEBUG"
 echo "허용 호스트: $ALLOWED_HOSTS"
 
+# 데이터베이스 연결 대기
+echo "데이터베이스 연결 확인 중..."
+python << END
+import sys
+import time
+import psycopg2
+from urllib.parse import urlparse
+
+# DATABASE_URL 파싱
+url = urlparse("$DATABASE_URL")
+dbname = url.path[1:]
+user = url.username
+password = url.password
+host = url.hostname
+port = url.port or 5432
+
+# 연결 시도
+retry_count = 0
+max_retries = 10
+retry_interval = 3  # 초
+
+while retry_count < max_retries:
+    try:
+        print(f"데이터베이스 연결 시도 중... (시도 {retry_count + 1}/{max_retries})")
+        conn = psycopg2.connect(
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port
+        )
+        conn.close()
+        print("데이터베이스 연결 성공!")
+        sys.exit(0)
+    except psycopg2.OperationalError as e:
+        print(f"데이터베이스 연결 실패: {e}")
+        retry_count += 1
+        if retry_count < max_retries:
+            print(f"{retry_interval}초 후 재시도합니다...")
+            time.sleep(retry_interval)
+        else:
+            print("최대 재시도 횟수 초과. 데이터베이스에 연결할 수 없습니다.")
+            sys.exit(1)
+END
+
 # 마이그레이션 실행
 echo "데이터베이스 마이그레이션 실행 중..."
 python manage.py migrate --no-input
