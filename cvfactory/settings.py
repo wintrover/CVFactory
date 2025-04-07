@@ -7,6 +7,7 @@ import logging.config
 import os
 from dotenv import load_dotenv
 from datetime import timedelta 
+import dj_database_url  # 데이터베이스 URL 지원을 위한 패키지 추가
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -129,6 +130,7 @@ if not DEBUG:
 MIDDLEWARE = [
     "middleware.RequestLoggingMiddleware",  # 요청 로깅 미들웨어 (최상단에 배치)
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # WhiteNoise 정적 파일 제공 미들웨어
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -171,13 +173,17 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise 설정 - 배포 환경에서 정적 파일 제공 최적화
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_MANIFEST_STRICT = False
+
 WSGI_APPLICATION = "cvfactory.wsgi.application"
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///" + str(BASE_DIR / "db.sqlite3"),
+        conn_max_age=600
+    )
 }
 
 REST_FRAMEWORK = {
