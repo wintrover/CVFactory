@@ -28,26 +28,26 @@ RUN mkdir -p /app/logs /app/static /app/frontend /app/staticfiles /app/ssl
 # SSL 인증서 생성
 RUN openssl req -x509 -newkey rsa:4096 -nodes -out /app/ssl/cert.pem -keyout /app/ssl/key.pem -days 365 -subj '/CN=localhost'
 
-# 환경 변수 설정 - Render 환경 시뮬레이션
-ENV DEBUG="True"
+# 환경 변수 설정 - 프로덕션 환경
+ENV DEBUG="False"
 ENV RENDER="true"
-ENV RENDER_EXTERNAL_HOSTNAME="localhost"
+ENV RENDER_EXTERNAL_HOSTNAME="cvfactory.dev"
 ENV DATABASE_URL="sqlite:///db.sqlite3"
-ENV DJANGO_SECRET_KEY="local-test-key-for-render-simulation"
-ENV ALLOWED_HOSTS="localhost,127.0.0.1"
-ENV CSRF_TRUSTED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"
-ENV CORS_ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"
+ENV DJANGO_SECRET_KEY="production-secret-key-change-this"
+ENV ALLOWED_HOSTS="cvfactory.dev,www.cvfactory.dev"
+ENV CSRF_TRUSTED_ORIGINS="https://cvfactory.dev,https://www.cvfactory.dev"
+ENV CORS_ALLOWED_ORIGINS="https://cvfactory.dev,https://www.cvfactory.dev"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # 포트 노출
 EXPOSE 8000
 
-# Render 배포 시뮬레이션 스크립트
+# 프로덕션 서버 실행 스크립트
 RUN echo '#!/bin/bash\n\
 python manage.py collectstatic --no-input\n\
 python manage.py migrate\n\
-python manage.py runserver 0.0.0.0:8000\n\
+waitress-serve --port=8000 cvfactory.wsgi:application\n\
 ' > /app/entrypoint.sh \
 && chmod +x /app/entrypoint.sh
 
