@@ -129,6 +129,40 @@ CVFactory는 GitHub Actions를 사용한 CI/CD 파이프라인을 통해 자동�
 
 CI/CD 설정을 확인하려면 `.github/workflows/ci-cd.yml` 파일을 참조하세요.
 
+### GitHub 브랜치 전략
+
+개발 워크플로를 최적화하고 배포 비용을 관리하기 위해 간단하고 효과적인 브랜칭 전략을 사용합니다:
+
+1. **`develop` 브랜치**: 모든 일상적인 개발 작업이 여기서 이루어집니다
+   - 배포를 트리거하지 않고 코드를 자주 푸시할 수 있습니다
+   - 테스트 및 기능 개발에 사용
+   - 이 브랜치에서는 Render 파이프라인이 트리거되지 않습니다
+
+2. **`main` 브랜치**: 프로덕션 준비가 완료된 코드만 포함
+   - 배포 준비가 되었을 때만 main으로 병합
+   - main에 푸시하면 자동으로 Render 배포가 트리거됨
+   - 파이프라인 사용 비용을 최소화하는 데 도움이 됩니다
+
+#### 개발 워크플로우
+
+```bash
+# develop 브랜치에서 작업 시작
+git checkout develop
+
+# 변경사항 작업 및 커밋
+git add .
+git commit -m "변경 내용"
+git push origin develop  # 배포가 트리거되지 않음
+
+# 배포 준비가 되었을 때
+git checkout main
+git merge develop
+git push origin main  # Render 배포 트리거
+git checkout develop  # develop 브랜치로 돌아가기
+```
+
+이 접근 방식을 통해 개발 중에는 빈번한 커밋을 하면서도 배포 시기를 제어할 수 있습니다.
+
 ### CI/CD 설정 방법
 
 GitHub Actions로 CI/CD를 설정하려면 GitHub 저장소에 다음 Secrets을 추가하세요:

@@ -129,6 +129,40 @@ This project uses GitHub Actions for continuous integration and deployment:
 
 To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
 
+### GitHub Branch Strategy
+
+We use a simple and effective branching strategy to optimize development workflow and manage deployment costs:
+
+1. **`develop` branch**: All daily development work happens here
+   - Push code frequently without triggering deployments
+   - Use for testing and feature development
+   - No Render pipelines are triggered on this branch
+
+2. **`main` branch**: Production-ready code only
+   - Merge to main only when ready to deploy
+   - Pushing to main automatically triggers Render deployment
+   - Helps minimize pipeline usage costs
+
+#### Development Workflow
+
+```bash
+# Start working on develop branch
+git checkout develop
+
+# Make changes and commit
+git add .
+git commit -m "Your changes"
+git push origin develop  # No deployment triggered
+
+# When ready to deploy
+git checkout main
+git merge develop
+git push origin main  # Triggers Render deployment
+git checkout develop  # Return to develop branch
+```
+
+This approach allows frequent commits during development while controlling when deployments occur.
+
 ### Setting up CI/CD
 
 To set up CI/CD with GitHub Actions, add the following secrets to your GitHub repository:
@@ -142,4 +176,3 @@ To set up CI/CD with GitHub Actions, add the following secrets to your GitHub re
    - `DJANGO_SECRET_KEY`: Django security key
    - `ALLOWED_HOSTS`: Allowed hosts list (comma-separated)
    - `GOOGLE_CLIENT_ID`: Google OAuth client ID
-   - `
