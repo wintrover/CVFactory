@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.development  # 개발 환경 변수 로드
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SELENIUM_DRIVER_EXECUTABLE_PATH=/usr/bin/chromedriver
+      - DEBUG=True
+    volumes:
+      - .:/app  # 코드 변경 시 자동 반영을 위한 볼륨 마운트
+    restart: unless-stopped
+    shm_size: 2gb
+    develop:
+      watch:
+        - action: sync
+          path: ./cvfactory
+          target: /app/cvfactory
+        - action: sync
+          path: ./api
+          target: /app/api
+        - action: sync
+          path: ./myapp
+          target: /app/myapp
+        - action: sync
+          path: ./data_management
+          target: /app/data_management
+        - action: sync
+          path: ./frontend
+          target: /app/frontend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # 로그 설정
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    # 개발 환경에서는 리소스 제한을 낮게 설정
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 256M 

@@ -169,10 +169,10 @@ TEMPLATES = [
 # 정적 파일 설정
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "static_dev",
     BASE_DIR / "frontend",
 ]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "static_prod"
 
 # WhiteNoise 설정 - 배포 환경에서 정적 파일 제공 최적화
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

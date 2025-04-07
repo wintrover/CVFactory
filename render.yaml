@@ -1,53 +1,32 @@
 services:
-  # 개발 환경 웹 서비스
-  - type: web
-    name: cvfactory-dev
-    env: python
-    region: singapore
-    plan: free
-    branch: main
-    buildCommand: ./build.sh
-    startCommand: gunicorn cvfactory.wsgi:application
+  # Docker 배포 서비스
+  - name: cvfactory
+    type: web
+    env: docker
+    dockerfilePath: ./Dockerfile.prod
+    dockerContext: .
     envVars:
-      - fromGroup: cvfactory-env
+      - key: DEBUG
+        value: False
       - key: ALLOWED_HOSTS
-        value: cvfactory-dev.onrender.com
+        value: cvfactory.onrender.com,localhost,127.0.0.1
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://cvfactory-dev.onrender.com
+        value: https://cvfactory.onrender.com,http://localhost:8000
       - key: CORS_ALLOWED_ORIGINS
-        value: https://cvfactory-dev.onrender.com
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cvfactory-db-dev
-          property: connectionString
-  # 프로덕션 환경 웹 서비스
-  - type: web
-    name: cvfactory-prod
-    env: python
-    region: singapore
-    plan: free
-    branch: main
-    buildCommand: ./build.sh
-    startCommand: gunicorn cvfactory.wsgi:application
-    envVars:
-      - fromGroup: cvfactory-env
-      - key: ALLOWED_HOSTS
-        value: cvfactory-prod.onrender.com,cvfactory.onrender.com
-      - key: CSRF_TRUSTED_ORIGINS
-        value: https://cvfactory-prod.onrender.com,https://cvfactory.onrender.com
-      - key: CORS_ALLOWED_ORIGINS
-        value: https://cvfactory-prod.onrender.com,https://cvfactory.onrender.com
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cvfactory-db-prod
-          property: connectionString
+        value: https://cvfactory.onrender.com,http://localhost:8000
+      - key: RENDER
+        value: true
+      - key: RENDER_EXTERNAL_HOSTNAME
+        value: cvfactory.onrender.com
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 8000
+    healthCheckPath: /
+    plan: starter
 
 databases:
-  - name: cvfactory-db-dev
-    databaseName: cvfactory_dev
-    user: cvfactory
-    plan: free
-  - name: cvfactory-db-prod
-    databaseName: cvfactory_prod
+  - name: cvfactory-db
+    databaseName: cvfactory
     user: cvfactory
     plan: free 
