@@ -8,13 +8,13 @@
 </div>
 
 ## 📖 Overview
-CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized cover letters based on job postings and applicant information using AI.
+CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized cover letters based on job postings and applicant information using AI. The system analyzes job descriptions and company information to highlight relevant skills and experiences in the generated documents.
 
 ## 🌐 Live Demo
 
 You can see the live application in action at **[cvfactory.dev](https://cvfactory.dev)**
 
-Experience the full functionality of CVFactory and generate your own personalized cover letters and resumes!
+Experience the full functionality of CVFactory and generate your own personalized cover letters and resumes in minutes!
 
 ## ✨ Key Features
 
