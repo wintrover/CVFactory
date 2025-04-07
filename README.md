@@ -133,17 +133,12 @@ To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
 
 We use a simple and effective branching strategy to optimize development workflow and manage deployment costs:
 
-1. **`feature` branch**: Used for individual feature development
-   - Create this branch from `develop` branch
-   - Use for daily coding tasks and work-in-progress changes
-   - Merge back to `develop` when feature is complete
-
-2. **`develop` branch**: Integration branch for completed features
-   - All completed feature branches get merged here
+1. **`develop` branch**: Integration branch for development work
+   - All daily development work happens here
    - Use for testing and integration
-   - When pushed to GitHub, automatically deploys to development server
+   - No pipelines are triggered when pushing to this branch
 
-3. **`production` branch**: Production-ready code only
+2. **`production` branch**: Production-ready code only
    - Merge to production only when ready to deploy
    - Pushing to production automatically triggers Render deployment to production server
    - Helps minimize production pipeline usage costs
@@ -151,19 +146,13 @@ We use a simple and effective branching strategy to optimize development workflo
 #### Development Workflow
 
 ```bash
-# Start a new feature
+# Do development work on develop branch
 git checkout develop
-git checkout -b feature
 
-# Make changes and commit to feature branch
+# Make changes and commit
 git add .
 git commit -m "Your changes"
-git push origin feature
-
-# When feature is complete, merge to develop
-git checkout develop
-git merge feature
-git push origin develop  # Triggers deployment to development server
+git push origin develop  # No deployment triggered
 
 # When ready to deploy to production
 git checkout production

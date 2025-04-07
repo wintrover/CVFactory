@@ -133,17 +133,12 @@ CI/CD 설정을 확인하려면 `.github/workflows/ci-cd.yml` 파일을 참조�
 
 개발 워크플로를 최적화하고 배포 비용을 관리하기 위해 간단하고 효과적인 브랜칭 전략을 사용합니다:
 
-1. **`feature` 브랜치**: 개별 기능 개발에 사용
-   - `develop` 브랜치에서 생성
-   - 일상적인 코딩 작업과 작업 중인 변경사항에 사용
-   - 기능이 완성되면 `develop`으로 병합
-
-2. **`develop` 브랜치**: 완성된 기능의 통합 브랜치
-   - 모든 완성된 feature 브랜치가 여기에 병합됨
+1. **`develop` 브랜치**: 개발 작업용 통합 브랜치
+   - 모든 일상적인 개발 작업이 여기서 이루어짐
    - 테스트 및 통합에 사용
-   - GitHub에 푸시하면 개발 서버에 자동으로 배포됨
+   - 이 브랜치에 푸시해도 파이프라인이 트리거되지 않음
 
-3. **`production` 브랜치**: 프로덕션 준비가 완료된 코드만 포함
+2. **`production` 브랜치**: 프로덕션 준비가 완료된 코드만 포함
    - 배포 준비가 되었을 때만 production으로 병합
    - production에 푸시하면 자동으로 운영 서버에 배포가 트리거됨
    - 운영 파이프라인 사용 비용을 최소화하는 데 도움이 됩니다
@@ -151,19 +146,13 @@ CI/CD 설정을 확인하려면 `.github/workflows/ci-cd.yml` 파일을 참조�
 #### 개발 워크플로우
 
 ```bash
-# 새로운 기능 시작
+# develop 브랜치에서 개발 작업 진행
 git checkout develop
-git checkout -b feature
 
-# 변경사항 작업 및 feature 브랜치에 커밋
+# 변경사항 작업 및 커밋
 git add .
 git commit -m "변경 내용"
-git push origin feature
-
-# 기능이 완료되면 develop으로 병합
-git checkout develop
-git merge feature
-git push origin develop  # 개발 서버에 배포가 트리거됨
+git push origin develop  # 배포가 트리거되지 않음
 
 # 운영 서버에 배포 준비가 되었을 때
 git checkout production
