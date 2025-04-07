@@ -29,7 +29,7 @@ services:
           name: cvfactory-db
           property: connectionString
     healthCheckPath: /api/health/
-    plan: starter
+    plan: free
 
 databases:
   - name: cvfactory-db
