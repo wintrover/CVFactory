@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     "myapp",
     "data_management",
     "corsheaders",
+    "django_extensions",  # HTTPS 개발 서버 지원
 ]
 
 # CORS 설정

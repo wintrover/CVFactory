@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     unzip \
     curl \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # requirements.txt 복사
@@ -16,23 +17,26 @@ COPY requirements.txt .
 
 # Python 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install 'whitenoise[brotli]' waitress
+RUN pip install 'whitenoise[brotli]' waitress django-extensions werkzeug pyOpenSSL
 
 # 애플리케이션 코드 복사
 COPY . .
 
 # 로그 및 정적 파일 디렉토리 생성
-RUN mkdir -p /app/logs /app/static /app/frontend /app/staticfiles
+RUN mkdir -p /app/logs /app/static /app/frontend /app/staticfiles /app/ssl
+
+# SSL 인증서 생성
+RUN openssl req -x509 -newkey rsa:4096 -nodes -out /app/ssl/cert.pem -keyout /app/ssl/key.pem -days 365 -subj '/CN=localhost'
 
 # 환경 변수 설정 - Render 환경 시뮬레이션
-ENV DEBUG="False"
+ENV DEBUG="True"
 ENV RENDER="true"
 ENV RENDER_EXTERNAL_HOSTNAME="localhost"
 ENV DATABASE_URL="sqlite:///db.sqlite3"
 ENV DJANGO_SECRET_KEY="local-test-key-for-render-simulation"
 ENV ALLOWED_HOSTS="localhost,127.0.0.1"
-ENV CSRF_TRUSTED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"
-ENV CORS_ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"
+ENV CSRF_TRUSTED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000,http://localhost:8080,http://127.0.0.1:8080,https://localhost:8080,https://127.0.0.1:8080"
+ENV CORS_ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000,http://localhost:8080,http://127.0.0.1:8080,https://localhost:8080,https://127.0.0.1:8080"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -43,7 +47,7 @@ EXPOSE 8000
 RUN echo '#!/bin/bash\n\
 python manage.py collectstatic --no-input\n\
 python manage.py migrate\n\
-waitress-serve --port=8000 cvfactory.wsgi:application\n\
+python manage.py runserver_plus --cert-file=/app/ssl/cert.pem --key-file=/app/ssl/key.pem 0.0.0.0:8000\n\
 ' > /app/render_simulation.sh \
 && chmod +x /app/render_simulation.sh
 
