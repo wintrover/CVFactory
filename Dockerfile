@@ -9,53 +9,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     unzip \
     curl \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
-
-# Chrome 설치 (Selenium을 위한 설정)
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# Chrome 버전에 맞는 ChromeDriver 다운로드
-RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | awk -F. '{print $1"."$2"."$3}') \
-    && CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") \
-    && wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip" \
-    && unzip chromedriver_linux64.zip \
-    && mv chromedriver /usr/bin/chromedriver \
-    && chmod +x /usr/bin/chromedriver \
-    && rm chromedriver_linux64.zip
 
 # requirements.txt 복사
 COPY requirements.txt .
 
 # Python 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install 'whitenoise[brotli]' waitress django-extensions werkzeug pyOpenSSL
 
 # 애플리케이션 코드 복사
 COPY . .
 
-# 로그 디렉토리 생성 및 권한 설정
-RUN mkdir -p /app/logs && chmod 755 /app/logs
+# 로그 및 정적 파일 디렉토리 생성
+RUN mkdir -p /app/logs /app/static /app/frontend /app/staticfiles /app/ssl
 
-# 비특권 사용자 생성 및 권한 설정
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-RUN chown -R appuser:appuser /app
+# SSL 인증서 생성
+RUN openssl req -x509 -newkey rsa:4096 -nodes -out /app/ssl/cert.pem -keyout /app/ssl/key.pem -days 365 -subj '/CN=localhost'
 
-# 비특권 사용자로 전환
-USER appuser
-
-# 환경 변수 설정
+# 환경 변수 설정 - Render 환경 시뮬레이션
+ENV DEBUG="True"
+ENV RENDER="true"
+ENV RENDER_EXTERNAL_HOSTNAME="localhost"
+ENV DATABASE_URL="sqlite:///db.sqlite3"
+ENV DJANGO_SECRET_KEY="local-test-key-for-render-simulation"
+ENV ALLOWED_HOSTS="localhost,127.0.0.1"
+ENV CSRF_TRUSTED_ORIGINS="https://localhost:8000,https://127.0.0.1:8000"
+ENV CORS_ALLOWED_ORIGINS="https://localhost:8000,https://127.0.0.1:8000"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # 포트 노출
 EXPOSE 8000
 
-# entrypoint 스크립트로 실행
-COPY --chown=appuser:appuser entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Render 배포 시뮬레이션 스크립트
+RUN echo '#!/bin/bash\n\
+python manage.py collectstatic --no-input\n\
+python manage.py migrate\n\
+python manage.py runserver_plus --cert-file=/app/ssl/cert.pem --key-file=/app/ssl/key.pem 0.0.0.0:8000\n\
+' > /app/entrypoint.sh \
+&& chmod +x /app/entrypoint.sh
 
 # 애플리케이션 실행
-CMD ["/app/entrypoint.sh"] 
+CMD ["bash", "/app/entrypoint.sh"] 

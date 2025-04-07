@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 # 로그 디렉토리 확인
 if [ ! -d "/app/logs" ]; then
     mkdir -p /app/logs
