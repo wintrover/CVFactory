@@ -133,42 +133,42 @@ To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
 
 We use a simple and effective branching strategy to optimize development workflow and manage deployment costs:
 
-1. **`feature/feature-name` branches**: Used for individual feature development
-   - Create these branches from `develop` branch
+1. **`feature` branch**: Used for individual feature development
+   - Create this branch from `develop` branch
    - Use for daily coding tasks and work-in-progress changes
    - Merge back to `develop` when feature is complete
 
 2. **`develop` branch**: Integration branch for completed features
    - All completed feature branches get merged here
    - Use for testing and integration
-   - No Render pipelines are triggered on this branch
+   - When pushed to GitHub, automatically deploys to development server
 
 3. **`production` branch**: Production-ready code only
    - Merge to production only when ready to deploy
-   - Pushing to production automatically triggers Render deployment
-   - Helps minimize pipeline usage costs
+   - Pushing to production automatically triggers Render deployment to production server
+   - Helps minimize production pipeline usage costs
 
 #### Development Workflow
 
 ```bash
 # Start a new feature
 git checkout develop
-git checkout -b feature/your-feature-name
+git checkout -b feature
 
 # Make changes and commit to feature branch
 git add .
 git commit -m "Your changes"
-git push origin feature/your-feature-name
+git push origin feature
 
 # When feature is complete, merge to develop
 git checkout develop
-git merge feature/your-feature-name
-git push origin develop  # No deployment triggered
+git merge feature
+git push origin develop  # Triggers deployment to development server
 
-# When ready to deploy
+# When ready to deploy to production
 git checkout production
 git merge develop
-git push origin production  # Triggers Render deployment
+git push origin production  # Triggers deployment to production server
 git checkout develop  # Return to develop branch
 ```
 
