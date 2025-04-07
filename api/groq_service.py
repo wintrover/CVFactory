@@ -47,50 +47,60 @@ groq_logger.info(f"Groq 모듈 경로: {getattr(groq, '__file__', '파일 경로
 
 # Groq 클라이언트 초기화
 try:
-    # 버전 호환성 문제를 해결하기 위한 방어적 코드
-    groq_logger.info("Groq Client 초기화 시도 - 특수 처리 방식")
+    # 문제의 근본적 원인: groq 모듈의 내부 구현 문제로 인한 'proxies' 파라미터 충돌
+    groq_logger.info("Groq Client 초기화를 위한 패치 시도")
     
-    # 클래스 구조 검사 없이 바로 초기화 시도
-    groq_logger.info("명시적으로 제한된 파라미터만 사용하여 초기화 시도")
+    # 원본 클래스를 직접 패치하여 proxies 문제 해결
+    import types
+    from groq import Client
+    from groq._client import Groq as OriginalGroq
     
-    # 클래스 상속 구조로 인한 proxies 파라미터 문제를 완전히 우회
-    try:
-        # 명시적으로 기본 파라미터만 사용하여 클라이언트 생성
-        from groq import Client
-        client = Client(
-            api_key=api_key,
-            base_url=None,  # 기본값 사용
-            timeout=None,   # 기본값 사용
-            max_retries=None,  # 기본값 사용
-            default_headers=None,  # 기본값 사용
-            default_query=None,  # 기본값 사용
-            http_client=None,  # 기본값 사용
-            _strict_response_validation=None  # 기본값 사용
-        )
-        groq_logger.info("Groq 클라이언트 초기화 성공 (특수 처리 방식)")
-    except TypeError as e:
-        # 여전히 오류가 발생하면 최소한의 파라미터만 사용
-        groq_logger.error(f"특수 처리 방식 실패: {e}")
-        groq_logger.info("최소 파라미터만으로 초기화 시도")
-        try:
-            # API 키만 사용
-            client = Client(api_key=api_key)
-            groq_logger.info("API 키만으로 초기화 성공")
-        except Exception as inner_e:
-            groq_logger.error(f"최소 파라미터 초기화 실패: {inner_e}")
+    # 원본 __init__ 메서드 가져오기
+    original_init = OriginalGroq.__init__
+    
+    # 패치 적용 전에 클래스 정보 출력
+    groq_logger.debug(f"OriginalGroq 클래스: {OriginalGroq}")
+    groq_logger.debug(f"original_init 메서드: {original_init}")
+    groq_logger.debug(f"original_init 파라미터: {inspect.signature(original_init)}")
+    
+    # 모든 인자를 받되 proxies 인자를 무시하는 새로운 __init__ 함수 정의
+    def patched_init(self, *args, **kwargs):
+        # 원본 kwargs 로깅
+        groq_logger.debug(f"patched_init 호출 kwargs: {kwargs}")
+        
+        # proxies 파라미터 제거
+        if 'proxies' in kwargs:
+            groq_logger.info(f"proxies 파라미터 제거됨: {kwargs['proxies']}")
+            del kwargs['proxies']
             
-            # 마지막 방법: 내부 구현을 우회하여 명시적으로 필요한 클래스만 가져와서 사용
-            groq_logger.info("내부 구현 우회 시도")
-            try:
-                from groq._client import Groq
-                # 내부 클래스를 직접 사용하여 proxies 관련 코드 실행 방지
-                client = Groq(api_key=api_key)
-                groq_logger.info("내부 클래스 직접 사용 성공")
-            except Exception as direct_e:
-                groq_logger.error(f"내부 구현 우회 실패: {direct_e}")
-                client = None
-                groq_logger.error("모든 초기화 방법 실패")
-                raise
+        # 수정된 kwargs 로깅
+        groq_logger.debug(f"수정된 kwargs: {kwargs}")
+        
+        try:
+            result = original_init(self, *args, **kwargs)
+            groq_logger.info("원본 __init__ 함수 호출 성공")
+            return result
+        except Exception as e:
+            groq_logger.error(f"원본 __init__ 함수 호출 중 오류 발생: {str(e)}")
+            groq_logger.debug(f"오류 상세: {traceback.format_exc()}")
+            raise
+    
+    # 패치 적용
+    groq_logger.info("groq.Client 클래스 패치 적용")
+    OriginalGroq.__init__ = patched_init
+    
+    # 패치 적용 후 클라이언트 초기화 시도
+    groq_logger.info("패치된 클래스로 클라이언트 초기화 시도")
+    
+    # 최소한의 필수 인자만으로 초기화 시도
+    client_params = {"api_key": api_key}
+    groq_logger.debug(f"클라이언트 초기화 파라미터: {client_params}")
+    
+    client = Client(**client_params)
+    groq_logger.info("Groq 클라이언트 초기화 성공 (패치 방식)")
+    
+    # 테스트 호출로 정상 작동 여부 확인
+    groq_logger.info("클라이언트 객체 생성 성공, 테스트 진행")
     
     if client is not None:
         groq_logger.info("Groq 서비스가 성공적으로 초기화되었습니다.")
@@ -101,9 +111,104 @@ except Exception as e:
     groq_logger.error(f"Groq 클라이언트 초기화 실패: {str(e)}")
     # 로그에 자세한 에러 정보 기록
     groq_logger.debug(f"상세 오류: {traceback.format_exc()}")
-    groq_logger.warning("이 오류로 인해 AI 기능이 제한됩니다.")
-    # 클라이언트 객체 None으로 설정 - 이 경우 함수들은 fallback 응답 반환
-    client = None
+    
+    # 대체 초기화 방법 시도
+    groq_logger.info("대체 초기화 방법 시도")
+    try:
+        # 첫 번째 대체 방법: http 모듈을 통한 직접 API 호출 설정
+        import httpx
+        groq_logger.info("httpx를 사용한 대체 클라이언트 설정 시도")
+        
+        # 사용자 정의 클래스 생성
+        class SimpleGroqClient:
+            def __init__(self, api_key):
+                self.api_key = api_key
+                self.base_url = "https://api.groq.com/openai/v1"
+                self.client = httpx.Client(
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    timeout=60.0
+                )
+                self.chat = SimpleGroqChatCompletions(self)
+                
+            def close(self):
+                self.client.close()
+                
+        class SimpleGroqChatCompletions:
+            def __init__(self, parent):
+                self.parent = parent
+                self.completions = self
+                
+            def create(self, model, messages, temperature=0.7, max_tokens=None, **kwargs):
+                payload = {
+                    "model": model,
+                    "messages": messages,
+                    "temperature": temperature
+                }
+                
+                if max_tokens:
+                    payload["max_tokens"] = max_tokens
+                    
+                # 추가 파라미터 처리
+                for k, v in kwargs.items():
+                    if k not in payload and k != "proxies":
+                        payload[k] = v
+                
+                groq_logger.debug(f"API 요청 페이로드: {payload}")
+                
+                response = self.parent.client.post(
+                    f"{self.parent.base_url}/chat/completions",
+                    json=payload
+                )
+                
+                if response.status_code != 200:
+                    groq_logger.error(f"API 오류: {response.status_code} - {response.text}")
+                    raise Exception(f"API 오류: {response.status_code} - {response.text}")
+                    
+                result = response.json()
+                groq_logger.debug(f"API 응답: {result}")
+                
+                # OpenAI 스타일의 응답 객체 생성
+                class SimpleResponse:
+                    def __init__(self, data):
+                        self.id = data.get("id")
+                        self.object = data.get("object")
+                        self.created = data.get("created")
+                        self.model = data.get("model")
+                        self.choices = [SimpleChoice(c) for c in data.get("choices", [])]
+                        self.usage = SimpleUsage(data.get("usage", {}))
+                        
+                class SimpleChoice:
+                    def __init__(self, data):
+                        self.index = data.get("index")
+                        self.message = SimpleMessage(data.get("message", {}))
+                        self.finish_reason = data.get("finish_reason")
+                        
+                class SimpleMessage:
+                    def __init__(self, data):
+                        self.role = data.get("role")
+                        self.content = data.get("content")
+                        
+                class SimpleUsage:
+                    def __init__(self, data):
+                        self.prompt_tokens = data.get("prompt_tokens")
+                        self.completion_tokens = data.get("completion_tokens")
+                        self.total_tokens = data.get("total_tokens")
+                        
+                return SimpleResponse(result)
+        
+        # 새로운 클라이언트 생성
+        client = SimpleGroqClient(api_key)
+        groq_logger.info("대체 클라이언트 초기화 성공")
+            
+    except Exception as alt_e:
+        groq_logger.error(f"대체 초기화 방법도 실패: {str(alt_e)}")
+        groq_logger.debug(f"대체 방법 상세 오류: {traceback.format_exc()}")
+        groq_logger.warning("이 오류로 인해 AI 기능이 제한됩니다.")
+        # 클라이언트 객체 None으로 설정 - 이 경우 함수들은 fallback 응답 반환
+        client = None
 
 def log_function_call(func_name, inputs, outputs=None, additional_info=None):
     """함수 호출 정보를 로깅하는 유틸리티 함수"""
