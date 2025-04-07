@@ -245,6 +245,88 @@ jobs:
           echo "Final migration status:"
           python manage.py showmigrations || echo "Failed to show migrations"
       
+      - name: Test Groq Client Initialization
+        if: steps.django_check.outputs.django_check == 'success'
+        run: |
+          echo "================ GROQ CLIENT TEST ================"
+          echo "Testing Groq client initialization to detect proxies parameter issue..."
+          
+          # Get Groq library info
+          python -c "import groq; print(f'Groq 버전: {getattr(groq, \"__version__\", \"버전 정보 없음\")}'); print(f'Groq 모듈 경로: {getattr(groq, \"__file__\", \"경로 정보 없음\")}')"
+          
+          # Create a simple test script
+          cat > test_groq.py << 'EOF'
+          import groq
+          import inspect
+          import sys
+          
+          print("===== Groq Client 초기화 테스트 =====")
+          
+          # 클라이언트 파라미터 검사
+          print("클라이언트 초기화 파라미터 목록:")
+          client_params = inspect.signature(groq.Client.__init__).parameters
+          print([param for param in client_params.keys()])
+          
+          # proxies 파라미터 확인
+          has_proxies = 'proxies' in client_params
+          print(f"proxies 파라미터 존재함: {has_proxies}")
+          
+          # 상속 구조 확인
+          print("\n클래스 상속 구조:")
+          mro = groq.Client.__mro__
+          print([cls.__name__ for cls in mro])
+          
+          # 테스트 초기화
+          print("\n기본 초기화 테스트:")
+          try:
+              client = groq.Client(api_key="테스트키")
+              print("✅ 기본 초기화 성공")
+          except TypeError as e:
+              print(f"❌ 초기화 실패: {e}")
+              if "unexpected keyword argument 'proxies'" in str(e):
+                  print("✱ proxies 파라미터 문제 감지됨")
+                  print("\n대체 방식 테스트:")
+                  try:
+                      # client_kwargs에서 proxies 제외
+                      valid_params = {name: param for name, param in client_params.items() if name not in ['self', 'proxies']}
+                      filtered_kwargs = {"api_key": "테스트키"}
+                      filtered_kwargs = {k: v for k, v in filtered_kwargs.items() if k in valid_params}
+                      client = groq.Client(**filtered_kwargs)
+                      print("✅ 대체 방식 초기화 성공")
+                  except Exception as e2:
+                      print(f"❌ 대체 방식도 실패: {e2}")
+              else:
+                  print(f"✱ 다른 종류의 오류: {e}")
+          
+          print("\n테스트 완료!")
+          EOF
+          
+          # Run the test script
+          python test_groq.py
+          
+          # Create a simple usage test
+          echo "Testing Groq client in Django environment..."
+          cat > test_groq_django.py << 'EOF'
+          import os
+          import django
+          import groq
+          
+          # Django 환경 설정
+          os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cvfactory.settings')
+          django.setup()
+          
+          # 실제 app 모듈에서와 같은 방식으로 초기화 시도
+          print("Django 환경에서 Groq 클라이언트 초기화 시도...")
+          try:
+              client = groq.Client(api_key="테스트키")
+              print("✅ Django 환경에서 초기화 성공")
+          except Exception as e:
+              print(f"❌ Django 환경에서 초기화 실패: {e}")
+          EOF
+          
+          # Run in Django environment
+          python test_groq_django.py || echo "Django environment test failed, but continuing..."
+      
       - name: Run tests
         if: steps.django_check.outputs.django_check == 'success'
         run: |
@@ -269,6 +351,13 @@ jobs:
           # Copy logs
           if [ -d "test-logs" ]; then
             cp -r test-logs/* test-results/ || true
+          fi
+          
+          # Collect Groq test results
+          if [ -f "test_groq.py" ]; then
+            echo "Collecting Groq test results..."
+            python test_groq.py > test-results/groq-client-test.log 2>&1 || true
+            python test_groq_django.py > test-results/groq-django-test.log 2>&1 || true
           fi
           
           # Collect Django logs
@@ -489,6 +578,65 @@ jobs:
           fi
           
           echo "Deployment validation complete."
+      
+      - name: Test Groq compatibility before deployment
+        run: |
+          echo "================ TESTING GROQ COMPATIBILITY ================"
+          cd deploy
+          
+          # Set up environment
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+          # Create a test script
+          cat > test_deploy_groq.py << 'EOF'
+          import groq
+          import inspect
+          import sys
+          import traceback
+          
+          print("===== 배포 전 Groq 호환성 테스트 =====")
+          print(f"Groq 버전: {getattr(groq, '__version__', '버전 정보 없음')}")
+          
+          # 클라이언트 파라미터 검사
+          print("클라이언트 초기화 파라미터 목록:")
+          try:
+              client_params = inspect.signature(groq.Client.__init__).parameters
+              print([param for param in client_params.keys()])
+              
+              # proxies 파라미터 확인
+              has_proxies = 'proxies' in client_params
+              print(f"proxies 파라미터 존재함: {has_proxies}")
+              
+              # 테스트 초기화
+              print("\n배포 환경에서 초기화 테스트:")
+              try:
+                  client = groq.Client(api_key="테스트키")
+                  print("✅ 배포 환경에서 초기화 성공")
+              except TypeError as e:
+                  print(f"❌ 초기화 실패: {e}")
+                  if "unexpected keyword argument 'proxies'" in str(e):
+                      print("‼ proxies 파라미터 문제 발견 - 실제 배포 환경에서 오류 발생 가능성 높음")
+                      print("  대체 방식으로 시도해야 함")
+                  else:
+                      print(f"‼ 다른 종류의 오류: {e}")
+              except Exception as e:
+                  print(f"❌ 다른 예외 발생: {e}")
+                  traceback.print_exc()
+          except Exception as e:
+              print(f"❌ 파라미터 검사 중 오류: {e}")
+              traceback.print_exc()
+          
+          print("\n테스트 완료!")
+          EOF
+          
+          # Run the test
+          python test_deploy_groq.py
+          
+          # Return to previous directory
+          cd ..
+          
+          echo "Groq compatibility test completed."
       
       - name: Check Render.com credentials
         id: check_creds
