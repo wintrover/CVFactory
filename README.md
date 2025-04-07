@@ -138,9 +138,9 @@ We use a simple and effective branching strategy to optimize development workflo
    - Use for testing and feature development
    - No Render pipelines are triggered on this branch
 
-2. **`main` branch**: Production-ready code only
-   - Merge to main only when ready to deploy
-   - Pushing to main automatically triggers Render deployment
+2. **`production` branch**: Production-ready code only
+   - Merge to production only when ready to deploy
+   - Pushing to production automatically triggers Render deployment
    - Helps minimize pipeline usage costs
 
 #### Development Workflow
@@ -155,9 +155,9 @@ git commit -m "Your changes"
 git push origin develop  # No deployment triggered
 
 # When ready to deploy
-git checkout main
+git checkout production
 git merge develop
-git push origin main  # Triggers Render deployment
+git push origin production  # Triggers Render deployment
 git checkout develop  # Return to develop branch
 ```
 

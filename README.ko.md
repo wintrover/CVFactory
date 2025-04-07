@@ -138,9 +138,9 @@ CI/CD 설정을 확인하려면 `.github/workflows/ci-cd.yml` 파일을 참조�
    - 테스트 및 기능 개발에 사용
    - 이 브랜치에서는 Render 파이프라인이 트리거되지 않습니다
 
-2. **`main` 브랜치**: 프로덕션 준비가 완료된 코드만 포함
-   - 배포 준비가 되었을 때만 main으로 병합
-   - main에 푸시하면 자동으로 Render 배포가 트리거됨
+2. **`production` 브랜치**: 프로덕션 준비가 완료된 코드만 포함
+   - 배포 준비가 되었을 때만 production으로 병합
+   - production에 푸시하면 자동으로 Render 배포가 트리거됨
    - 파이프라인 사용 비용을 최소화하는 데 도움이 됩니다
 
 #### 개발 워크플로우
@@ -155,9 +155,9 @@ git commit -m "변경 내용"
 git push origin develop  # 배포가 트리거되지 않음
 
 # 배포 준비가 되었을 때
-git checkout main
+git checkout production
 git merge develop
-git push origin main  # Render 배포 트리거
+git push origin production  # Render 배포 트리거
 git checkout develop  # develop 브랜치로 돌아가기
 ```
 
