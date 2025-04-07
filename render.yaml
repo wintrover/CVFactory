@@ -1,10 +1,10 @@
 services:
-  # Docker 배포 서비스
+  # Python 네이티브 배포 서비스
   - name: cvfactory
     type: web
-    env: docker
-    dockerfilePath: ./Dockerfile.prod
-    dockerContext: .
+    env: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn cvfactory.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
     envVars:
       - key: DEBUG
         value: False
@@ -28,6 +28,8 @@ services:
         fromDatabase:
           name: cvfactory-db
           property: connectionString
+      - key: LOG_LEVEL
+        value: DEBUG
     healthCheckPath: /api/health/
     plan: free
 
