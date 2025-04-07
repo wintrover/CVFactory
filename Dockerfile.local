@@ -47,7 +47,7 @@ EXPOSE 8000
 RUN echo '#!/bin/bash\n\
 python manage.py collectstatic --no-input\n\
 python manage.py migrate\n\
-python manage.py runserver_plus --cert-file=/app/ssl/cert.pem --key-file=/app/ssl/key.pem --no-http 0.0.0.0:8000\n\
+python manage.py runserver_plus --cert-file=/app/ssl/cert.pem --key-file=/app/ssl/key.pem 0.0.0.0:8000\n\
 ' > /app/render_simulation.sh \
 && chmod +x /app/render_simulation.sh
 
