@@ -6,6 +6,8 @@ import logging
 import json
 from datetime import datetime
 import traceback
+import inspect
+import sys
 from django.conf import settings
 
 # 로거 설정
@@ -38,15 +40,105 @@ if not api_key:
     groq_logger.error(error_msg)
     raise ValueError(error_msg)
 
-# Groq 클라이언트 초기화 - proxies 인자 제거
+# 패키지 버전 정보 로깅
+groq_logger.info(f"Python 버전: {sys.version}")
+groq_logger.info(f"Groq 모듈 버전: {getattr(groq, '__version__', '버전 정보 없음')}")
+groq_logger.info(f"Groq 모듈 경로: {getattr(groq, '__file__', '파일 경로 정보 없음')}")
+
+# Groq 클라이언트 초기화 파라미터 검사
 try:
-    client = groq.Client(api_key=api_key)
-    groq_logger.debug("Groq 클라이언트 초기화 성공")
+    groq_logger.info("Groq Client 초기화 파라미터 검사 시작")
+    client_init_params = inspect.signature(groq.Client.__init__).parameters
+    groq_logger.info(f"Groq.Client.__init__ 파라미터 목록: {list(client_init_params.keys())}")
+    
+    # 상속 관계 확인
+    groq_logger.info("Groq Client 클래스 계층 구조 검사")
+    mro = groq.Client.__mro__
+    groq_logger.info(f"상속 계층: {[cls.__name__ for cls in mro]}")
+    
+    # 모든 상위 클래스의 __init__ 파라미터 검사
+    for cls in mro:
+        if cls == object:
+            continue
+        try:
+            init_sig = inspect.signature(cls.__init__)
+            groq_logger.info(f"{cls.__name__}.__init__ 파라미터: {list(init_sig.parameters.keys())}")
+        except (ValueError, TypeError) as e:
+            groq_logger.info(f"{cls.__name__}.__init__ 시그니처 검사 실패: {e}")
+except Exception as e:
+    groq_logger.error(f"Groq Client 파라미터 검사 중 예외 발생: {e}")
+    groq_logger.debug(traceback.format_exc())
+
+# Groq 클라이언트 초기화
+try:
+    # 버전 호환성 문제 해결을 위한 방어적 코드
+    try:
+        groq_logger.info("Groq Client 초기화 시도 - 표준 방식")
+        # 소스 코드 검사
+        if hasattr(groq.Client, '__init__') and callable(groq.Client.__init__):
+            source_code = inspect.getsource(groq.Client.__init__)
+            groq_logger.debug(f"Groq.Client.__init__ 소스코드 일부: {source_code[:200]}...")
+        
+        # 최신 버전 호환 방식으로 초기화 시도
+        client = groq.Client(api_key=api_key)
+        groq_logger.info("Groq 클라이언트 초기화 성공 (표준 방식)")
+    except TypeError as type_error:
+        groq_logger.error(f"TypeError 발생: {type_error}")
+        error_msg = str(type_error)
+        
+        if "unexpected keyword argument 'proxies'" in error_msg:
+            # proxies 인자 문제 확인
+            groq_logger.warning(f"Groq 모듈 버전 호환성 문제 감지: {error_msg}")
+            
+            # 스택 트레이스에서 문제 발생 지점 확인
+            tb = traceback.extract_tb(sys.exc_info()[2])
+            groq_logger.debug(f"오류 발생 스택 트레이스: {tb}")
+            
+            # 모듈 내부에서 proxies 사용 여부 검사
+            groq_logger.info("groq 모듈 내부 코드 검사")
+            base_modules = ['_client', '_base_client']
+            for module_name in base_modules:
+                try:
+                    module = getattr(groq, module_name, None)
+                    if module:
+                        groq_logger.info(f"{module_name} 모듈 확인됨")
+                        classes = [name for name, obj in inspect.getmembers(module, inspect.isclass)]
+                        groq_logger.info(f"{module_name} 클래스 목록: {classes}")
+                except Exception as e:
+                    groq_logger.error(f"{module_name} 검사 중 오류: {e}")
+            
+            # 대체 방식 시도 (proxies 제외)
+            from typing import Dict, Any
+            
+            # 클라이언트 생성자의 인자 목록 확인
+            sig = inspect.signature(groq.Client.__init__)
+            valid_params = {
+                name: param 
+                for name, param in sig.parameters.items() 
+                if name not in ['self', 'proxies']
+            }
+            
+            # 유효한 파라미터만 전달
+            client_kwargs: Dict[str, Any] = {"api_key": api_key}
+            filtered_kwargs = {k: v for k, v in client_kwargs.items() if k in valid_params}
+            
+            groq_logger.info(f"필터링된 인자로 초기화 시도: {filtered_kwargs}")
+            
+            # 필터링된 인자로 초기화 재시도
+            client = groq.Client(**filtered_kwargs)
+            groq_logger.info("Groq 클라이언트 초기화 성공 (대체 방식)")
+        else:
+            # 다른 TypeError인 경우 다시 발생
+            groq_logger.error(f"알 수 없는 TypeError: {error_msg}")
+            raise
+    groq_logger.info("Groq 서비스가 성공적으로 초기화되었습니다.")
+
 except Exception as e:
     groq_logger.error(f"Groq 클라이언트 초기화 실패: {str(e)}")
     # 로그에 자세한 에러 정보 기록
     groq_logger.debug(f"상세 오류: {traceback.format_exc()}")
-    # 프로세스는 계속 실행
+    groq_logger.warning("이 오류로 인해 AI 기능이 제한됩니다.")
+    # 클라이언트 객체 None으로 설정 - 이 경우 함수들은 fallback 응답 반환
     client = None
 
 def log_function_call(func_name, inputs, outputs=None, additional_info=None):
