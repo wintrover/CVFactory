@@ -38,8 +38,16 @@ if not api_key:
     groq_logger.error(error_msg)
     raise ValueError(error_msg)
 
-# Groq 클라이언트 초기화
-client = groq.Client(api_key=api_key)
+# Groq 클라이언트 초기화 - proxies 인자 제거
+try:
+    client = groq.Client(api_key=api_key)
+    groq_logger.debug("Groq 클라이언트 초기화 성공")
+except Exception as e:
+    groq_logger.error(f"Groq 클라이언트 초기화 실패: {str(e)}")
+    # 로그에 자세한 에러 정보 기록
+    groq_logger.debug(f"상세 오류: {traceback.format_exc()}")
+    # 프로세스는 계속 실행
+    client = None
 
 def log_function_call(func_name, inputs, outputs=None, additional_info=None):
     """함수 호출 정보를 로깅하는 유틸리티 함수"""
