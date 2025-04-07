@@ -12,7 +12,7 @@ CVFactory는 구직자를 위한 맞춤형 자기소개서 자동 생성 시스�
 
 ## 🌐 라이브 데모
 
-실제 작동하는 애플리케이션은 **[https://cvfactory.dev](https://cvfactory.dev)** 에서 확인하실 수 있습니다.
+실제 작동하는 애플리케이션은 **[cvfactory.dev](https://cvfactory.dev)** 에서 확인하실 수 있습니다.
 
 CVFactory의 모든 기능을 직접 체험하고 나만의 맞춤형 자기소개서를 생성해보세요!
 
