@@ -38,6 +38,10 @@ services:
         value: ""
       - key: GOOGLE_CLIENT_SECRET
         value: ""
+      - key: SELENIUM_DRIVER_EXECUTABLE_PATH
+        value: "/opt/render/project/usr/bin/chromedriver"
+      - key: ENVIRONMENT
+        value: production
     healthCheckPath: /
     plan: free
 
