@@ -30,7 +30,9 @@ services:
           property: connectionString
       - key: LOG_LEVEL
         value: DEBUG
-    healthCheckPath: /api/health/
+      - key: API_KEY
+        generateValue: true
+    healthCheckPath: /
     plan: free
 
 databases:
