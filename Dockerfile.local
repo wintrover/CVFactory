@@ -35,8 +35,8 @@ ENV RENDER_EXTERNAL_HOSTNAME="localhost"
 ENV DATABASE_URL="sqlite:///db.sqlite3"
 ENV DJANGO_SECRET_KEY="local-test-key-for-render-simulation"
 ENV ALLOWED_HOSTS="localhost,127.0.0.1"
-ENV CSRF_TRUSTED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000,http://localhost:8080,http://127.0.0.1:8080,https://localhost:8080,https://127.0.0.1:8080"
-ENV CORS_ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000,http://localhost:8080,http://127.0.0.1:8080,https://localhost:8080,https://127.0.0.1:8080"
+ENV CSRF_TRUSTED_ORIGINS="https://localhost:8000,https://127.0.0.1:8000"
+ENV CORS_ALLOWED_ORIGINS="https://localhost:8000,https://127.0.0.1:8000"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -47,7 +47,7 @@ EXPOSE 8000
 RUN echo '#!/bin/bash\n\
 python manage.py collectstatic --no-input\n\
 python manage.py migrate\n\
-python manage.py runserver_plus --cert-file=/app/ssl/cert.pem --key-file=/app/ssl/key.pem 0.0.0.0:8000\n\
+python manage.py runserver_plus --cert-file=/app/ssl/cert.pem --key-file=/app/ssl/key.pem --no-http 0.0.0.0:8000\n\
 ' > /app/render_simulation.sh \
 && chmod +x /app/render_simulation.sh
 
