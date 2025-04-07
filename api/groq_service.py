@@ -47,52 +47,50 @@ groq_logger.info(f"Groq 모듈 경로: {getattr(groq, '__file__', '파일 경로
 
 # Groq 클라이언트 초기화
 try:
-    # 버전 호환성 문제 해결을 위한 방어적 코드
+    # 버전 호환성 문제를 해결하기 위한 방어적 코드
+    groq_logger.info("Groq Client 초기화 시도 - 특수 처리 방식")
+    
+    # 클래스 구조 검사 없이 바로 초기화 시도
+    groq_logger.info("명시적으로 제한된 파라미터만 사용하여 초기화 시도")
+    
+    # 클래스 상속 구조로 인한 proxies 파라미터 문제를 완전히 우회
     try:
-        groq_logger.info("Groq Client 초기화 시도 - 표준 방식")
-        # 소스 코드 검사
-        if hasattr(groq.Client, '__init__') and callable(groq.Client.__init__):
-            source_code = inspect.getsource(groq.Client.__init__)
-            groq_logger.debug(f"Groq.Client.__init__ 소스코드 일부: {source_code[:200]}...")
-        
-        # 최신 버전 호환 방식으로 초기화 시도 - API 키만 명시적 지정
-        client = groq.Client(api_key=api_key)
-        groq_logger.info("Groq 클라이언트 초기화 성공 (표준 방식)")
-    except TypeError as type_error:
-        groq_logger.error(f"TypeError 발생: {type_error}")
-        error_msg = str(type_error)
-        
-        # 오류 메시지에 대한 기록
-        groq_logger.warning(f"Groq 모듈 버전 호환성 문제 감지: {error_msg}")
-        
-        # 스택 트레이스에서 문제 발생 지점 확인
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        groq_logger.debug(f"오류 발생 스택 트레이스: {tb}")
-        
-        # 모듈 내부에서 사용 상태 검사
-        groq_logger.info("groq 모듈 내부 코드 검사")
-        base_modules = ['_client', '_base_client']
-        for module_name in base_modules:
-            try:
-                module = getattr(groq, module_name, None)
-                if module:
-                    groq_logger.info(f"{module_name} 모듈 확인됨")
-                    classes = [name for name, obj in inspect.getmembers(module, inspect.isclass)]
-                    groq_logger.info(f"{module_name} 클래스 목록: {classes}")
-            except Exception as e:
-                groq_logger.error(f"{module_name} 검사 중 오류: {e}")
-        
-        # 중요: proxies 파라미터 문제를 완전히 우회하기 위한 최소 설정으로 초기화
-        groq_logger.info("기본 파라미터로만 초기화 시도")
+        # 명시적으로 기본 파라미터만 사용하여 클라이언트 생성
+        from groq import Client
+        client = Client(
+            api_key=api_key,
+            base_url=None,  # 기본값 사용
+            timeout=None,   # 기본값 사용
+            max_retries=None,  # 기본값 사용
+            default_headers=None,  # 기본값 사용
+            default_query=None,  # 기본값 사용
+            http_client=None,  # 기본값 사용
+            _strict_response_validation=None  # 기본값 사용
+        )
+        groq_logger.info("Groq 클라이언트 초기화 성공 (특수 처리 방식)")
+    except TypeError as e:
+        # 여전히 오류가 발생하면 최소한의 파라미터만 사용
+        groq_logger.error(f"특수 처리 방식 실패: {e}")
+        groq_logger.info("최소 파라미터만으로 초기화 시도")
         try:
-            # API 키만으로 초기화 
-            client = groq.Client(api_key=api_key)
+            # API 키만 사용
+            client = Client(api_key=api_key)
             groq_logger.info("API 키만으로 초기화 성공")
         except Exception as inner_e:
-            groq_logger.error(f"기본 파라미터로 초기화 실패: {inner_e}")
-            # 클라이언트 객체 None으로 설정
-            client = None
-            raise
+            groq_logger.error(f"최소 파라미터 초기화 실패: {inner_e}")
+            
+            # 마지막 방법: 내부 구현을 우회하여 명시적으로 필요한 클래스만 가져와서 사용
+            groq_logger.info("내부 구현 우회 시도")
+            try:
+                from groq._client import Groq
+                # 내부 클래스를 직접 사용하여 proxies 관련 코드 실행 방지
+                client = Groq(api_key=api_key)
+                groq_logger.info("내부 클래스 직접 사용 성공")
+            except Exception as direct_e:
+                groq_logger.error(f"내부 구현 우회 실패: {direct_e}")
+                client = None
+                groq_logger.error("모든 초기화 방법 실패")
+                raise
     
     if client is not None:
         groq_logger.info("Groq 서비스가 성공적으로 초기화되었습니다.")
