@@ -30,7 +30,7 @@ if settings.DEBUG:
     groq_logger.debug(f"로그 레벨: {logging.getLevelName(groq_logger.level)}")
 
 # .env 파일 로드
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'env_configs', '.env'))
 
 # Groq API 키 설정
 api_key = os.getenv("GROQ_API_KEY")

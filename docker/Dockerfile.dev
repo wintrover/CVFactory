@@ -23,7 +23,7 @@ RUN pip install 'whitenoise[brotli]' django-extensions werkzeug pyOpenSSL gunico
 RUN mkdir -p /app/logs /app/static_dev /app/frontend /app/static_prod /app/ssl
 
 # entrypoint 스크립트 복사 및 권한 설정
-COPY entrypoint-dev.sh /app/
+COPY entrypoints/entrypoint-dev.sh /app/
 RUN chmod +x /app/entrypoint-dev.sh
 
 # 애플리케이션 코드 복사

@@ -30,7 +30,7 @@ RUN pip install 'whitenoise[brotli]' waitress django-extensions werkzeug pyOpenS
 RUN echo "추가 Python 패키지 설치 완료"
 
 # entrypoint 스크립트 복사 및 실행 권한 설정
-COPY entrypoint-prod.sh /app/
+COPY entrypoints/entrypoint-prod.sh /app/
 RUN chmod +x /app/entrypoint-prod.sh
 RUN echo "entrypoint 스크립트 설정 완료"
 

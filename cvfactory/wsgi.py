@@ -34,7 +34,7 @@ logger.info(f"Python 버전: {sys.version}")
 try:
     # 환경 변수 디버깅
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'env_configs', '.env'))
     env_vars = {key: value for key, value in os.environ.items() 
                if not key.startswith('PATH') and not key.startswith('PYTHONPATH')}
     logger.debug(f"환경 변수: {env_vars}")

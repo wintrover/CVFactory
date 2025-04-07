@@ -3,12 +3,12 @@ version: '3'
 services:
   web:
     build:
-      context: .
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: docker/Dockerfile.prod
     ports:
       - "8000:8000"
     env_file:
-      - .env.production  # 프로덕션 환경 변수 로드
+      - ../env_configs/.env.production  # 프로덕션 환경 변수 로드
     environment:
       - PYTHONUNBUFFERED=1
       - SELENIUM_DRIVER_EXECUTABLE_PATH=/usr/bin/chromedriver
@@ -40,3 +40,6 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M 
+
+volumes:
+  - ../env_configs/.env.production:/app/.env  # 프로덕션 환경 변수 로드 
