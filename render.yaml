@@ -32,6 +32,12 @@ services:
         value: DEBUG
       - key: API_KEY
         generateValue: true
+      - key: GROQ_API_KEY
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        value: ""
+      - key: GOOGLE_CLIENT_SECRET
+        value: ""
     healthCheckPath: /
     plan: free
 
