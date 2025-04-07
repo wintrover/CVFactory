@@ -45,30 +45,6 @@ groq_logger.info(f"Python 버전: {sys.version}")
 groq_logger.info(f"Groq 모듈 버전: {getattr(groq, '__version__', '버전 정보 없음')}")
 groq_logger.info(f"Groq 모듈 경로: {getattr(groq, '__file__', '파일 경로 정보 없음')}")
 
-# Groq 클라이언트 초기화 파라미터 검사
-try:
-    groq_logger.info("Groq Client 초기화 파라미터 검사 시작")
-    client_init_params = inspect.signature(groq.Client.__init__).parameters
-    groq_logger.info(f"Groq.Client.__init__ 파라미터 목록: {list(client_init_params.keys())}")
-    
-    # 상속 관계 확인
-    groq_logger.info("Groq Client 클래스 계층 구조 검사")
-    mro = groq.Client.__mro__
-    groq_logger.info(f"상속 계층: {[cls.__name__ for cls in mro]}")
-    
-    # 모든 상위 클래스의 __init__ 파라미터 검사
-    for cls in mro:
-        if cls == object:
-            continue
-        try:
-            init_sig = inspect.signature(cls.__init__)
-            groq_logger.info(f"{cls.__name__}.__init__ 파라미터: {list(init_sig.parameters.keys())}")
-        except (ValueError, TypeError) as e:
-            groq_logger.info(f"{cls.__name__}.__init__ 시그니처 검사 실패: {e}")
-except Exception as e:
-    groq_logger.error(f"Groq Client 파라미터 검사 중 예외 발생: {e}")
-    groq_logger.debug(traceback.format_exc())
-
 # Groq 클라이언트 초기화
 try:
     # 버전 호환성 문제 해결을 위한 방어적 코드
@@ -79,7 +55,7 @@ try:
             source_code = inspect.getsource(groq.Client.__init__)
             groq_logger.debug(f"Groq.Client.__init__ 소스코드 일부: {source_code[:200]}...")
         
-        # 최신 버전 호환 방식으로 초기화 시도
+        # 최신 버전 호환 방식으로 초기화 시도 - API 키만 명시적 지정
         client = groq.Client(api_key=api_key)
         groq_logger.info("Groq 클라이언트 초기화 성공 (표준 방식)")
     except TypeError as type_error:
@@ -106,12 +82,22 @@ try:
             except Exception as e:
                 groq_logger.error(f"{module_name} 검사 중 오류: {e}")
         
-        # 대체 방식으로 초기화 시도
-        groq_logger.info("대체 방식으로 초기화 시도")
-        client = groq.Client(api_key=api_key)
-        groq_logger.info("Groq 클라이언트 초기화 성공 (대체 방식)")
+        # 중요: proxies 파라미터 문제를 완전히 우회하기 위한 최소 설정으로 초기화
+        groq_logger.info("기본 파라미터로만 초기화 시도")
+        try:
+            # API 키만으로 초기화 
+            client = groq.Client(api_key=api_key)
+            groq_logger.info("API 키만으로 초기화 성공")
+        except Exception as inner_e:
+            groq_logger.error(f"기본 파라미터로 초기화 실패: {inner_e}")
+            # 클라이언트 객체 None으로 설정
+            client = None
+            raise
     
-    groq_logger.info("Groq 서비스가 성공적으로 초기화되었습니다.")
+    if client is not None:
+        groq_logger.info("Groq 서비스가 성공적으로 초기화되었습니다.")
+    else:
+        groq_logger.error("Groq 클라이언트가 초기화되지 않았습니다.")
 
 except Exception as e:
     groq_logger.error(f"Groq 클라이언트 초기화 실패: {str(e)}")
