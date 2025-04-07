@@ -40,3 +40,6 @@ logs/*.log
 # 로그 파일
 logs/
 *.log
+
+# Static production directory
+static_prod/
