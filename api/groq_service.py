@@ -123,7 +123,7 @@ except Exception as e:
         class SimpleGroqClient:
             def __init__(self, api_key):
                 self.api_key = api_key
-                self.base_url = "https://api.groq.com/openai/v1"
+                self.base_url = "https://api.groq.com/v1"
                 self.client = httpx.Client(
                     headers={
                         "Authorization": f"Bearer {api_key}",
@@ -170,7 +170,7 @@ except Exception as e:
                 result = response.json()
                 groq_logger.debug(f"API 응답: {result}")
                 
-                # OpenAI 스타일의 응답 객체 생성
+                # Groq 스타일의 응답 객체 생성
                 class SimpleResponse:
                     def __init__(self, data):
                         self.id = data.get("id")
