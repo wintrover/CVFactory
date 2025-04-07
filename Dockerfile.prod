@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.9.21-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -19,6 +19,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install 'whitenoise[brotli]' waitress django-extensions werkzeug pyOpenSSL gunicorn
 
+# entrypoint 스크립트 복사 및 실행 권한 설정
+COPY entrypoint-prod.sh /app/
+RUN chmod +x /app/entrypoint-prod.sh
+
 # 애플리케이션 코드 복사
 COPY . .
 
@@ -33,18 +37,10 @@ ENV DEBUG="False"
 ENV RENDER="true"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV ENVIRONMENT="production"
 
 # 포트 노출
 EXPOSE 8000
 
-# 프로덕션 서버 실행 스크립트
-RUN echo '#!/bin/bash\n\
-python manage.py collectstatic --no-input\n\
-python manage.py migrate\n\
-PORT="${PORT:-8000}"\n\
-gunicorn --bind 0.0.0.0:$PORT cvfactory.wsgi:application\n\
-' > /app/entrypoint.sh \
-&& chmod +x /app/entrypoint.sh
-
 # 애플리케이션 실행
-CMD ["bash", "/app/entrypoint.sh"] 
+CMD ["./entrypoint-prod.sh"] 

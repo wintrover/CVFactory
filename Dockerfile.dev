@@ -19,11 +19,15 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install 'whitenoise[brotli]' django-extensions werkzeug pyOpenSSL gunicorn django-debug-toolbar
 
-# 애플리케이션 코드 복사
-COPY . .
-
 # 로그 및 정적 파일 디렉토리 생성
 RUN mkdir -p /app/logs /app/static_dev /app/frontend /app/static_prod /app/ssl
+
+# entrypoint 스크립트 복사 및 권한 설정
+COPY entrypoint-dev.sh /app/
+RUN chmod +x /app/entrypoint-dev.sh
+
+# 애플리케이션 코드 복사
+COPY . .
 
 # SSL 인증서 생성
 RUN openssl req -x509 -newkey rsa:4096 -nodes -out /app/ssl/cert.pem -keyout /app/ssl/key.pem -days 365 -subj '/CN=localhost'
@@ -36,14 +40,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # 포트 노출
 EXPOSE 8000
 
-# 개발 서버 실행 스크립트
-RUN echo '#!/bin/bash\n\
-mkdir -p /app/logs\n\
-python manage.py migrate\n\
-python manage.py collectstatic --no-input\n\
-python manage.py runserver 0.0.0.0:8000\n\
-' > /app/entrypoint-dev.sh \
-&& chmod +x /app/entrypoint-dev.sh
-
 # 애플리케이션 실행
-CMD ["bash", "/app/entrypoint-dev.sh"] 
+CMD ["/app/entrypoint-dev.sh"] 

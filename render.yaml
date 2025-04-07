@@ -22,7 +22,9 @@ services:
         generateValue: true
       - key: PORT
         value: 8000
-    healthCheckPath: /
+      - key: PYTHON_VERSION
+        value: 3.9.21
+    healthCheckPath: /api/health/
     plan: starter
 
 databases:
