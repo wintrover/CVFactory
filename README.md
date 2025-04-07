@@ -10,6 +10,12 @@
 ## 📖 Overview
 CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized cover letters based on job postings and applicant information using AI.
 
+## 🌐 Live Demo
+
+You can see the live application in action at **[https://cvfactory.dev](https://cvfactory.dev)**
+
+Experience the full functionality of CVFactory and generate your own personalized cover letters and resumes!
+
 ## ✨ Key Features
 
 - **📄 Job Posting Crawler**: Automatically collects relevant job information when a recruitment site URL is entered
@@ -237,6 +243,56 @@ fetch('/api/generate-letter/', {
   body: JSON.stringify(data)
 });
 ```
+
+## 🚀 Deployment to Render.com
+
+CVFactory can be deployed to Render.com, a cloud platform that offers both development and production environments.
+
+### Environment Setup
+
+1. **Development Environment**
+   - URL: `https://cvfactory-dev.onrender.com` (or your custom development URL)
+   - Purpose: Testing new features, development code, and integrations
+   - Database: Separate database for development purposes
+
+2. **Production Environment**
+   - URL: `https://cvfactory-prod.onrender.com` (and your custom domain, if configured)
+   - Purpose: Live service for actual users
+   - Database: Production database with regular backups
+
+### Deployment Steps
+
+1. **Create a Web Service on Render**:
+   - Connect your GitHub repository
+   - Select Python environment
+   - Set build command: `./build.sh`
+   - Set start command: `gunicorn cvfactory.asgi:application -k uvicorn.workers.UvicornWorker`
+
+2. **Configure Environment Variables**:
+   - Essential variables:
+     - `ALLOWED_HOSTS`: Add your Render domains and custom domains
+     - `CSRF_TRUSTED_ORIGINS`: Add `https://` URLs for your domains
+     - `CORS_ALLOWED_ORIGINS`: Add `https://` URLs for your domains
+     - `DATABASE_URL`: Automatically provided by Render
+     - `SECRET_KEY`: Generate a secure key
+     - `DEBUG`: Set to `False` for production
+
+3. **Database Setup**:
+   - Render automatically provides a PostgreSQL database
+   - Migrations run during deployment via the build script
+
+4. **Custom Domain Configuration** (for Production):
+   - In Render dashboard, navigate to the web service settings
+   - Add your custom domain (e.g., `cvfactory.dev`)
+   - Verify domain ownership through DNS settings
+   - SSL certificates are automatically provisioned
+
+### Deployment Best Practices
+
+- Test changes in the development environment before deploying to production
+- Use environment-specific settings for different deployment targets
+- Regularly monitor logs in the Render dashboard
+- For cost efficiency, you can pause development services when not in use
 
 ## 📄 License
 

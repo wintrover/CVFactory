@@ -10,6 +10,12 @@
 ## 📖 개요
 CVFactory는 구직자를 위한 맞춤형 자기소개서 자동 생성 시스템입니다. 채용 공고와 지원자 정보를 기반으로 AI가 개인화된 자기소개서를 생성합니다. 자기소개서를 하나하나 쓸 시간이 없는 구직자들을 위해 개발했습니다.
 
+## 🌐 라이브 데모
+
+실제 작동하는 애플리케이션은 **[https://cvfactory.dev](https://cvfactory.dev)** 에서 확인하실 수 있습니다.
+
+CVFactory의 모든 기능을 직접 체험하고 나만의 맞춤형 자기소개서를 생성해보세요!
+
 ## ✨ 주요 기능
 
 - **📄 채용 공고 크롤링**: 채용 사이트 URL을 입력하면 관련 채용 정보를 자동으로 수집
@@ -253,6 +259,56 @@ fetch('/api/generate-letter/', {
   body: JSON.stringify(data)
 });
 ```
+
+## 🚀 Render.com 배포
+
+CVFactory는 개발 및 프로덕션 환경을 모두 제공하는 클라우드 플랫폼인 Render.com에 배포할 수 있습니다.
+
+### 환경 설정
+
+1. **개발 환경**
+   - URL: `https://cvfactory-dev.onrender.com` (또는 사용자 지정 개발 URL)
+   - 목적: 새로운 기능, 개발 코드 및 통합 테스트
+   - 데이터베이스: 개발 목적의 별도 데이터베이스
+
+2. **프로덕션 환경**
+   - URL: `https://cvfactory-prod.onrender.com` (및 구성된 경우 사용자 지정 도메인)
+   - 목적: 실제 사용자를 위한 라이브 서비스
+   - 데이터베이스: 정기적인 백업이 있는 프로덕션 데이터베이스
+
+### 배포 단계
+
+1. **Render에서 웹 서비스 생성**:
+   - GitHub 저장소 연결
+   - Python 환경 선택
+   - 빌드 명령어 설정: `./build.sh`
+   - 시작 명령어 설정: `gunicorn cvfactory.asgi:application -k uvicorn.workers.UvicornWorker`
+
+2. **환경 변수 구성**:
+   - 필수 변수:
+     - `ALLOWED_HOSTS`: Render 도메인 및 사용자 지정 도메인 추가
+     - `CSRF_TRUSTED_ORIGINS`: 도메인의 `https://` URL 추가
+     - `CORS_ALLOWED_ORIGINS`: 도메인의 `https://` URL 추가
+     - `DATABASE_URL`: Render에서 자동으로 제공
+     - `SECRET_KEY`: 안전한 키 생성
+     - `DEBUG`: 프로덕션에서는 `False`로 설정
+
+3. **데이터베이스 설정**:
+   - Render는 자동으로 PostgreSQL 데이터베이스 제공
+   - 빌드 스크립트를 통해 배포 중 마이그레이션 실행
+
+4. **사용자 지정 도메인 구성** (프로덕션용):
+   - Render 대시보드에서 웹 서비스 설정으로 이동
+   - 사용자 지정 도메인 추가 (예: `cvfactory.dev`)
+   - DNS 설정을 통해 도메인 소유권 확인
+   - SSL 인증서 자동 발급
+
+### 배포 모범 사례
+
+- 프로덕션에 배포하기 전에 개발 환경에서 변경 사항 테스트
+- 다양한 배포 대상에 대해 환경별 설정 사용
+- Render 대시보드에서 정기적으로 로그 모니터링
+- 비용 효율성을 위해 사용하지 않을 때는 개발 서비스 일시 중지 가능
 
 ## 📄 라이센스
 
