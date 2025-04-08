@@ -2,9 +2,9 @@ name: CVFactory CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, production]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, production]
   workflow_dispatch:
 
 # 기본 권한 설정
@@ -150,20 +150,21 @@ jobs:
             echo "Created env_configs directory."
           fi
           
-          echo "Using existing .env.development file for testing..."
-          if [ -f "env_configs/.env.development" ]; then
-            cp env_configs/.env.development .env
-            echo ".env file created from env_configs/.env.development."
+          echo "Using existing .env.production file for testing..."
+          if [ -f "env_configs/.env.production" ]; then
+            cp env_configs/.env.production .env
+            echo ".env file created from env_configs/.env.production."
             
             # 테스트용 설정 추가
             echo "Adding test-specific settings..."
             echo "DJANGO_SECRET_KEY=test-secret-key-for-ci" >> .env
             echo "ALLOWED_HOSTS=localhost,127.0.0.1,testserver" >> .env
+            echo "DEBUG=True" >> .env
             
             echo ".env file configured. Preview:"
             grep -v "SECRET\|PASSWORD" .env || echo "Failed to grep .env file"
           else
-            echo "WARNING: env_configs/.env.development not found!"
+            echo "WARNING: env_configs/.env.production not found!"
             echo "Creating a default .env file for testing..."
             # 여기서 생성하는 .env 파일에 올바른 형식의
             # 설정이 포함되어 있는지 확인
@@ -433,17 +434,17 @@ EOF
         run: |
           echo "================ PREPARING ENVIRONMENT ================"
           
-          echo "Using existing env_configs/.env.development file..."
-          if [ -f "env_configs/.env.development" ]; then
-            cp env_configs/.env.development .env
+          echo "Using existing env_configs/.env.production file..."
+          if [ -f "env_configs/.env.production" ]; then
+            cp env_configs/.env.production .env
             
             # 빌드용 설정 수정
             echo "DJANGO_SECRET_KEY=dev-build-key" >> .env
             
-            echo "Environment prepared from env_configs/.env.development. Preview (excluding sensitive data):"
+            echo "Environment prepared from env_configs/.env.production. Preview (excluding sensitive data):"
             grep -v "SECRET\|PASSWORD" .env || echo "Failed to display .env file"
           else
-            echo "WARNING: env_configs/.env.development not found!"
+            echo "WARNING: env_configs/.env.production not found!"
             echo "Creating a default .env file..."
             cat > .env << 'EOF'
 DEBUG=True
@@ -555,7 +556,7 @@ EOF
     name: Deploy to Render.com
     needs: [debug, build]
     runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/develop'
+    if: success() && github.ref == 'refs/heads/develop' && github.ref != 'refs/heads/production'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
