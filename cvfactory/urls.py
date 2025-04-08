@@ -22,6 +22,7 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.conf import settings
 from django.conf.urls.static import static
+from api.views import index  # index 뷰 import
 
 class GoogleLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
@@ -39,7 +40,7 @@ urlpatterns = [
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),  
     path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),  # Google OAuth 추가
-    path("", TemplateView.as_view(template_name="index.html")),
+    path("", index, name="index"),  # TemplateView 대신 index 뷰 사용
 ]
 
 # 디버그 모드에서 정적 파일 제공

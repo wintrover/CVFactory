@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 import logging
 from .models import Resume
 from .groq_service import generate_resume, extract_job_keypoints, log_function_call
@@ -18,6 +18,8 @@ import re
 import validators  # URL 검증을 위한 라이브러리 추가
 import bleach  # 특수문자 필터링을 위한 라이브러리 추가
 from django.conf import settings
+from django.shortcuts import render
+from rest_framework.authtoken.models import Token
 
 # 로거 설정 - 환경에 따른 로그 레벨 조정
 logger = logging.getLogger('api')
@@ -114,7 +116,7 @@ def log_resume(resume_id, generated_resume):
 
 @csrf_protect
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def fetch_company_info(request):
     """
     회사 정보를 크롤링하는 API 엔드포인트
@@ -185,7 +187,7 @@ def fetch_company_info(request):
 
 
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
-@permission_classes([IsAuthenticated])  # 인증된 사용자만 API 호출 가능하도록 설정
+@permission_classes([AllowAny])  # 인증된 사용자만 API 호출 가능하도록 설정
 @ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
 @csrf_protect  # CSRF 보호 활성화
 def create_resume(request):
@@ -396,3 +398,8 @@ def test_groq_logging(request):
             'status': 'error',
             'message': str(e)
         }, status=500)
+
+def index(request):
+    """메인 페이지를 렌더링하는 뷰"""
+    api_key = os.getenv('API_KEY')  # 환경 변수에서 API 키 가져오기
+    return render(request, 'index.html', {'api_key': api_key})

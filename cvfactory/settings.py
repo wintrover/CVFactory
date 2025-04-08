@@ -112,8 +112,8 @@ SESSION_COOKIE_AGE = 3600  # 세션 만료 시간 (1시간)
 
 # CSRF 보안 설정
 CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() == 'true'
-CSRF_COOKIE_HTTPONLY = os.getenv('CSRF_COOKIE_HTTPONLY', 'True').lower() == 'true'
-CSRF_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
+CSRF_COOKIE_HTTPONLY = False  # JavaScript에서 CSRF 토큰에 접근할 수 있도록 설정
+CSRF_COOKIE_SAMESITE = 'None'  # SameSite 정책을 None으로 설정
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
 
 # 보안 헤더 설정
@@ -140,10 +140,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "allauth.account.middleware.AccountMiddleware",  # allauth 미들웨어 주석 처리 (버전 호환성 문제)
-    "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어
+    # "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어 - 비활성화
     "middleware.SecurityHeadersMiddleware",  # 보안 헤더 미들웨어
     "middleware.JWTUserStatusMiddleware",  # JWT 사용자 상태 확인 미들웨어 (CVE-2024-22513 완화)
-    "middleware.SecureApiAccessMiddleware",  # API 접근 제한 미들웨어 (인증 사용자 및 사이트 방문자)
     "middleware.RateLimitMiddleware",  # API 요청 속도 제한 미들웨어
 ]
 
@@ -192,16 +191,13 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',  
     ),
     'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser',  
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
     ),
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",  # AllowAny에서 IsAuthenticated로 변경
-    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ]
 }
 
 SIMPLE_JWT = {
