@@ -176,3 +176,20 @@ To set up CI/CD with GitHub Actions, add the following secrets to your GitHub re
    - `DJANGO_SECRET_KEY`: Django security key
    - `ALLOWED_HOSTS`: Allowed hosts list (comma-separated)
    - `GOOGLE_CLIENT_ID`: Google OAuth client ID
+   - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+   - `GROQ_API_KEY`: Groq API access key
+
+## CI/CD
+
+이 프로젝트는 GitHub Actions를 사용하여 CI/CD 파이프라인을 설정했습니다:
+
+- **develop** 브랜치: 테스트와 빌드만 실행 (배포 없음)
+- **production** 브랜치: 테스트, 빌드, Render.com 배포 자동 실행
+
+GitHub Secrets에 다음 항목들이 설정되어 있습니다:
+- `API_KEY`: API 액세스 키
+- `DJANGO_SECRET_KEY`: Django 암호화 키
+- `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET`: Google OAuth 인증을 위한 ID와 시크릿 
+- `GROQ_API_KEY`: Groq API 액세스 키
+- `RENDER_API_KEY`: Render.com API 키
+- `RENDER_PROD_SERVICE_ID`: Render.com 서비스 ID
