@@ -134,29 +134,19 @@ jobs:
         run: |
           echo "================ ENVIRONMENT SETUP ================"
           
-          echo "Checking .env.example file..."
-          if [ -f .env.example ]; then
-            echo ".env.example exists. Content preview:"
-            head -n 5 .env.example
-            echo "Creating .env file for testing..."
-            cp .env.example .env
-            
-            # Add test settings
-            echo "Adding testing configuration..."
-            echo "DEBUG=True" >> .env
-            echo "DJANGO_SECRET_KEY=test-secret-key-for-ci" >> .env
-            echo "ALLOWED_HOSTS=localhost,127.0.0.1,testserver" >> .env
-            echo "DB_ENGINE=django.db.backends.sqlite3" >> .env
-            echo "DB_NAME=db.sqlite3" >> .env
-            
-            echo ".env file created. Preview:"
-            grep -v "SECRET\|PASSWORD" .env
-          else
-            echo "ERROR: .env.example not found!"
-            echo "Current directory contains:"
-            ls -la
-            exit 1
-          fi
+          echo "Creating .env file for testing..."
+          # 직접 .env 파일 생성 (기존 .env.example 사용하지 않음)
+          cat > .env << 'EOF'
+          DEBUG=True
+          DJANGO_SECRET_KEY=test-secret-key-for-ci
+          ALLOWED_HOSTS=localhost,127.0.0.1,testserver
+          DB_ENGINE=django.db.backends.sqlite3
+          DB_NAME=db.sqlite3
+          LOG_LEVEL=INFO
+          EOF
+          
+          echo ".env file created. Preview:"
+          grep -v "SECRET\|PASSWORD" .env
       
       - name: Django verification
         id: django_check
@@ -422,8 +412,14 @@ jobs:
           
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "Setting up PRODUCTION environment"
-            cp .env.example .env
-            echo "DEBUG=False" >> .env
+            # 직접 .env 파일 생성 (기존 .env.example 사용하지 않음)
+            cat > .env << 'EOF'
+            DEBUG=False
+            ALLOWED_HOSTS=localhost,127.0.0.1
+            DB_ENGINE=django.db.backends.sqlite3
+            DB_NAME=db.sqlite3
+            LOG_LEVEL=INFO
+            EOF
             
             # Add secrets if available, otherwise use defaults
             if [ -n "${{ secrets.DJANGO_SECRET_KEY }}" ]; then
@@ -436,15 +432,18 @@ jobs:
             
             if [ -n "${{ secrets.ALLOWED_HOSTS }}" ]; then
               echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
-            else
-              echo "ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
             fi
           else
             echo "Setting up DEVELOPMENT environment"
-            cp .env.example .env
-            echo "DEBUG=True" >> .env
-            echo "DJANGO_SECRET_KEY=dev-build-key" >> .env
-            echo "ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
+            # 직접 .env 파일 생성 (기존 .env.example 사용하지 않음)
+            cat > .env << 'EOF'
+            DEBUG=True
+            DJANGO_SECRET_KEY=dev-build-key
+            ALLOWED_HOSTS=localhost,127.0.0.1
+            DB_ENGINE=django.db.backends.sqlite3
+            DB_NAME=db.sqlite3
+            LOG_LEVEL=INFO
+            EOF
           fi
           
           echo "Environment prepared. Preview (excluding sensitive data):"
@@ -547,7 +546,7 @@ jobs:
     name: Deploy to Render.com
     needs: [debug, build]
     runs-on: ubuntu-latest
-    if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: success() && github.ref == 'refs/heads/develop'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -556,7 +555,7 @@ jobs:
         run: |
           echo "================ DEPLOYMENT STARTED ================"
           echo "Branch: ${{ github.ref }}"
-          echo "Deployment type: ${{ github.ref == 'refs/heads/main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
+          echo "Deployment type: DEVELOPMENT"
           echo "Deployment time: $(date)"
       
       - name: Download build
@@ -643,42 +642,20 @@ jobs:
         run: |
           echo "Checking Render.com credentials..."
           
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Production credentials
-            if [ -z "${{ secrets.RENDER_PROD_SERVICE_ID }}" ]; then
-              echo "ERROR: RENDER_PROD_SERVICE_ID secret is not set!"
-              echo "credential_check=failure" >> $GITHUB_OUTPUT
-            elif [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
-              echo "ERROR: RENDER_API_KEY secret is not set!"
-              echo "credential_check=failure" >> $GITHUB_OUTPUT
-            else
-              echo "Production deployment credentials verified."
-              echo "credential_check=success" >> $GITHUB_OUTPUT
-            fi
+          # Development credentials
+          if [ -z "${{ secrets.RENDER_DEV_SERVICE_ID }}" ]; then
+            echo "ERROR: RENDER_DEV_SERVICE_ID secret is not set!"
+            echo "credential_check=failure" >> $GITHUB_OUTPUT
+          elif [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
+            echo "ERROR: RENDER_API_KEY secret is not set!"
+            echo "credential_check=failure" >> $GITHUB_OUTPUT
           else
-            # Development credentials
-            if [ -z "${{ secrets.RENDER_DEV_SERVICE_ID }}" ]; then
-              echo "ERROR: RENDER_DEV_SERVICE_ID secret is not set!"
-              echo "credential_check=failure" >> $GITHUB_OUTPUT
-            elif [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
-              echo "ERROR: RENDER_API_KEY secret is not set!"
-              echo "credential_check=failure" >> $GITHUB_OUTPUT
-            else
-              echo "Development deployment credentials verified."
-              echo "credential_check=success" >> $GITHUB_OUTPUT
-            fi
+            echo "Development deployment credentials verified."
+            echo "credential_check=success" >> $GITHUB_OUTPUT
           fi
       
-      - name: Deploy to Render.com Production
-        if: github.ref == 'refs/heads/main' && steps.check_creds.outputs.credential_check == 'success'
-        uses: JorgeLNJunior/render-deploy@v1.4.3
-        with:
-          service_id: ${{ secrets.RENDER_PROD_SERVICE_ID }}
-          api_key: ${{ secrets.RENDER_API_KEY }}
-          wait: true
-      
       - name: Deploy to Render.com Development
-        if: github.ref == 'refs/heads/develop' && steps.check_creds.outputs.credential_check == 'success'
+        if: steps.check_creds.outputs.credential_check == 'success'
         uses: JorgeLNJunior/render-deploy@v1.4.3
         with:
           service_id: ${{ secrets.RENDER_DEV_SERVICE_ID }}
@@ -697,7 +674,7 @@ jobs:
           echo "Deployment Report" > deployment-report/summary.txt
           echo "================" >> deployment-report/summary.txt
           echo "Branch: ${{ github.ref }}" >> deployment-report/summary.txt
-          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'PRODUCTION' || 'DEVELOPMENT' }}" >> deployment-report/summary.txt
+          echo "Environment: DEVELOPMENT" >> deployment-report/summary.txt
           echo "Status: ${{ job.status }}" >> deployment-report/summary.txt
           echo "Time: $(date)" >> deployment-report/summary.txt
           
