@@ -556,7 +556,7 @@ EOF
     name: Deploy to Render.com
     needs: [debug, build]
     runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/develop' && github.ref != 'refs/heads/production'
+    if: success() && github.ref == 'refs/heads/develop'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
