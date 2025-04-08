@@ -152,27 +152,25 @@ jobs:
           GROQ_API_KEY_VALUE="${{ secrets.GROQ_API_KEY }}"
           if [ -z "$GROQ_API_KEY_VALUE" ]; then GROQ_API_KEY_VALUE="test-groq-key"; fi
           
-          # 환경 변수 파일 생성
+          # 환경 변수 파일 생성 (각 줄을 개별적으로 생성)
           echo "Creating .env file from GitHub secrets and environment variables..."
-          cat > .env << EOF
-DEBUG="$DEBUG_VALUE"
-DJANGO_SECRET_KEY="$SECRET_KEY_VALUE"
-ALLOWED_HOSTS="$ALLOWED_HOSTS_VALUE"
-DB_ENGINE="$DB_ENGINE_VALUE"
-DB_NAME="$DB_NAME_VALUE"
-LOG_LEVEL="$LOG_LEVEL_VALUE"
-API_KEY="$API_KEY_VALUE"
-GROQ_API_KEY="$GROQ_API_KEY_VALUE"
-CSRF_USE_SESSIONS=False
-CSRF_COOKIE_HTTPONLY=False
-CSRF_COOKIE_SECURE=True
-CSRF_COOKIE_SAMESITE=Lax
-CSRF_TRUSTED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
-CORS_ALLOW_ALL_ORIGINS=False
-CORS_ALLOWED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
-ENABLE_CSRF_MIDDLEWARE=True
-ENVIRONMENT=testing
-EOF
+          echo "DEBUG=\"$DEBUG_VALUE\"" > .env
+          echo "DJANGO_SECRET_KEY=\"$SECRET_KEY_VALUE\"" >> .env
+          echo "ALLOWED_HOSTS=\"$ALLOWED_HOSTS_VALUE\"" >> .env
+          echo "DB_ENGINE=\"$DB_ENGINE_VALUE\"" >> .env
+          echo "DB_NAME=\"$DB_NAME_VALUE\"" >> .env
+          echo "LOG_LEVEL=\"$LOG_LEVEL_VALUE\"" >> .env
+          echo "API_KEY=\"$API_KEY_VALUE\"" >> .env
+          echo "GROQ_API_KEY=\"$GROQ_API_KEY_VALUE\"" >> .env
+          echo "CSRF_USE_SESSIONS=False" >> .env
+          echo "CSRF_COOKIE_HTTPONLY=False" >> .env
+          echo "CSRF_COOKIE_SECURE=True" >> .env
+          echo "CSRF_COOKIE_SAMESITE=Lax" >> .env
+          echo "CSRF_TRUSTED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com" >> .env
+          echo "CORS_ALLOW_ALL_ORIGINS=False" >> .env
+          echo "CORS_ALLOWED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com" >> .env
+          echo "ENABLE_CSRF_MIDDLEWARE=True" >> .env
+          echo "ENVIRONMENT=testing" >> .env
           
           echo ".env file created. Preview (excluding sensitive data):"
           grep -v "SECRET\|PASSWORD\|KEY" .env || echo "Failed to display .env file"
@@ -442,27 +440,25 @@ EOF
           GROQ_API_KEY_VALUE="${{ secrets.GROQ_API_KEY }}"
           if [ -z "$GROQ_API_KEY_VALUE" ]; then GROQ_API_KEY_VALUE="build-groq-key"; fi
           
-          # 환경 변수 파일 생성
+          # 환경 변수 파일 생성 (각 줄을 개별적으로 생성)
           echo "Creating .env file for build environment..."
-          cat > .env << EOF
-DEBUG="$DEBUG_VALUE"
-DJANGO_SECRET_KEY="$SECRET_KEY_VALUE"
-ALLOWED_HOSTS="$ALLOWED_HOSTS_VALUE"
-DB_ENGINE="$DB_ENGINE_VALUE"
-DB_NAME="$DB_NAME_VALUE"
-LOG_LEVEL="$LOG_LEVEL_VALUE"
-API_KEY="$API_KEY_VALUE"
-GROQ_API_KEY="$GROQ_API_KEY_VALUE"
-CSRF_USE_SESSIONS=False
-CSRF_COOKIE_HTTPONLY=False
-CSRF_COOKIE_SECURE=True
-CSRF_COOKIE_SAMESITE=Lax
-CSRF_TRUSTED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
-CORS_ALLOW_ALL_ORIGINS=False
-CORS_ALLOWED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
-ENABLE_CSRF_MIDDLEWARE=True
-ENVIRONMENT=build
-EOF
+          echo "DEBUG=\"$DEBUG_VALUE\"" > .env
+          echo "DJANGO_SECRET_KEY=\"$SECRET_KEY_VALUE\"" >> .env
+          echo "ALLOWED_HOSTS=\"$ALLOWED_HOSTS_VALUE\"" >> .env
+          echo "DB_ENGINE=\"$DB_ENGINE_VALUE\"" >> .env
+          echo "DB_NAME=\"$DB_NAME_VALUE\"" >> .env
+          echo "LOG_LEVEL=\"$LOG_LEVEL_VALUE\"" >> .env
+          echo "API_KEY=\"$API_KEY_VALUE\"" >> .env
+          echo "GROQ_API_KEY=\"$GROQ_API_KEY_VALUE\"" >> .env
+          echo "CSRF_USE_SESSIONS=False" >> .env
+          echo "CSRF_COOKIE_HTTPONLY=False" >> .env
+          echo "CSRF_COOKIE_SECURE=True" >> .env
+          echo "CSRF_COOKIE_SAMESITE=Lax" >> .env
+          echo "CSRF_TRUSTED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com" >> .env
+          echo "CORS_ALLOW_ALL_ORIGINS=False" >> .env
+          echo "CORS_ALLOWED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com" >> .env
+          echo "ENABLE_CSRF_MIDDLEWARE=True" >> .env
+          echo "ENVIRONMENT=build" >> .env
           
           echo "Environment prepared. Preview (excluding sensitive data):"
           grep -v "SECRET\|PASSWORD\|KEY" .env || echo "Failed to display .env file"
