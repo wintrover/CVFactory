@@ -410,41 +410,16 @@ jobs:
         run: |
           echo "================ PREPARING ENVIRONMENT ================"
           
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "Setting up PRODUCTION environment"
-            # 직접 .env 파일 생성 (기존 .env.example 사용하지 않음)
-            cat > .env << 'EOF'
-            DEBUG=False
-            ALLOWED_HOSTS=localhost,127.0.0.1
-            DB_ENGINE=django.db.backends.sqlite3
-            DB_NAME=db.sqlite3
-            LOG_LEVEL=INFO
-            EOF
-            
-            # Add secrets if available, otherwise use defaults
-            if [ -n "${{ secrets.DJANGO_SECRET_KEY }}" ]; then
-              echo "Using production secret key from secrets"
-              echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
-            else
-              echo "WARNING: Using default secret key - NOT SECURE for production!"
-              echo "DJANGO_SECRET_KEY=default-production-key-change-me" >> .env
-            fi
-            
-            if [ -n "${{ secrets.ALLOWED_HOSTS }}" ]; then
-              echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
-            fi
-          else
-            echo "Setting up DEVELOPMENT environment"
-            # 직접 .env 파일 생성 (기존 .env.example 사용하지 않음)
-            cat > .env << 'EOF'
-            DEBUG=True
-            DJANGO_SECRET_KEY=dev-build-key
-            ALLOWED_HOSTS=localhost,127.0.0.1
-            DB_ENGINE=django.db.backends.sqlite3
-            DB_NAME=db.sqlite3
-            LOG_LEVEL=INFO
-            EOF
-          fi
+          # 직접 .env 파일 생성
+          echo "Setting up DEVELOPMENT environment"
+          cat > .env << EOF
+          DEBUG=True
+          DJANGO_SECRET_KEY=dev-build-key
+          ALLOWED_HOSTS=localhost,127.0.0.1
+          DB_ENGINE=django.db.backends.sqlite3
+          DB_NAME=db.sqlite3
+          LOG_LEVEL=INFO
+          EOF
           
           echo "Environment prepared. Preview (excluding sensitive data):"
           grep -v "SECRET\|PASSWORD" .env
