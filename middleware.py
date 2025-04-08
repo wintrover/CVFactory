@@ -215,7 +215,7 @@ class SecurityHeadersMiddleware:
         # CSP(Content-Security-Policy) 헤더 추가
         csp_directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",  # 필요한 외부 스크립트 소스 추가
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",  # 필요한 외부 스크립트 소스 추가
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",  # 필요한 스타일 소스 추가
             "img-src 'self' data:",
             "font-src 'self' https://fonts.gstatic.com",

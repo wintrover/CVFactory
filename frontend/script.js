@@ -155,21 +155,27 @@ function generateResume() {
     // 로딩 화면 표시
     document.getElementById("loading-overlay").style.display = "flex";
 
-    let animationContainer = document.getElementById("lottie-container");
-    let animationPath = animationContainer.getAttribute("data-animation");
+    // Lottie 애니메이션 시도 (실패해도 계속 진행)
+    try {
+        let animationContainer = document.getElementById("lottie-container");
+        let animationPath = animationContainer.getAttribute("data-animation");
 
-    // 기존 애니메이션이 있다면 제거 후 새로 실행
-    if (animationContainer.lottieInstance) {
-      animationContainer.lottieInstance.destroy();
+        // 기존 애니메이션이 있다면 제거 후 새로 실행
+        if (animationContainer.lottieInstance) {
+            animationContainer.lottieInstance.destroy();
+        }
+
+        animationContainer.lottieInstance = lottie.loadAnimation({
+            container: animationContainer,
+            renderer: "svg",
+            loop: true,
+            autoplay: true,
+            path: animationPath
+        });
+    } catch (error) {
+        console.warn("Lottie 애니메이션 로드 실패:", error);
+        // 애니메이션 실패해도 계속 진행
     }
-
-    animationContainer.lottieInstance = lottie.loadAnimation({
-      container: animationContainer,
-      renderer: "svg",
-      loop: true,
-      autoplay: true,
-      path: animationPath
-    });
 
     // CSRF 토큰 가져오기
     fetch(`${API_BASE_URL}/api/create_resume/`, {
@@ -210,17 +216,22 @@ function generateResume() {
         }
     })
     .catch(error => {
-      console.error("에러 발생:", error);
-      alert("서버 요청 중 오류가 발생했습니다.");
+        console.error("에러 발생:", error);
+        alert("서버 요청 중 오류가 발생했습니다.");
     })
     .finally(() => {
-      // 로딩 화면 숨김
-      document.getElementById("loading-overlay").style.display = "none";
+        // 로딩 화면 숨김
+        document.getElementById("loading-overlay").style.display = "none";
 
-      // 애니메이션 종료
-      if (animationContainer.lottieInstance) {
-        animationContainer.lottieInstance.destroy();
-      }
+        // 애니메이션 종료 (있는 경우에만)
+        try {
+            let animationContainer = document.getElementById("lottie-container");
+            if (animationContainer && animationContainer.lottieInstance) {
+                animationContainer.lottieInstance.destroy();
+            }
+        } catch (error) {
+            console.warn("Lottie 애니메이션 종료 실패:", error);
+        }
     });
 }
 
