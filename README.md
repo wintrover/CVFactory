@@ -136,107 +136,45 @@ We use a simple and effective branching strategy to optimize development workflo
 1. **`develop` branch**: Integration branch for development work
    - All daily development work happens here
    - Use for testing and integration
-   - No pipelines are triggered when pushing to this branch
+   - Only test and build steps are executed when pushing to this branch
 
 2. **`production` branch**: Production-ready code only
    - Merge to production only when ready to deploy
-   - Pushing to production automatically triggers Render deployment to production server
-   - Helps minimize production pipeline usage costs
+   - Pushing to production automatically triggers deployment to Render.com
+   - Helps control when and where deployments occur
 
-#### Development Workflow
+### Development Workflow Guidelines
 
-```bash
-# Do development work on develop branch
-git checkout develop
+1. **Development Phase**
+   ```bash
+   git checkout develop
+   # Make your changes
+   git add .
+   git commit -m "Feature implementation"
+   git push origin develop
+   ```
+   - This triggers tests and builds but no deployment
 
-# Make changes and commit
-git add .
-git commit -m "Your changes"
-git push origin develop  # No deployment triggered
+2. **Deployment Phase**
+   ```bash
+   git checkout production
+   git merge develop
+   git push origin production
+   ```
+   - This triggers tests, builds, and automatic deployment
+   
+3. **Return to Development**
+   ```bash
+   git checkout develop
+   ```
 
-# When ready to deploy to production
-git checkout production
-git merge develop
-git push origin production  # Triggers deployment to production server
-git checkout develop  # Return to develop branch
-```
+### Security Notes
 
-This approach allows frequent commits during development while controlling when deployments occur.
+- Keep all sensitive information in GitHub Secrets, never in the code
+- Always include `.env` files in `.gitignore`
+- Only push stable code to the production branch
+- Regularly check GitHub Actions logs for any issues
 
-### Setting up CI/CD
+## License
 
-To set up CI/CD with GitHub Actions, add the following secrets to your GitHub repository:
-
-1. **Deployment Credentials**
-   - `RENDER_API_KEY`: Your Render.com API key
-   - `RENDER_DEV_SERVICE_ID`: The service ID for your development environment
-   - `RENDER_PROD_SERVICE_ID`: The service ID for your production environment
-
-2. **Environment Variables**
-   - `DJANGO_SECRET_KEY`: Django security key
-   - `ALLOWED_HOSTS`: Allowed hosts list (comma-separated)
-   - `GOOGLE_CLIENT_ID`: Google OAuth client ID
-   - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
-   - `GROQ_API_KEY`: Groq API access key
-
-## CI/CD
-
-이 프로젝트는 GitHub Actions를 사용하여 CI/CD 파이프라인을 설정했습니다:
-
-- **develop** 브랜치: 테스트와 빌드만 실행 (배포 없음)
-- **production** 브랜치: 테스트, 빌드, Render.com 배포 자동 실행
-
-### 주요 작업 요약
-
-1. **GitHub Secrets 설정**
-   - GitHub 저장소의 설정 → Secrets and variables → Actions에서 다음 시크릿 등록:
-     - `API_KEY`: API 액세스 키
-     - `DJANGO_SECRET_KEY`: Django 암호화 키
-     - `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET`: Google OAuth 인증
-     - `GROQ_API_KEY`: Groq API 액세스 키
-     - `RENDER_API_KEY`: Render.com API 키
-     - `RENDER_PROD_SERVICE_ID`: Render.com 서비스 ID (프로덕션 환경)
-
-2. **CI/CD 워크플로우 조정**
-   - .github/workflows/ci-cd.yml 파일에서 다음 설정:
-     - `production` 브랜치에 푸시 시에만 Render.com 배포 실행 
-     - 환경 변수를 하드코딩하는 대신 GitHub Secrets 사용
-     - 배포 자동화를 위한 JorgeLNJunior/render-deploy 액션 활용
-
-3. **배포 프로세스**
-   - 워크플로우는 다음 단계로 진행됩니다:
-     - 환경 디버깅: 시스템 정보 및 환경 검증
-     - Django 테스트: 애플리케이션 테스트 실행
-     - 빌드: 애플리케이션 빌드 및 정적 파일 수집
-     - 배포: production 브랜치인 경우에만 Render.com에 자동 배포
-
-4. **Render.com 설정**
-   - Render.com 대시보드에서 서비스 ID 확인
-   - API 키 생성 및 GitHub Secrets에 등록
-   - 환경 변수 설정 및 관리
-
-### 개발 워크플로우 가이드
-
-```bash
-# develop 브랜치에서 개발 작업
-git checkout develop
-
-# 변경사항 커밋 및 푸시 (테스트와 빌드만 실행, 배포 안 됨)
-git add .
-git commit -m "기능 개발 완료"
-git push origin develop
-
-# 배포 준비가 완료되면 production 브랜치로 병합
-git checkout production
-git merge develop
-git push origin production  # 이 시점에 Render.com에 자동 배포됨
-
-# 다시 develop 브랜치로 돌아가 작업 계속
-git checkout develop
-```
-
-### 주의사항
-
-- production 브랜치는 안정적인 코드만 푸시해야 합니다
-- GitHub Secrets 정보는 보안을 위해 절대 코드에 직접 포함하지 마세요
-- .env 파일은 항상 .gitignore에 포함하여 민감한 정보가 저장소에 노출되지 않도록 합니다
+This project is licensed under the MIT License - see the LICENSE file for details.
