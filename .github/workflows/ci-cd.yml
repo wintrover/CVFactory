@@ -381,12 +381,11 @@ EOF
           name: test-results
           path: test-results
 
-  # ======== Django 빌드 작업 ========
+  # ======== 빌드 작업 ========
   build:
-    name: Build Django Application
+    name: Build Application
     needs: [debug, test]
     runs-on: ubuntu-latest
-    if: ${{ !failure() }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -534,6 +533,84 @@ EOF
           name: django-build
           path: build/
 
+  # ======== 배포 시뮬레이션 작업 (develop 브랜치용) ========
+  deploy_simulation:
+    name: Deploy Simulation
+    needs: [debug, build]
+    runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/develop'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up environment
+        run: |
+          echo "================ DEPLOYMENT SIMULATION STARTED ================"
+          echo "Branch: ${{ github.ref }}"
+          echo "Simulation type: PRODUCTION-LIKE"
+          echo "Simulation time: $(date)"
+      
+      - name: Verify credentials for simulation
+        id: check_creds
+        run: |
+          echo "Checking Render.com credentials for simulation..."
+          
+          # Simulation credentials check
+          if [ -z "${{ secrets.RENDER_PROD_SERVICE_ID }}" ]; then
+            echo "WARNING: RENDER_PROD_SERVICE_ID secret is not set! This would fail in production."
+            echo "credential_check=warning" >> $GITHUB_OUTPUT
+          elif [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
+            echo "WARNING: RENDER_API_KEY secret is not set! This would fail in production."
+            echo "credential_check=warning" >> $GITHUB_OUTPUT
+          else
+            echo "Production deployment credentials verified for simulation."
+            echo "credential_check=success" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Simulate Render.com deployment
+        run: |
+          echo "Simulating deployment process to Render.com..."
+          echo "Step 1: Preparing application for deployment..."
+          sleep 2
+          
+          echo "Step 2: Building application in production mode..."
+          if [ -f requirements.txt ]; then
+            echo "Installing production dependencies (simulation)..."
+            # 실제로 설치하진 않음, 시뮬레이션만 함
+          fi
+          sleep 2
+          
+          echo "Step 3: Running database migrations (simulation)..."
+          # 실제로 마이그레이션 실행하지 않음, 시뮬레이션만 함
+          sleep 2
+          
+          echo "Step 4: Starting application with production settings (simulation)..."
+          sleep 2
+          
+          echo "Deployment simulation completed successfully!"
+      
+      - name: Create deployment simulation report
+        run: |
+          mkdir -p deployment-simulation-report
+          
+          echo "================" > deployment-simulation-report/summary.txt
+          echo "DEPLOYMENT SIMULATION REPORT" >> deployment-simulation-report/summary.txt
+          echo "================" >> deployment-simulation-report/summary.txt
+          echo "Branch: ${{ github.ref }}" >> deployment-simulation-report/summary.txt
+          echo "Environment: SIMULATED PRODUCTION" >> deployment-simulation-report/summary.txt
+          echo "Status: Simulated successfully" >> deployment-simulation-report/summary.txt
+          echo "Time: $(date)" >> deployment-simulation-report/summary.txt
+          echo "================" >> deployment-simulation-report/summary.txt
+          echo "NOTE: This was a simulation only. No actual deployment occurred." >> deployment-simulation-report/summary.txt
+          
+          cat deployment-simulation-report/summary.txt
+      
+      - name: Upload deployment simulation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-simulation-report
+          path: deployment-simulation-report
+  
   # ======== Render.com 배포 작업 ========
   deploy:
     name: Deploy to Render.com
@@ -744,7 +821,7 @@ EOF
                 - **워크플로우:** ${context.workflow}
                 - **커밋:** ${context.sha}
                 - **브랜치:** ${context.ref}
-                - **실패한 작업:** ${failedJobs}
+                - **실행한 작업:** ${failedJobs}
                 - **상세 정보:** https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
                 
                 **작업 결과:**
@@ -767,4 +844,41 @@ EOF
           echo "Final status: ${{ steps.status.outputs.workflow_status }}"
           echo "Job results:"
           echo "${{ steps.status.outputs.job_results }}"
-          echo "Workflow URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" 
+          echo "Workflow URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  # ======== 워크플로우 결과 요약 ========
+  workflow_summary:
+    name: Workflow Summary
+    needs: [debug, test, build, deploy_simulation, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate workflow summary
+        run: |
+          echo "### 워크플로우 실행 결과 요약" > workflow-summary.txt
+          echo "- 브랜치: ${{ github.ref }}" >> workflow-summary.txt
+          echo "- 커밋: ${{ github.sha }}" >> workflow-summary.txt
+          echo "- 실행 시간: $(date)" >> workflow-summary.txt
+          echo "" >> workflow-summary.txt
+          
+          echo "#### 작업 결과" >> workflow-summary.txt
+          results="- Debug: ${{ needs.debug.result }}\n"
+          results+="- Test: ${{ needs.test.result }}\n"
+          results+="- Build: ${{ needs.build.result }}\n"
+          
+          # 브랜치에 따라 다른 정보 추가
+          if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            results+="- Deploy Simulation: ${{ needs.deploy_simulation.result }}\n"
+          elif [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
+            results+="- Deploy: ${{ needs.deploy.result }}\n"
+          fi
+          
+          echo -e "$results" >> workflow-summary.txt
+          
+          cat workflow-summary.txt
+      
+      - name: Upload workflow summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-summary
+          path: workflow-summary.txt 
