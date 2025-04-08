@@ -142,14 +142,14 @@ jobs:
           # 환경 변수 파일 생성
           echo "Creating .env file from GitHub secrets and environment variables..."
           cat > .env << EOF
-DEBUG=${{ env.DJANGO_DEBUG }}
-DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'test-secret-key-for-ci' }}
-ALLOWED_HOSTS=${{ env.DJANGO_ALLOWED_HOSTS }}
-DB_ENGINE=${{ env.DJANGO_DB_ENGINE }}
-DB_NAME=${{ env.DJANGO_DB_NAME }}
-LOG_LEVEL=${{ env.LOG_LEVEL }}
-API_KEY=${{ secrets.API_KEY || 'test-api-key' }}
-GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'test-groq-key' }}
+DEBUG="${{ env.DJANGO_DEBUG }}"
+DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'test-secret-key-for-ci' }}"
+ALLOWED_HOSTS="${{ env.DJANGO_ALLOWED_HOSTS }}"
+DB_ENGINE="${{ env.DJANGO_DB_ENGINE }}"
+DB_NAME="${{ env.DJANGO_DB_NAME }}"
+LOG_LEVEL="${{ env.LOG_LEVEL }}"
+API_KEY="${{ secrets.API_KEY || 'test-api-key' }}"
+GROQ_API_KEY="${{ secrets.GROQ_API_KEY || 'test-groq-key' }}"
 CSRF_USE_SESSIONS=False
 CSRF_COOKIE_HTTPONLY=False
 CSRF_COOKIE_SECURE=True
@@ -419,14 +419,14 @@ EOF
           # 환경 변수 파일 생성
           echo "Creating .env file for build environment..."
           cat > .env << EOF
-DEBUG=${{ env.DJANGO_DEBUG }}
-DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'dev-build-key' }}
-ALLOWED_HOSTS=${{ env.DJANGO_ALLOWED_HOSTS }}
-DB_ENGINE=${{ env.DJANGO_DB_ENGINE }}
-DB_NAME=${{ env.DJANGO_DB_NAME }}
-LOG_LEVEL=${{ env.LOG_LEVEL }}
-API_KEY=${{ secrets.API_KEY || 'build-api-key' }}
-GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'build-groq-key' }}
+DEBUG="${{ env.DJANGO_DEBUG }}"
+DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'dev-build-key' }}"
+ALLOWED_HOSTS="${{ env.DJANGO_ALLOWED_HOSTS }}"
+DB_ENGINE="${{ env.DJANGO_DB_ENGINE }}"
+DB_NAME="${{ env.DJANGO_DB_NAME }}"
+LOG_LEVEL="${{ env.LOG_LEVEL }}"
+API_KEY="${{ secrets.API_KEY || 'build-api-key' }}"
+GROQ_API_KEY="${{ secrets.GROQ_API_KEY || 'build-groq-key' }}"
 CSRF_USE_SESSIONS=False
 CSRF_COOKIE_HTTPONLY=False
 CSRF_COOKIE_SECURE=True
