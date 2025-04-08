@@ -134,19 +134,33 @@ jobs:
         run: |
           echo "================ ENVIRONMENT SETUP ================"
           
-          echo "Creating .env file for testing..."
-          # 직접 .env 파일 생성 (기존 .env.example 사용하지 않음)
-          cat > .env << 'EOF'
-          DEBUG=True
-          DJANGO_SECRET_KEY=test-secret-key-for-ci
-          ALLOWED_HOSTS=localhost,127.0.0.1,testserver
-          DB_ENGINE=django.db.backends.sqlite3
-          DB_NAME=db.sqlite3
-          LOG_LEVEL=INFO
-          EOF
-          
-          echo ".env file created. Preview:"
-          grep -v "SECRET\|PASSWORD" .env
+          echo "Using existing .env.development file for testing..."
+          if [ -f "env_configs/.env.development" ]; then
+            cp env_configs/.env.development .env
+            echo ".env file created from env_configs/.env.development."
+            
+            # 테스트용 설정 추가
+            echo "Adding test-specific settings..."
+            echo "DJANGO_SECRET_KEY=test-secret-key-for-ci" >> .env
+            echo "ALLOWED_HOSTS=localhost,127.0.0.1,testserver" >> .env
+            
+            echo ".env file configured. Preview:"
+            grep -v "SECRET\|PASSWORD" .env
+          else
+            echo "WARNING: env_configs/.env.development not found!"
+            echo "Creating a default .env file for testing..."
+            cat > .env << EOF
+            DEBUG=True
+            DJANGO_SECRET_KEY=test-secret-key-for-ci
+            ALLOWED_HOSTS=localhost,127.0.0.1,testserver
+            DB_ENGINE=django.db.backends.sqlite3
+            DB_NAME=db.sqlite3
+            LOG_LEVEL=INFO
+            EOF
+            
+            echo "Default .env file created. Preview:"
+            grep -v "SECRET\|PASSWORD" .env
+          fi
       
       - name: Django verification
         id: django_check
@@ -239,7 +253,7 @@ jobs:
         if: steps.django_check.outputs.django_check == 'success'
         run: |
           echo "================ GROQ CLIENT TEST ================"
-          echo "Testing Groq client initialization to detect proxies parameter issue..."
+          echo "Testing Groq client initialization..."
           
           # Get Groq library info
           python -c "import groq; print(f'Groq 버전: {getattr(groq, \"__version__\", \"버전 정보 없음\")}'); print(f'Groq 모듈 경로: {getattr(groq, \"__file__\", \"경로 정보 없음\")}')"
@@ -257,10 +271,6 @@ jobs:
           client_params = inspect.signature(groq.Client.__init__).parameters
           print([param for param in client_params.keys()])
           
-          # proxies 파라미터 확인
-          has_proxies = 'proxies' in client_params
-          print(f"proxies 파라미터 존재함: {has_proxies}")
-          
           # 상속 구조 확인
           print("\n클래스 상속 구조:")
           mro = groq.Client.__mro__
@@ -271,22 +281,10 @@ jobs:
           try:
               client = groq.Client(api_key="테스트키")
               print("✅ 기본 초기화 성공")
-          except TypeError as e:
+          except Exception as e:
               print(f"❌ 초기화 실패: {e}")
-              if "unexpected keyword argument 'proxies'" in str(e):
-                  print("✱ proxies 파라미터 문제 감지됨")
-                  print("\n대체 방식 테스트:")
-                  try:
-                      # client_kwargs에서 proxies 제외
-                      valid_params = {name: param for name, param in client_params.items() if name not in ['self', 'proxies']}
-                      filtered_kwargs = {"api_key": "테스트키"}
-                      filtered_kwargs = {k: v for k, v in filtered_kwargs.items() if k in valid_params}
-                      client = groq.Client(**filtered_kwargs)
-                      print("✅ 대체 방식 초기화 성공")
-                  except Exception as e2:
-                      print(f"❌ 대체 방식도 실패: {e2}")
-              else:
-                  print(f"✱ 다른 종류의 오류: {e}")
+              # 실패 시 명확하게 종료
+              sys.exit(1)
           
           print("\n테스트 완료!")
           EOF
@@ -300,6 +298,7 @@ jobs:
           import os
           import django
           import groq
+          import sys
           
           # Django 환경 설정
           os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cvfactory.settings')
@@ -312,10 +311,12 @@ jobs:
               print("✅ Django 환경에서 초기화 성공")
           except Exception as e:
               print(f"❌ Django 환경에서 초기화 실패: {e}")
+              # 실패 시 명확하게 종료
+              sys.exit(1)
           EOF
           
           # Run in Django environment
-          python test_groq_django.py || echo "Django environment test failed, but continuing..."
+          python test_groq_django.py
       
       - name: Run tests
         if: steps.django_check.outputs.django_check == 'success'
@@ -410,19 +411,30 @@ jobs:
         run: |
           echo "================ PREPARING ENVIRONMENT ================"
           
-          # 직접 .env 파일 생성
-          echo "Setting up DEVELOPMENT environment"
-          cat > .env << EOF
-          DEBUG=True
-          DJANGO_SECRET_KEY=dev-build-key
-          ALLOWED_HOSTS=localhost,127.0.0.1
-          DB_ENGINE=django.db.backends.sqlite3
-          DB_NAME=db.sqlite3
-          LOG_LEVEL=INFO
-          EOF
-          
-          echo "Environment prepared. Preview (excluding sensitive data):"
-          grep -v "SECRET\|PASSWORD" .env
+          echo "Using existing env_configs/.env.development file..."
+          if [ -f "env_configs/.env.development" ]; then
+            cp env_configs/.env.development .env
+            
+            # 빌드용 설정 수정
+            echo "DJANGO_SECRET_KEY=dev-build-key" >> .env
+            
+            echo "Environment prepared from env_configs/.env.development. Preview (excluding sensitive data):"
+            grep -v "SECRET\|PASSWORD" .env
+          else
+            echo "WARNING: env_configs/.env.development not found!"
+            echo "Creating a default .env file..."
+            cat > .env << EOF
+            DEBUG=True
+            DJANGO_SECRET_KEY=dev-build-key
+            ALLOWED_HOSTS=localhost,127.0.0.1
+            DB_ENGINE=django.db.backends.sqlite3
+            DB_NAME=db.sqlite3
+            LOG_LEVEL=INFO
+            EOF
+            
+            echo "Default .env file created. Preview:"
+            grep -v "SECRET\|PASSWORD" .env
+          fi
       
       - name: Collect static files
         run: |
