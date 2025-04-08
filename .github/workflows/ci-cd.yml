@@ -16,6 +16,11 @@ permissions:
 env:
   LOG_LEVEL: debug
   PYTHON_VERSION: '3.9.18'
+  DJANGO_DEBUG: 'True'
+  DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
+  DJANGO_DB_ENGINE: 'django.db.backends.sqlite3'
+  DJANGO_DB_NAME: 'db.sqlite3'
+  # 비밀 정보가 아닌 기본 설정들
 
 jobs:
   # ======== 환경 디버깅 작업 ========
@@ -134,52 +139,30 @@ jobs:
         run: |
           echo "================ ENVIRONMENT SETUP ================"
           
-          # 현재 디렉토리 구조 확인
-          echo "Current directory structure:"
-          find . -maxdepth 2 -type d | sort
-          
-          # env_configs 디렉토리 확인
-          echo "Checking env_configs directory:"
-          if [ -d "env_configs" ]; then
-            echo "env_configs directory exists. Contents:"
-            ls -la env_configs/
-          else
-            echo "ERROR: env_configs directory not found!"
-            # 디렉토리 생성
-            mkdir -p env_configs
-            echo "Created env_configs directory."
-          fi
-          
-          echo "Using existing .env.production file for testing..."
-          if [ -f "env_configs/.env.production" ]; then
-            cp env_configs/.env.production .env
-            echo ".env file created from env_configs/.env.production."
-            
-            # 테스트용 설정 추가
-            echo "Adding test-specific settings..."
-            echo "DJANGO_SECRET_KEY=test-secret-key-for-ci" >> .env
-            echo "ALLOWED_HOSTS=localhost,127.0.0.1,testserver" >> .env
-            echo "DEBUG=True" >> .env
-            
-            echo ".env file configured. Preview:"
-            grep -v "SECRET\|PASSWORD" .env || echo "Failed to grep .env file"
-          else
-            echo "WARNING: env_configs/.env.production not found!"
-            echo "Creating a default .env file for testing..."
-            # 여기서 생성하는 .env 파일에 올바른 형식의
-            # 설정이 포함되어 있는지 확인
-            cat > .env << 'EOF'
-DEBUG=True
-DJANGO_SECRET_KEY=test-secret-key-for-ci
-ALLOWED_HOSTS=localhost,127.0.0.1,testserver
-DB_ENGINE=django.db.backends.sqlite3
-DB_NAME=db.sqlite3
-LOG_LEVEL=INFO
+          # 환경 변수 파일 생성
+          echo "Creating .env file from GitHub secrets and environment variables..."
+          cat > .env << EOF
+DEBUG=${{ env.DJANGO_DEBUG }}
+DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'test-secret-key-for-ci' }}
+ALLOWED_HOSTS=${{ env.DJANGO_ALLOWED_HOSTS }}
+DB_ENGINE=${{ env.DJANGO_DB_ENGINE }}
+DB_NAME=${{ env.DJANGO_DB_NAME }}
+LOG_LEVEL=${{ env.LOG_LEVEL }}
+API_KEY=${{ secrets.API_KEY || 'test-api-key' }}
+GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'test-groq-key' }}
+CSRF_USE_SESSIONS=False
+CSRF_COOKIE_HTTPONLY=False
+CSRF_COOKIE_SECURE=True
+CSRF_COOKIE_SAMESITE=Lax
+CSRF_TRUSTED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
+CORS_ALLOW_ALL_ORIGINS=False
+CORS_ALLOWED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
+ENABLE_CSRF_MIDDLEWARE=True
+ENVIRONMENT=testing
 EOF
-            
-            echo "Default .env file created. Preview:"
-            cat .env | grep -v "SECRET\|PASSWORD" || echo "Failed to display .env file"
-          fi
+          
+          echo ".env file created. Preview (excluding sensitive data):"
+          grep -v "SECRET\|PASSWORD\|KEY" .env || echo "Failed to display .env file"
           
           # 환경 변수 파일 권한 확인
           echo "Checking .env file permissions:"
@@ -434,30 +417,30 @@ EOF
         run: |
           echo "================ PREPARING ENVIRONMENT ================"
           
-          echo "Using existing env_configs/.env.production file..."
-          if [ -f "env_configs/.env.production" ]; then
-            cp env_configs/.env.production .env
-            
-            # 빌드용 설정 수정
-            echo "DJANGO_SECRET_KEY=dev-build-key" >> .env
-            
-            echo "Environment prepared from env_configs/.env.production. Preview (excluding sensitive data):"
-            grep -v "SECRET\|PASSWORD" .env || echo "Failed to display .env file"
-          else
-            echo "WARNING: env_configs/.env.production not found!"
-            echo "Creating a default .env file..."
-            cat > .env << 'EOF'
-DEBUG=True
-DJANGO_SECRET_KEY=dev-build-key
-ALLOWED_HOSTS=localhost,127.0.0.1
-DB_ENGINE=django.db.backends.sqlite3
-DB_NAME=db.sqlite3
-LOG_LEVEL=INFO
+          # 환경 변수 파일 생성
+          echo "Creating .env file for build environment..."
+          cat > .env << EOF
+DEBUG=${{ env.DJANGO_DEBUG }}
+DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'dev-build-key' }}
+ALLOWED_HOSTS=${{ env.DJANGO_ALLOWED_HOSTS }}
+DB_ENGINE=${{ env.DJANGO_DB_ENGINE }}
+DB_NAME=${{ env.DJANGO_DB_NAME }}
+LOG_LEVEL=${{ env.LOG_LEVEL }}
+API_KEY=${{ secrets.API_KEY || 'build-api-key' }}
+GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'build-groq-key' }}
+CSRF_USE_SESSIONS=False
+CSRF_COOKIE_HTTPONLY=False
+CSRF_COOKIE_SECURE=True
+CSRF_COOKIE_SAMESITE=Lax
+CSRF_TRUSTED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
+CORS_ALLOW_ALL_ORIGINS=False
+CORS_ALLOWED_ORIGINS=https://cvfactory.dev,https://www.cvfactory.dev,https://cvfactory.onrender.com
+ENABLE_CSRF_MIDDLEWARE=True
+ENVIRONMENT=build
 EOF
-            
-            echo "Default .env file created. Preview:"
-            grep -v "SECRET\|PASSWORD" .env || echo "Failed to display .env file"
-          fi
+          
+          echo "Environment prepared. Preview (excluding sensitive data):"
+          grep -v "SECRET\|PASSWORD\|KEY" .env || echo "Failed to display .env file"
       
       - name: Collect static files
         run: |
