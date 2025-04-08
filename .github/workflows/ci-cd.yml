@@ -134,6 +134,22 @@ jobs:
         run: |
           echo "================ ENVIRONMENT SETUP ================"
           
+          # 현재 디렉토리 구조 확인
+          echo "Current directory structure:"
+          find . -maxdepth 2 -type d | sort
+          
+          # env_configs 디렉토리 확인
+          echo "Checking env_configs directory:"
+          if [ -d "env_configs" ]; then
+            echo "env_configs directory exists. Contents:"
+            ls -la env_configs/
+          else
+            echo "ERROR: env_configs directory not found!"
+            # 디렉토리 생성
+            mkdir -p env_configs
+            echo "Created env_configs directory."
+          fi
+          
           echo "Using existing .env.development file for testing..."
           if [ -f "env_configs/.env.development" ]; then
             cp env_configs/.env.development .env
@@ -145,22 +161,28 @@ jobs:
             echo "ALLOWED_HOSTS=localhost,127.0.0.1,testserver" >> .env
             
             echo ".env file configured. Preview:"
-            grep -v "SECRET\|PASSWORD" .env
+            grep -v "SECRET\|PASSWORD" .env || echo "Failed to grep .env file"
           else
             echo "WARNING: env_configs/.env.development not found!"
             echo "Creating a default .env file for testing..."
-            cat > .env << EOF
-            DEBUG=True
-            DJANGO_SECRET_KEY=test-secret-key-for-ci
-            ALLOWED_HOSTS=localhost,127.0.0.1,testserver
-            DB_ENGINE=django.db.backends.sqlite3
-            DB_NAME=db.sqlite3
-            LOG_LEVEL=INFO
-            EOF
+            # 여기서 생성하는 .env 파일에 올바른 형식의
+            # 설정이 포함되어 있는지 확인
+            cat > .env << 'EOF'
+DEBUG=True
+DJANGO_SECRET_KEY=test-secret-key-for-ci
+ALLOWED_HOSTS=localhost,127.0.0.1,testserver
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
+LOG_LEVEL=INFO
+EOF
             
             echo "Default .env file created. Preview:"
-            grep -v "SECRET\|PASSWORD" .env
+            cat .env | grep -v "SECRET\|PASSWORD" || echo "Failed to display .env file"
           fi
+          
+          # 환경 변수 파일 권한 확인
+          echo "Checking .env file permissions:"
+          ls -la .env || echo ".env file not found after creation"
       
       - name: Django verification
         id: django_check
@@ -419,21 +441,21 @@ jobs:
             echo "DJANGO_SECRET_KEY=dev-build-key" >> .env
             
             echo "Environment prepared from env_configs/.env.development. Preview (excluding sensitive data):"
-            grep -v "SECRET\|PASSWORD" .env
+            grep -v "SECRET\|PASSWORD" .env || echo "Failed to display .env file"
           else
             echo "WARNING: env_configs/.env.development not found!"
             echo "Creating a default .env file..."
-            cat > .env << EOF
-            DEBUG=True
-            DJANGO_SECRET_KEY=dev-build-key
-            ALLOWED_HOSTS=localhost,127.0.0.1
-            DB_ENGINE=django.db.backends.sqlite3
-            DB_NAME=db.sqlite3
-            LOG_LEVEL=INFO
-            EOF
+            cat > .env << 'EOF'
+DEBUG=True
+DJANGO_SECRET_KEY=dev-build-key
+ALLOWED_HOSTS=localhost,127.0.0.1
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
+LOG_LEVEL=INFO
+EOF
             
             echo "Default .env file created. Preview:"
-            grep -v "SECRET\|PASSWORD" .env
+            grep -v "SECRET\|PASSWORD" .env || echo "Failed to display .env file"
           fi
       
       - name: Collect static files
