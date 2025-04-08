@@ -139,17 +139,30 @@ jobs:
         run: |
           echo "================ ENVIRONMENT SETUP ================"
           
+          # 환경 변수 먼저 설정
+          DEBUG_VALUE="${{ env.DJANGO_DEBUG }}"
+          SECRET_KEY_VALUE="${{ secrets.DJANGO_SECRET_KEY }}"
+          if [ -z "$SECRET_KEY_VALUE" ]; then SECRET_KEY_VALUE="test-secret-key-for-ci"; fi
+          ALLOWED_HOSTS_VALUE="${{ env.DJANGO_ALLOWED_HOSTS }}"
+          DB_ENGINE_VALUE="${{ env.DJANGO_DB_ENGINE }}"
+          DB_NAME_VALUE="${{ env.DJANGO_DB_NAME }}"
+          LOG_LEVEL_VALUE="${{ env.LOG_LEVEL }}"
+          API_KEY_VALUE="${{ secrets.API_KEY }}"
+          if [ -z "$API_KEY_VALUE" ]; then API_KEY_VALUE="test-api-key"; fi
+          GROQ_API_KEY_VALUE="${{ secrets.GROQ_API_KEY }}"
+          if [ -z "$GROQ_API_KEY_VALUE" ]; then GROQ_API_KEY_VALUE="test-groq-key"; fi
+          
           # 환경 변수 파일 생성
           echo "Creating .env file from GitHub secrets and environment variables..."
           cat > .env << EOF
-DEBUG="${{ env.DJANGO_DEBUG }}"
-DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'test-secret-key-for-ci' }}"
-ALLOWED_HOSTS="${{ env.DJANGO_ALLOWED_HOSTS }}"
-DB_ENGINE="${{ env.DJANGO_DB_ENGINE }}"
-DB_NAME="${{ env.DJANGO_DB_NAME }}"
-LOG_LEVEL="${{ env.LOG_LEVEL }}"
-API_KEY="${{ secrets.API_KEY || 'test-api-key' }}"
-GROQ_API_KEY="${{ secrets.GROQ_API_KEY || 'test-groq-key' }}"
+DEBUG="$DEBUG_VALUE"
+DJANGO_SECRET_KEY="$SECRET_KEY_VALUE"
+ALLOWED_HOSTS="$ALLOWED_HOSTS_VALUE"
+DB_ENGINE="$DB_ENGINE_VALUE"
+DB_NAME="$DB_NAME_VALUE"
+LOG_LEVEL="$LOG_LEVEL_VALUE"
+API_KEY="$API_KEY_VALUE"
+GROQ_API_KEY="$GROQ_API_KEY_VALUE"
 CSRF_USE_SESSIONS=False
 CSRF_COOKIE_HTTPONLY=False
 CSRF_COOKIE_SECURE=True
@@ -416,17 +429,30 @@ EOF
         run: |
           echo "================ PREPARING ENVIRONMENT ================"
           
+          # 환경 변수 먼저 설정
+          DEBUG_VALUE="${{ env.DJANGO_DEBUG }}"
+          SECRET_KEY_VALUE="${{ secrets.DJANGO_SECRET_KEY }}"
+          if [ -z "$SECRET_KEY_VALUE" ]; then SECRET_KEY_VALUE="dev-build-key"; fi
+          ALLOWED_HOSTS_VALUE="${{ env.DJANGO_ALLOWED_HOSTS }}"
+          DB_ENGINE_VALUE="${{ env.DJANGO_DB_ENGINE }}"
+          DB_NAME_VALUE="${{ env.DJANGO_DB_NAME }}"
+          LOG_LEVEL_VALUE="${{ env.LOG_LEVEL }}"
+          API_KEY_VALUE="${{ secrets.API_KEY }}"
+          if [ -z "$API_KEY_VALUE" ]; then API_KEY_VALUE="build-api-key"; fi
+          GROQ_API_KEY_VALUE="${{ secrets.GROQ_API_KEY }}"
+          if [ -z "$GROQ_API_KEY_VALUE" ]; then GROQ_API_KEY_VALUE="build-groq-key"; fi
+          
           # 환경 변수 파일 생성
           echo "Creating .env file for build environment..."
           cat > .env << EOF
-DEBUG="${{ env.DJANGO_DEBUG }}"
-DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'dev-build-key' }}"
-ALLOWED_HOSTS="${{ env.DJANGO_ALLOWED_HOSTS }}"
-DB_ENGINE="${{ env.DJANGO_DB_ENGINE }}"
-DB_NAME="${{ env.DJANGO_DB_NAME }}"
-LOG_LEVEL="${{ env.LOG_LEVEL }}"
-API_KEY="${{ secrets.API_KEY || 'build-api-key' }}"
-GROQ_API_KEY="${{ secrets.GROQ_API_KEY || 'build-groq-key' }}"
+DEBUG="$DEBUG_VALUE"
+DJANGO_SECRET_KEY="$SECRET_KEY_VALUE"
+ALLOWED_HOSTS="$ALLOWED_HOSTS_VALUE"
+DB_ENGINE="$DB_ENGINE_VALUE"
+DB_NAME="$DB_NAME_VALUE"
+LOG_LEVEL="$LOG_LEVEL_VALUE"
+API_KEY="$API_KEY_VALUE"
+GROQ_API_KEY="$GROQ_API_KEY_VALUE"
 CSRF_USE_SESSIONS=False
 CSRF_COOKIE_HTTPONLY=False
 CSRF_COOKIE_SECURE=True
