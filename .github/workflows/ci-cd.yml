@@ -539,7 +539,7 @@ EOF
     name: Deploy to Render.com
     needs: [debug, build]
     runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/develop'
+    if: success() && github.ref == 'refs/heads/production'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -548,7 +548,7 @@ EOF
         run: |
           echo "================ DEPLOYMENT STARTED ================"
           echo "Branch: ${{ github.ref }}"
-          echo "Deployment type: DEVELOPMENT"
+          echo "Deployment type: PRODUCTION"
           echo "Deployment time: $(date)"
       
       - name: Download build
@@ -635,23 +635,23 @@ EOF
         run: |
           echo "Checking Render.com credentials..."
           
-          # Development credentials
-          if [ -z "${{ secrets.RENDER_DEV_SERVICE_ID }}" ]; then
-            echo "ERROR: RENDER_DEV_SERVICE_ID secret is not set!"
+          # Production credentials
+          if [ -z "${{ secrets.RENDER_PROD_SERVICE_ID }}" ]; then
+            echo "ERROR: RENDER_PROD_SERVICE_ID secret is not set!"
             echo "credential_check=failure" >> $GITHUB_OUTPUT
           elif [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
             echo "ERROR: RENDER_API_KEY secret is not set!"
             echo "credential_check=failure" >> $GITHUB_OUTPUT
           else
-            echo "Development deployment credentials verified."
+            echo "Production deployment credentials verified."
             echo "credential_check=success" >> $GITHUB_OUTPUT
           fi
       
-      - name: Deploy to Render.com Development
+      - name: Deploy to Render.com Production
         if: steps.check_creds.outputs.credential_check == 'success'
         uses: JorgeLNJunior/render-deploy@v1.4.3
         with:
-          service_id: ${{ secrets.RENDER_DEV_SERVICE_ID }}
+          service_id: ${{ secrets.RENDER_PROD_SERVICE_ID }}
           api_key: ${{ secrets.RENDER_API_KEY }}
           wait: true
       
@@ -667,7 +667,7 @@ EOF
           echo "Deployment Report" > deployment-report/summary.txt
           echo "================" >> deployment-report/summary.txt
           echo "Branch: ${{ github.ref }}" >> deployment-report/summary.txt
-          echo "Environment: DEVELOPMENT" >> deployment-report/summary.txt
+          echo "Environment: PRODUCTION" >> deployment-report/summary.txt
           echo "Status: ${{ job.status }}" >> deployment-report/summary.txt
           echo "Time: $(date)" >> deployment-report/summary.txt
           
