@@ -22,8 +22,12 @@ async def test_resume_generation():
     # 테스트 결과 저장을 위한 디렉토리 생성
     os.makedirs("test-logs/playwright/screenshots", exist_ok=True)
     
+    # CI 환경 확인 - GitHub Actions에서는 CI=true 환경 변수가 설정됨
+    is_ci = os.environ.get('CI') == 'true'
+    
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=False)
+        # CI 환경에서는 headless=True, 로컬에서는 headless=False
+        browser = await playwright.chromium.launch(headless=is_ci)
         context = await browser.new_context()
         page = await context.new_page()
         
