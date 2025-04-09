@@ -66,8 +66,8 @@ async def test_resume_generation():
                 status = res.status
                 log_msg = f"RESPONSE: {status} {res.url}"
                 
-                # 500 에러인 경우 응답 본문 확인
-                if status == 500:
+                # 모든 종류의 HTTP 에러 상태 코드 체크
+                if status >= 400:
                     try:
                         body = await res.text()
                         log_msg += f", 응답 본문: {body[:500]}..."
@@ -111,8 +111,13 @@ async def test_resume_generation():
             # 로딩 텍스트 확인
             loading_texts = await page.locator("#loading-overlay p").all_text_contents()
             print(f"로딩 텍스트: {loading_texts}")
-            assert "자기소개서를 생성하는 중입니다" in " ".join(loading_texts), f"예상 텍스트가 포함되지 않음: {loading_texts}"
-            assert "최대 3분 정도 소요될 수 있습니다" in " ".join(loading_texts), f"예상 텍스트가 포함되지 않음: {loading_texts}"
+            
+            # 검증 실패 시 즉시 테스트 실패로 처리
+            if "자기소개서를 생성하는 중입니다" not in " ".join(loading_texts):
+                raise AssertionError(f"예상 텍스트가 포함되지 않음: {loading_texts}")
+            
+            if "최대 3분 정도 소요될 수 있습니다" not in " ".join(loading_texts):
+                raise AssertionError(f"예상 텍스트가 포함되지 않음: {loading_texts}")
 
             # 7. 3분 이내 결과 확인
             start_time = time.time()
@@ -144,6 +149,8 @@ async def test_resume_generation():
 
             if time.time() - start_time >= MAX_WAIT_TIME:
                 print("3분이 지났지만 로딩이 완료되지 않았습니다.")
+                # 타임아웃 시 실패 처리
+                await page.screenshot(path="test-logs/playwright/screenshots/timeout_failure.png")
                 raise TimeoutError("로딩이 3분 이상 지속되었습니다.")
 
             # 로딩 완료 후 textarea에 내용이 채워질 때까지 기다리기
@@ -151,7 +158,7 @@ async def test_resume_generation():
             
             # 폴링 방식으로 변경 (CSP 제한 우회)
             max_wait = 30  # 30초 대기
-            check_interval = 1  # 1초마다 확인
+            check_interval = 5  # 5초마다 확인
             start_wait = time.time()
             has_content = False
             
@@ -175,9 +182,13 @@ async def test_resume_generation():
                             break
                     else:
                         print("textarea 요소를 찾을 수 없음")
+                        # 요소를 찾지 못하는 경우 즉시 실패 처리
+                        raise Exception("textarea 요소(#generated_resume)를 찾을 수 없습니다.")
                         
                 except Exception as e:
                     print(f"값 확인 중 오류: {e}")
+                    # 모든 예외를 테스트 실패로 처리
+                    raise Exception(f"값 확인 중 오류가 발생했습니다: {e}")
                 
                 # 짧은 대기 후 다시 시도
                 print(f"내용 확인 중... (경과: {int(time.time() - start_wait)}초)")
@@ -204,24 +215,28 @@ async def test_resume_generation():
                         for log in response_logs:
                             print(f"  {log}")
                     
-                    # 500 에러 있는지 확인
-                    error_500_logs = [log for log in response_logs if "RESPONSE: 500" in log]
-                    if error_500_logs:
-                        print("\n서버 500 에러가 발견되었습니다. 가능한 원인:")
+                    # 모든 HTTP 에러 코드 확인 (400 이상)
+                    error_logs = [log for log in response_logs if any(f"RESPONSE: {status}" in log for status in range(400, 600))]
+                    if error_logs:
+                        print("\n서버 에러가 발견되었습니다. 가능한 원인:")
                         print("1. API 키 설정 오류 - CI 환경에서 API 키가 올바르게 설정되었는지 확인")
                         print("2. 서버측 예외 - Django 로그에서 자세한 오류 확인 필요")
                         print("3. 환경 변수 문제 - CI 환경과 로컬 환경의 차이 확인")
                         print("\n에러 로그:")
-                        for log in error_500_logs:
+                        for log in error_logs:
                             print(f"  {log}")
+                        
+                        # 테스트 실패 처리
+                        raise Exception(f"서버에서 HTTP 에러가 발생했습니다: {error_logs[0]}. 테스트를 실패로 처리합니다.")
                 
                 except Exception as e:
                     print(f"API 로그 확인 중 오류: {e}")
+                    # 예외 다시 발생시켜 테스트 실패 처리
+                    raise
                 
-                # 테스트 결과를 '경고'로 표시하고 계속 진행 (fail 대신)
-                print("\n⚠️ 경고: 자기소개서가 생성되지 않았지만, 테스트는 계속 진행됩니다.")
-                print("서버측 로그를 확인하여 오류 원인을 파악하세요.")
-                
+                # 테스트 실패 처리 (자기소개서 내용이 생성되지 않음)
+                raise Exception("자기소개서가 생성되지 않았습니다. 테스트를 실패로 처리합니다.")
+
             # 8. 결과 확인 (내용이 없어도 계속 진행)
             result_element = page.locator('#generated_resume')
             is_visible = await result_element.is_visible()
@@ -237,10 +252,12 @@ async def test_resume_generation():
                     print(f"자기소개서 시작 부분: {result_text[:100]}...")
                 else:
                     print("자기소개서 내용이 비어 있습니다.")
+                    # 자기소개서가 비어있는 경우도 테스트 실패 처리
+                    raise Exception("자기소개서 내용이 비어 있습니다. 테스트를 실패로 처리합니다.")
             except Exception as e:
                 print(f"결과 확인 중 오류: {e}")
-                # 오류 발생 시 테스트를 실패로 표시하지 않고 경고만 출력
-                print("⚠️ 결과 확인 실패, 하지만 테스트는 계속 진행됩니다.")
+                # 오류 발생 시 테스트 실패 처리
+                raise Exception(f"결과 확인 중 오류가 발생했습니다: {e}. 테스트를 실패로 처리합니다.")
 
         except Exception as e:
             print(f"테스트 실패: {e}")
