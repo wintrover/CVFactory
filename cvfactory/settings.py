@@ -38,16 +38,6 @@ elif not API_KEY and not DEBUG:
     logger = logging.getLogger('app')
     logger.error("프로덕션 환경에서 API_KEY가 설정되지 않았습니다. API 기능이 작동하지 않을 수 있습니다.")
 
-# Google OAuth 환경 변수
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-
-# 환경 변수가 설정되지 않은 경우 경고 로그 출력
-if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-    import logging
-    logger = logging.getLogger('app')
-    logger.warning("Google OAuth 자격 증명이 환경 변수로 설정되지 않았습니다. Google 로그인 기능이 작동하지 않을 수 있습니다.")
-
 # 자동 로그인 및 자동 계정 연결 허용
 ACCOUNT_ADAPTER = "data_management.adapters.MyAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "data_management.adapters.MySocialAccountAdapter"
@@ -174,8 +164,14 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "static_prod"
 
 # WhiteNoise 설정 - 배포 환경에서 정적 파일 제공 최적화
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_MANIFEST_STRICT = False
+STORAGES = {
+    "default": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 WSGI_APPLICATION = "cvfactory.wsgi.application"
 
@@ -404,24 +400,3 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-#  Google OAuth 설정 (하드코딩 포함)
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": GOOGLE_CLIENT_ID,
-            "secret": GOOGLE_CLIENT_SECRET,
-            "key": "",
-        },
-        "SCOPE": ["email", "profile", "openid", "https://www.googleapis.com/auth/userinfo.email",
-                  "https://www.googleapis.com/auth/userinfo.profile"],
-        "AUTH_PARAMS": {
-            "access_type": "offline",
-            "prompt": "consent",
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
-
-# 디버깅용 print 문 제거
-# print("Google OAuth 설정 완료")

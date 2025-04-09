@@ -1,8 +1,7 @@
 import os
 import pytest
 import time
-from playwright.async_api import async_playwright
-from playwright.sync_api import expect
+from playwright.async_api import async_playwright, expect
 
 @pytest.mark.asyncio
 async def test_resume_generation():
