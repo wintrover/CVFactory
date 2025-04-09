@@ -53,13 +53,15 @@ async def test_resume_generation():
             
             # 6. 로딩 상태 확인 - ID 선택자와 p 태그 내부 텍스트 확인
             loading_overlay = page.locator("#loading-overlay")
-            loading_text = page.locator("#loading-overlay p")
+            
+            # strict 모드 문제 해결: 첫 번째 p 태그만 선택
+            loading_text = page.locator("#loading-overlay p").first
             
             # 로딩 오버레이가 표시되는지 확인
             await expect(loading_overlay).to_be_visible()
             
-            # 로딩 텍스트가 올바른지 확인
-            loading_text_content = await loading_text.text_content()
+            # 로딩 텍스트가 올바른지 확인 - 여러 텍스트 중 하나라도 포함되는지 확인
+            loading_text_content = await page.locator("#loading-overlay").text_content()
             print(f"로딩 텍스트: {loading_text_content}")
             assert "자기소개서를 생성하는 중입니다" in loading_text_content, f"예상 텍스트가 포함되지 않음: {loading_text_content}"
             
