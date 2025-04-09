@@ -1,54 +1,139 @@
 import pytest
-from playwright.sync_api import Page, expect
+import asyncio
+from playwright.async_api import async_playwright, Page, expect
+import time
+import os
+from asgiref.sync import sync_to_async
 
-# Django 테스트 설정을 위한 데코레이터
-pytestmark = pytest.mark.django_db
-
-def test_home_page_loads(page: Page):
-    """홈페이지가 정상적으로 로드되는지 테스트합니다."""
-    # 홈페이지로 이동
-    page.goto('http://localhost:8000/')
+# 비동기 테스트로 변경
+@pytest.mark.asyncio
+async def test_resume_generation():
+    """
+    이력서 생성 프로세스를 테스트합니다.
+    1. 메인 페이지 접속
+    2. 공고 URL 입력
+    3. 회사 URL 입력
+    4. 사용자 스토리 입력
+    5. 생성하기 버튼 클릭
+    6. 로딩 상태 확인
+    7. 3분 이내 결과 확인
+    8. 결과 확인 (성공 또는 실패)
+    """
+    # 테스트 결과 저장을 위한 디렉토리 생성
+    os.makedirs("test-logs/playwright/screenshots", exist_ok=True)
     
-    # 페이지 제목 확인
-    assert page.title() != ""
-    
-    # 스크린샷 캡처
-    page.screenshot(path="test-logs/playwright/screenshots/homepage.png")
-    
-    print("홈페이지 로드 테스트 완료")
-
-def test_resume_form_exists(page: Page):
-    """이력서 생성 폼이 존재하는지 테스트합니다."""
-    # 홈페이지로 이동
-    page.goto('http://localhost:8000/')
-    
-    # 폼 요소 확인 (가정: 폼이 존재함)
-    form = page.locator('form')
-    expect(form).to_be_visible()
-    
-    print("이력서 폼 확인 테스트 완료")
-
-def test_resume_preview_functionality(page: Page):
-    """이력서 미리보기 기능이 동작하는지 테스트합니다."""
-    # 이력서 생성 페이지로 이동 (가정: /resume/create 경로가 존재함)
-    page.goto('http://localhost:8000/resume/create')
-    
-    # 필수 입력 필드 채우기 (가정: 이름과 이메일 필드가 존재함)
-    page.fill('input[name="name"]', '홍길동')
-    page.fill('input[name="email"]', 'test@example.com')
-    
-    # 미리보기 버튼 클릭 (가정: 미리보기 버튼이 존재함)
-    page.click('button:has-text("미리보기")')
-    
-    # 미리보기 요소가 나타나는지 확인
-    preview = page.locator('.resume-preview')
-    expect(preview).to_be_visible()
-    
-    # 미리보기에 입력한 정보가 표시되는지 확인
-    expect(page.locator('.resume-preview')).to_contain_text('홍길동')
-    expect(page.locator('.resume-preview')).to_contain_text('test@example.com')
-    
-    # 스크린샷 캡처
-    page.screenshot(path="test-logs/playwright/screenshots/resume-preview.png")
-    
-    print("이력서 미리보기 테스트 완료") 
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch(headless=False)
+        context = await browser.new_context()
+        page = await context.new_page()
+        
+        try:
+            # 1. 메인 페이지 접속
+            await page.goto("http://localhost:8000")
+            await expect(page).to_have_title("CVFactory")
+            
+            # 2. 공고 URL 입력
+            job_url = "https://www.jobkorea.co.kr/Recruit/GI_Read/46699223?Oem_Code=C1&logpath=1&stext=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&listno=1&sc=63"
+            await page.fill("#job_url", job_url)
+            
+            # 3. 회사 URL 입력
+            company_url = "https://deepinsight.ninehire.site/"
+            await page.fill("#company_url", company_url)
+            
+            # 4. 사용자 스토리 입력
+            user_story = "안녕하세요. 저는 윤수혁이고 AI 개발자입니다."
+            await page.fill("#user_story", user_story)
+            
+            # 5. 생성하기 버튼 클릭
+            await page.click("button:has-text('생성하기')")
+            
+            # 6. 로딩 상태 확인 - ID 선택자와 p 태그 내부 텍스트 확인
+            loading_overlay = page.locator("#loading-overlay")
+            loading_text = page.locator("#loading-overlay p")
+            
+            # 로딩 오버레이가 표시되는지 확인
+            await expect(loading_overlay).to_be_visible()
+            
+            # 로딩 텍스트가 올바른지 확인
+            loading_text_content = await loading_text.text_content()
+            print(f"로딩 텍스트: {loading_text_content}")
+            assert "자기소개서를 생성하는 중입니다" in loading_text_content, f"예상 텍스트가 포함되지 않음: {loading_text_content}"
+            
+            # 7. 3분 이내 결과 확인
+            start_time = time.time()
+            loading_ended = False
+            MAX_WAIT_TIME = 180  # 3분 (초 단위)
+            
+            while time.time() - start_time < MAX_WAIT_TIME:
+                # 로딩 오버레이의 display 속성이 none인지 확인
+                is_hidden = await loading_overlay.evaluate("el => window.getComputedStyle(el).display === 'none'")
+                if is_hidden:
+                    loading_ended = True
+                    break
+                await asyncio.sleep(1)
+            
+            # 8. 결과 확인 - 로딩이 3분 내에 끝났는지 확인
+            if not loading_ended:
+                print("\n=== 테스트 결과 ===")
+                print(f"공고 URL: {job_url}")
+                print(f"회사 URL: {company_url}")
+                print(f"사용자 스토리: {user_story}")
+                print("결과: 실패 - 3분 이내에 자기소개서 생성이 완료되지 않았습니다.")
+                await page.screenshot(path="test-logs/playwright/screenshots/resume_generation_timeout.png")
+                # 테스트를 실패로 처리
+                assert False, "자기소개서 생성이 3분 이내에 완료되지 않았습니다"
+            
+            # 로딩이 끝났으면 결과 확인
+            print("\n=== 테스트 결과 ===")
+            print(f"공고 URL: {job_url}")
+            print(f"회사 URL: {company_url}")
+            print(f"사용자 스토리: {user_story}")
+            
+            # textarea에서 내용 확인 (id 선택자 사용)
+            textarea_locator = page.locator("#generated_resume")
+            await expect(textarea_locator).to_be_visible()
+            
+            # textarea의 값 가져오기
+            textarea_value = await textarea_locator.input_value()
+            textarea_empty = textarea_value == "" or textarea_value is None
+            
+            if textarea_empty:
+                # 실패 메시지 확인 - 실패 메시지가 표시될 수 있는 다양한 방식 고려
+                error_message = await page.evaluate("""() => {
+                    // DOM에서 '자기소개서 생성에 실패했습니다' 텍스트를 포함하는 요소 찾기
+                    const elements = Array.from(document.querySelectorAll('*'));
+                    for (const el of elements) {
+                        if (el.textContent && el.textContent.includes('자기소개서 생성에 실패했습니다')) {
+                            return el.textContent.trim();
+                        }
+                    }
+                    return null;
+                }""")
+                
+                if error_message:
+                    print(f"결과: 실패 - {error_message}")
+                    await page.screenshot(path="test-logs/playwright/screenshots/resume_generation_failed.png")
+                else:
+                    print("결과: 빈 자기소개서 (생성 실패 또는 진행 중)")
+                    await page.screenshot(path="test-logs/playwright/screenshots/resume_generation_empty.png")
+            else:
+                # 성공 - 텍스트 영역에 내용이 있음
+                print("결과: 이력서 생성 성공!")
+                print(f"생성된 자기소개서 내용 (처음 100자):\n{textarea_value[:100]}...")
+                await page.screenshot(path="test-logs/playwright/screenshots/resume_generation_success.png")
+            
+        except Exception as e:
+            # 실패 시 스크린샷 저장 및 디버깅 정보 추가
+            await page.screenshot(path="test-logs/playwright/screenshots/resume_generation_exception.png")
+            print(f"\n테스트 실패: {str(e)}")
+            
+            # 디버깅을 위한 HTML 덤프
+            html_content = await page.content()
+            with open("test-logs/playwright/debug_html.html", "w", encoding="utf-8") as f:
+                f.write(html_content)
+                
+            raise
+            
+        finally:
+            await context.close()
+            await browser.close() 

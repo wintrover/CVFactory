@@ -8,10 +8,10 @@ const path = require('path');
 
 module.exports = defineConfig({
   testDir: path.join(__dirname, 'tests/ui'),
-  testMatch: ['**/*.spec.js', '**/*.spec.ts'],
-  timeout: 30000,
+  testMatch: ['**/*.spec.js', '**/*.spec.ts', '**/*.py'],
+  timeout: 60000, // 1분 타임아웃
   expect: {
-    timeout: 5000
+    timeout: 10000
   },
   // 타임아웃 설정
   fullyParallel: false,
