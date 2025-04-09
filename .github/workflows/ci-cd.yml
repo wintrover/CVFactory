@@ -1,4 +1,4 @@
-﻿name: CVFactory CI/CD
+﻿﻿name: CVFactory CI/CD
 
 on:
   push:
