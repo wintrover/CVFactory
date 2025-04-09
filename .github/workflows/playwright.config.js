@@ -26,16 +26,23 @@ module.exports = defineConfig({
     baseURL: 'http://localhost:8000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'on-first-retry'
+    video: 'on-first-retry',
+    headless: true, // 항상 헤드리스 모드로 실행
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      use: { 
+        ...devices['Desktop Chrome'],
+        headless: true,
+      }
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] }
+      use: { 
+        ...devices['Desktop Firefox'],
+        headless: true,
+      }
     },
   ]
 }); 

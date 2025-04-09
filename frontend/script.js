@@ -261,7 +261,16 @@ function generateResume() {
         let generatedResumeElement = document.getElementById("generated_resume");
 
         if (generatedResumeElement) {
-            generatedResumeElement.value = data.generated_resume || "자기소개서 생성에 실패했습니다.";
+            const resumeText = data.generated_resume || "자기소개서 생성에 실패했습니다.";
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] 자기소개서 생성 완료 및 DOM에 렌더링 시작. 길이: ${resumeText.length}자`);
+            generatedResumeElement.value = resumeText;
+            console.log(`[${timestamp}] 자기소개서가 DOM에 렌더링 완료됨`);
+            
+            // 콘솔에 앞부분 미리보기 출력 (디버깅용)
+            if (resumeText.length > 0) {
+                console.log(`자기소개서 미리보기 (앞부분 50자): ${resumeText.substring(0, 50)}...`);
+            }
         } else {
             console.error("generated_resume 요소를 찾을 수 없습니다.");
         }

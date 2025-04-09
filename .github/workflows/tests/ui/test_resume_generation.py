@@ -23,8 +23,8 @@ async def test_resume_generation():
     is_ci = os.environ.get('CI') == 'true'
 
     async with async_playwright() as playwright:
-        # CI 환경에서는 headless=True, 로컬에서는 headless=False
-        browser = await playwright.chromium.launch(headless=is_ci)
+        # 항상 headless=True로 설정 (CI 환경 구분 없이)
+        browser = await playwright.chromium.launch(headless=True)
         context = await browser.new_context()
         page = await context.new_page()
         
