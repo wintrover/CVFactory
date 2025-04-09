@@ -970,7 +970,7 @@ def finalize_resume(resume_draft):
 
 def generate_resume(job_description, user_story, company_info):
     """
-    자기소개서 생성 - 전체 과정
+    자기소개서 생성 - 단일 API 호출로 통합
     """
     func_name = "generate_resume"
     groq_logger.info(f"===== {func_name} 함수 시작 =====")
@@ -1018,38 +1018,88 @@ def generate_resume(job_description, user_story, company_info):
     }
     log_function_call(func_name, inputs)
     
-    try:
-        # 1단계: 분석
-        groq_logger.info("1단계: 채용공고에서 핵심 내용 추출 시작")
-        job_keypoints = extract_job_keypoints(job_description)
-        groq_logger.debug(f"채용공고 핵심 내용 길이: {len(job_keypoints)}")
-        
-        # 2단계: 자기소개서 초안 작성
-        groq_logger.info("2단계: 자기소개서 초안 작성 시작")
-        resume_draft = create_resume_draft(job_keypoints, company_info, user_story_dict)
-        groq_logger.debug(f"자기소개서 초안 길이: {len(resume_draft)}")
-        
-        # 3단계: 자기소개서 최종 완성
-        groq_logger.info("3단계: 자기소개서 최종 완성 시작")
-        finalized_resume = finalize_resume(resume_draft)
-        groq_logger.debug(f"최종 자기소개서 길이: {len(finalized_resume)}")
-        
-        # 출력 및 처리 과정 로깅
-        outputs = {
-            "finalized_resume_length": len(finalized_resume),
-            "finalized_resume_preview": finalized_resume[:100] + "..."
-        }
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.info(f"===== {func_name} 함수 종료 =====")
-        return finalized_resume
+    # 통합 프롬프트 구성 - 모든 단계를 하나의 프롬프트로 통합
+    filtered_story = {
+        '성격의 장단점': user_story_dict.get('성격의 장단점', ''),
+        '지원 동기': user_story_dict.get('지원 동기', ''),
+        '입사 후 포부': user_story_dict.get('입사 후 포부', '')
+    }
     
+    prompt = f"""
+    다음 정보를 바탕으로 완성된 자기소개서를 작성해주세요:
+    
+    [채용공고]
+    {job_description}
+    
+    [회사 정보]
+    {company_info}
+    
+    [지원자 정보]
+    성격의 장단점: {filtered_story['성격의 장단점']}
+    지원 동기: {filtered_story['지원 동기']}
+    입사 후 포부: {filtered_story['입사 후 포부']}
+    
+    다음 사항을 포함하는 완성도 높은 자기소개서를 작성해주세요:
+    1. 지원자의 핵심 경쟁력과 지원 동기
+    2. 회사와 직무에 대한 이해도
+    3. 입사 후 기여 방안
+    4. 성과와 역량은 구체적 수치로 표현 (예: "생산성 30% 향상", "만족도 4.8/5 달성")
+    5. 전문 용어와 업계 용어를 자연스럽게 사용하고 열정과 자신감을 표현하는 어조 사용
+    6. 직무 관련 핵심 키워드를 3-5개 자연스럽게 강조
+    7. 회사 문화와 가치관과 일치하는 내용 강조
+    """
+    
+    groq_logger.debug(f"생성된 통합 프롬프트 길이: {len(prompt)}")
+    
+    try:
+        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b (단일 API 호출 방식)")
+        response = client.chat.completions.create(
+            model="qwen-qwq-32b",
+            messages=[
+                {"role": "system", "content": "당신은 자기소개서 작성 전문가입니다. 채용공고와 회사 정보를 분석하여 지원자 정보를 바탕으로 완성도 높은 자기소개서를 작성해주세요."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+        
+        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
+        
+        if response and hasattr(response, 'choices') and len(response.choices) > 0:
+            finalized_resume = response.choices[0].message.content
+            
+            # 출력 및 처리 과정 로깅
+            additional_info = {
+                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
+                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
+                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
+            }
+            outputs = {
+                "finalized_resume_length": len(finalized_resume),
+                "finalized_resume_preview": finalized_resume[:100] + "..."
+            }
+            log_function_call(func_name, inputs, outputs, additional_info)
+            
+            logger.info(f"자기소개서 생성 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
+            groq_logger.info(f"===== {func_name} 함수 종료 =====")
+            return finalized_resume
+        else:
+            error_msg = f"자기소개서 생성 API 응답 형식 오류: {response}"
+            logger.error(error_msg)
+            
+            # 오류 로깅
+            outputs = {"error": error_msg}
+            log_function_call(func_name, inputs, outputs)
+            
+            groq_logger.error(error_msg)
+            groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
+            return "자기소개서 생성 중 오류가 발생했습니다."
+            
     except Exception as e:
-        error_msg = f"자기소개서 생성 중 오류: {str(e)}"
+        error_msg = f"자기소개서 생성 API 호출 오류: {str(e)}"
         logger.error(error_msg, exc_info=True)
         
         # 오류 로깅
-        outputs = {"error": error_msg, "traceback": traceback.format_exc()}
+        outputs = {"error": str(e), "traceback": traceback.format_exc()}
         log_function_call(func_name, inputs, outputs)
         
         groq_logger.error(error_msg)
