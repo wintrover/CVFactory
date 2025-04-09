@@ -56,14 +56,11 @@ async def test_resume_generation():
             loading_overlay = page.locator("#loading-overlay:visible")
             await expect(loading_overlay).to_be_visible()
             
-            # 로딩 텍스트가 보이는지 확인
-            loading_text = page.locator("#loading-overlay p:visible")
-            await expect(loading_text).to_be_visible()
-            
-            # 로딩 텍스트 내용 확인
-            loading_text_content = await loading_text.text_content()
-            print(f"로딩 텍스트: {loading_text_content}")
-            assert "자기소개서를 생성하는 중입니다" in loading_text_content, f"예상 텍스트가 포함되지 않음: {loading_text_content}"
+            # 로딩 텍스트 확인
+            loading_texts = await page.locator("#loading-overlay p").all_text_contents()
+            print(f"로딩 텍스트: {loading_texts}")
+            assert "자기소개서를 생성하는 중입니다" in " ".join(loading_texts), f"예상 텍스트가 포함되지 않음: {loading_texts}"
+            assert "최대 3분 정도 소요될 수 있습니다" in " ".join(loading_texts), f"예상 텍스트가 포함되지 않음: {loading_texts}"
             
             # 7. 3분 이내 결과 확인
             start_time = time.time()
