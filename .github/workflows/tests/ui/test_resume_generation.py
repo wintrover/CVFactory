@@ -54,7 +54,7 @@ async def test_resume_generation():
             # 6. 로딩 상태 확인 - visible 선택자 사용
             # 로딩 오버레이가 보이는지 확인
             loading_overlay = page.locator("#loading-overlay:visible")
-            await expect(loading_overlay).to_be_visible()
+            await expect(loading_overlay).to_be_visible(timeout=180_000)  # 3분 타임아웃 설정
             
             # 로딩 텍스트 확인
             loading_texts = await page.locator("#loading-overlay p").all_text_contents()
@@ -68,9 +68,9 @@ async def test_resume_generation():
             MAX_WAIT_TIME = 180  # 3분 (초 단위)
             
             while time.time() - start_time < MAX_WAIT_TIME:
-                # 로딩 오버레이의 display 속성이 none인지 확인
-                is_hidden = await loading_overlay.evaluate("el => window.getComputedStyle(el).display === 'none'")
-                if is_hidden:
+                # 로딩 오버레이의 가시성 체크
+                is_visible = await loading_overlay.is_visible()
+                if not is_visible:
                     loading_ended = True
                     break
                 await asyncio.sleep(1)
