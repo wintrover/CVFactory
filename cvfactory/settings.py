@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     "data_management",
     "corsheaders",
     "django_extensions",  # HTTPS 개발 서버 지원
+    "cvfactory",  # 프로젝트 앱 - 사용자 정의 명령어 로드
 ]
 
 # CORS 설정
