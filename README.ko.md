@@ -132,17 +132,9 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 ```
 
 ### 배포 환경
-- **Render.com**: `production` 브랜치에 배포
-
-## 브랜치 전략
-- **develop**: 개발 및 테스트용
-- **production**: 운영 서버 배포용
+- CI/CD 워크플로우 구성됨
 
 ## 📊 모니터링 및 로깅
-
-### 로그 구조
-- **개발 환경**: 상세 디버그 로그, SQL 쿼리 로깅
-- **배포 환경**: 에러 및 중요 이벤트 중심 로깅
 
 ### 모니터링 지표
 - **API 응답 시간**: 성능 측정
@@ -159,7 +151,7 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 | 크롤링 모델러 | 문이환 |
 
 ## 📄 라이센스
-이 프로젝트는 MIT 라이센스를 따릅니다. 자세한 내용은 LICENSE 파일을 참조하세요.
+이 프로젝트는 Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)를 따릅니다. 자세한 내용은 LICENSE 파일을 참조하세요.
 
 ## 👨‍💻 기여하기
 이슈 제출, 풀 리퀘스트, 문서 개선 등 모든 형태의 기여를 환영합니다. 기여하기 전에 기여 가이드라인을 확인해주세요.

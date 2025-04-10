@@ -132,17 +132,9 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 ```
 
 ### Deployment Environment
-- **Render.com**: Deployed on `production` branch
-
-## Branch Strategy
-- **develop**: For development and testing
-- **production**: For production server deployment
+- Continuous Integration & Deployment workflows configured
 
 ## 📊 Monitoring & Logging
-
-### Log Structure
-- **Development Environment**: Detailed debug logs, SQL query logging
-- **Production Environment**: Error and important event-focused logging
 
 ### Monitoring Metrics
 - **API Response Time**: Performance measurement
@@ -159,7 +151,7 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 | Crawling Modeler | Ihwan Moon |
 
 ## 📄 License
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0). See the LICENSE file for details.
 
 ## 👨‍💻 Contributing
 All forms of contribution are welcome, including issue submission, pull requests, and documentation improvements. Please check the contribution guidelines before contributing.
