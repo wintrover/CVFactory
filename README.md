@@ -8,173 +8,170 @@
 </div>
 
 ## 📖 Overview
-CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized cover letters based on job postings and applicant information using AI. The system analyzes job descriptions and company information to highlight relevant skills and experiences in the generated documents.
+CVFactory is an automated resume and cover letter generation system for job seekers. It creates personalized documents based on job postings and applicant information using AI. The system analyzes job descriptions and company information to highlight relevant skills and experiences.
 
 ## 🌐 Live Demo
-
-You can see the live application in action at **[cvfactory.dev](https://cvfactory.dev)**
-
-Experience the full functionality of CVFactory and generate your own personalized cover letters and resumes in minutes!
+Experience the application at [cvfactory.dev](https://cvfactory.dev).
 
 ## ✨ Key Features
+- **📄 Job Posting Crawler**: Automatically collects job information from recruitment site URLs
+- **🏢 Company Information Crawler**: Gathers company vision, mission, and values from company websites
+- **📝 Custom Cover Letter Generation**: Creates personalized cover letters using Groq API
+- **💾 Document Management**: Save, edit, and download generated documents
+- **👤 User Profiles**: Google account integration and profile management
 
-- **📄 Job Posting Crawler**: Automatically collects relevant job information when a recruitment site URL is entered
-- **🏢 Company Information Crawler**: Gathers company vision, mission, values, and other information through the company website URL
-- **📝 Customized Cover Letter Generation**: Automatically generates personalized cover letters using Groq API
+## 🛠️ Technology Stack
 
-## 🚀 Installation and Setup
+### Backend
+- **Framework**: Django, Django REST Framework
+- **AI**: Groq API (LLM-based text generation)
+- **Web Crawling**: Selenium, BeautifulSoup
+- **Authentication**: Google OAuth
+- **Database**: SQLite(development), PostgreSQL(production)
+- **Server**: Gunicorn WSGI Server
 
-### Local Development Environment
+### Frontend
+- **Core Technologies**: HTML5, CSS3, JavaScript(ES6+)
+- **UI Framework**: Bootstrap 5
+- **Animation**: Lottie
 
-1. Clone the repository:
+### Deployment & Infrastructure
+- **Containerization**: Docker, Docker Compose
+- **Cloud Hosting**: Render.com
+- **CI/CD**: GitHub Actions
+- **Version Control**: Git, GitHub
+
+## 🏗️ Architecture
+
+### Software Structure
+```
+CVFactory/
+├── api/                # API logic and Groq service integration
+├── crawlers/           # Job posting and company information crawling modules
+├── frontend/           # User interface elements
+├── docker/             # Docker environment configuration files
+├── myapp/              # Main Django app
+├── logs/               # Log files storage
+├── scripts/            # Utility scripts
+└── static_dev/static_prod/ # Static files (development/production)
+```
+
+### Core Modules
+- **Crawling Engine**: `Job_Post_Crawler.py`, `Target_Company_Crawler.py`
+- **AI Service**: `groq_service.py` (Groq API integration)
+- **Web Frontend**: Files in the `frontend/` directory
+
+## 🔒 Security Architecture
+
+### Data Protection
+- **Sensitive Information Management**: Environment variable (.env) based configuration
+- **HTTPS Implementation**: All communications encrypted
+- **API Key Protection**: Server-side storage and management
+
+### Authentication & Authorization
+- **User Authentication**: Google OAuth 2.0
+- **API Security**: Token-based authentication
+- **CSRF Protection**: Django built-in CSRF tokens
+- **CORS Policy**: Only allowed origins can access
+
+### Logging & Monitoring
+- **Security Logs**: Authentication and authorization events recorded in `security.log`
+- **Environment-specific Logging**: Different logging strategies for development/production
+
+## 🔄 Data Pipeline
+
+```
+[User Input] → [Crawling Engine] → [Data Processing] → [AI Analysis] → [Document Generation] → [User Repository]
+```
+
+1. **Data Collection Stage**: Job information and company information crawling
+2. **Analysis Stage**: Structuring collected information and extracting key elements
+3. **Generation Stage**: AI-based cover letter draft creation
+4. **Optimization Stage**: Applying customized style and emphasis points
+5. **Delivery Stage**: Providing results to users and saving
+
+## 🔌 API Structure
+
+### Internal API Endpoints
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/job-crawler/` | POST | Job posting crawling |
+| `/api/company-info/` | POST | Company information collection |
+| `/api/generate-letter/` | POST | Cover letter generation |
+| `/api/user-letters/` | GET/POST | User document management |
+| `/api/user-profile/` | GET/PUT | User profile management |
+
+### External API Integration
+- **Groq API**: Text generation and analysis
+- **Google OAuth API**: User authentication
+
+## 👤 User Flow
+
+### Registration & Login
+```
+[First Visit] → [Google Login] → [Profile Setup] → [Dashboard]
+```
+
+### Cover Letter Generation
+```
+[Job Posting URL Input] → [Company Info Confirmation] → [Cover Letter Generation] → [Review & Edit] → [Save/Download]
+```
+
+## ⚙️ Development & Deployment Environment
+
+### Local Development Setup
 ```bash
+# Clone repository
 git clone https://github.com/yourusername/CVFactory.git
 cd CVFactory
-```
 
-2. Set up virtual environment and install packages:
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Conda virtual environment setup
+conda create -n cvfactory python=3.9
+conda activate cvfactory
 pip install -r requirements.txt
-```
 
-3. Environment variable setup:
-   - Create a `.env` file from `.env.example` and configure settings
-   - Set up the Groq API key in your environment variables
+# Environment variable setup
+# Copy .env.example to .env and set necessary values
 
-4. Database migration:
-```bash
+# Run development server
 python manage.py migrate
-```
-
-5. Run server:
-```bash
 python manage.py runserver
 ```
 
-6. Access in browser at `http://127.0.0.1:8000`
-
-### Running with Docker
-
-1. Clone the repository and build/run Docker container:
+### Docker Development Environment
 ```bash
-git clone https://github.com/yourusername/CVFactory.git
-cd CVFactory
-docker-compose up --build
+cd 'D:\Coding\CVFactory'
+docker-compose -f docker/docker-compose.dev.yml up --build
 ```
 
-2. Access in browser at `http://localhost:8000`
+### Deployment Environment
+- **Render.com**: Automatic deployment when pushing to `production` branch
+- **Environment Switching**: Scripts provided for switching between development/production
 
-## 📁 Project Structure
+## 🚢 CI/CD Pipeline
 
+### GitHub Actions Configuration
 ```
-CVFactory/
-├── api/                # API logic and Groq service
-├── crawlers/           # Job posting and company info crawling modules
-├── cvfactory/          # Project configuration files
-├── data_management/    # User data management module
-├── frontend/           # Frontend files
-├── logs/               # Log file directory
-├── myapp/              # Main app module
-├── static/             # Static files
-├── Dockerfile          # Docker configuration
-├── docker-compose.yml  # Docker Compose configuration
-├── manage.py           # Django management script
-├── requirements.txt    # Dependency package list
-└── README.md           # Project description
+[Code Push] → [Test] → [Build] → [Deploy (production branch only)]
 ```
 
-## 🛠 Technology Stack
+### Branch Strategy
+- **develop**: For development and testing (not deployed)
+- **production**: For production server deployment
 
-### Backend
-- **Django**: Web backend framework
-- **Django REST Framework**: RESTful API implementation
-- **Groq API**: AI-based cover letter generation
-- **Selenium**: Web crawling automation
-- **BeautifulSoup**: HTML parsing
+## 📊 Monitoring & Logging
 
-### Frontend
-- **HTML/CSS/JavaScript**: Basic UI implementation
-- **Bootstrap**: Responsive design
+### Log Structure
+- **Development Environment**: Detailed debug logs, SQL query logging
+- **Production Environment**: Error and important event-focused logging
 
-### Deployment and Development Environment
-- **Docker**: Containerization and development
-- **Git**: Version control
-- **GitHub Actions**: CI/CD automation
-- **Render.com**: Cloud hosting platform (optional)
+### Monitoring Metrics
+- **API Response Time**: Performance measurement
+- **Error Rate**: System stability evaluation
+- **User Activity**: Usage pattern analysis by feature
 
-## 🔄 Environment Switching
+## 📄 License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-This project supports both development and production environments. Use the provided scripts to switch between them:
-
-```bash
-# Switch to development environment (default)
-./switch_env.sh development  # Linux/macOS
-.\switch_env.bat development  # Windows
-
-# Switch to production environment
-./switch_env.sh production  # Linux/macOS
-.\switch_env.bat production  # Windows
-```
-
-## 🚢 CI/CD Pipeline with GitHub Actions
-
-This project uses GitHub Actions for continuous integration and deployment:
-
-1. **Environment Debugging**: Verifies environment settings and creates reports
-2. **Testing**: Runs Django tests to ensure code quality
-3. **Building**: Prepares the application for deployment
-4. **Deployment**: Automatically deploys based on branch (develop or main)
-
-To view the CI/CD configuration, check the `.github/workflows/ci-cd.yml` file.
-
-### GitHub Branch Strategy
-
-We use a simple and effective branching strategy to optimize development workflow and manage deployment costs:
-
-1. **`develop` branch**: Integration branch for development work
-   - All daily development work happens here
-   - Use for testing and integration
-   - Only test and build steps are executed when pushing to this branch
-
-2. **`production` branch**: Production-ready code only
-   - Merge to production only when ready to deploy
-   - Pushing to production automatically triggers deployment to Render.com
-   - Helps control when and where deployments occur
-
-### Development Workflow Guidelines
-
-1. **Development Phase**
-   ```bash
-   git checkout develop
-   # Make your changes
-   git add .
-   git commit -m "Feature implementation"
-   git push origin develop
-   ```
-   - This triggers tests and builds but no deployment
-
-2. **Deployment Phase**
-   ```bash
-   git checkout production
-   git merge develop
-   git push origin production
-   ```
-   - This triggers tests, builds, and automatic deployment
-   
-3. **Return to Development**
-   ```bash
-   git checkout develop
-   ```
-
-### Security Notes
-
-- Keep all sensitive information in GitHub Secrets, never in the code
-- Always include `.env` files in `.gitignore`
-- Only push stable code to the production branch
-- Regularly check GitHub Actions logs for any issues
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 👨‍💻 Contributing
+All forms of contribution are welcome, including issue submission, pull requests, and documentation improvements. Please check the contribution guidelines before contributing.
