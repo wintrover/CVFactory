@@ -17,8 +17,6 @@ Experience the application at [cvfactory.dev](https://cvfactory.dev).
 - **📄 Job Posting Crawler**: Automatically collects job information from recruitment site URLs
 - **🏢 Company Information Crawler**: Gathers company vision, mission, and values from company websites
 - **📝 Custom Cover Letter Generation**: Creates personalized cover letters using Groq API
-- **💾 Document Management**: Save, edit, and download generated documents
-- **👤 User Profiles**: Google account integration and profile management
 
 ## 🛠️ Technology Stack
 
@@ -26,7 +24,6 @@ Experience the application at [cvfactory.dev](https://cvfactory.dev).
 - **Framework**: Django, Django REST Framework
 - **AI**: Groq API (LLM-based text generation)
 - **Web Crawling**: Selenium, BeautifulSoup
-- **Authentication**: Google OAuth
 - **Database**: SQLite(development), PostgreSQL(production)
 - **Server**: Gunicorn WSGI Server
 
@@ -38,7 +35,6 @@ Experience the application at [cvfactory.dev](https://cvfactory.dev).
 ### Deployment & Infrastructure
 - **Containerization**: Docker, Docker Compose
 - **Cloud Hosting**: Render.com
-- **CI/CD**: GitHub Actions
 - **Version Control**: Git, GitHub
 
 ## 🏗️ Architecture
@@ -69,7 +65,6 @@ CVFactory/
 - **API Key Protection**: Server-side storage and management
 
 ### Authentication & Authorization
-- **User Authentication**: Google OAuth 2.0
 - **API Security**: Token-based authentication
 - **CSRF Protection**: Django built-in CSRF tokens
 - **CORS Policy**: Only allowed origins can access
@@ -81,14 +76,14 @@ CVFactory/
 ## 🔄 Data Pipeline
 
 ```
-[User Input] → [Crawling Engine] → [Data Processing] → [AI Analysis] → [Document Generation] → [User Repository]
+[User Input] → [Crawling Engine] → [Data Processing] → [AI Analysis] → [Document Generation] → [Results Display]
 ```
 
 1. **Data Collection Stage**: Job information and company information crawling
 2. **Analysis Stage**: Structuring collected information and extracting key elements
 3. **Generation Stage**: AI-based cover letter draft creation
 4. **Optimization Stage**: Applying customized style and emphasis points
-5. **Delivery Stage**: Providing results to users and saving
+5. **Delivery Stage**: Providing results to users
 
 ## 🔌 API Structure
 
@@ -98,23 +93,15 @@ CVFactory/
 | `/api/job-crawler/` | POST | Job posting crawling |
 | `/api/company-info/` | POST | Company information collection |
 | `/api/generate-letter/` | POST | Cover letter generation |
-| `/api/user-letters/` | GET/POST | User document management |
-| `/api/user-profile/` | GET/PUT | User profile management |
 
 ### External API Integration
 - **Groq API**: Text generation and analysis
-- **Google OAuth API**: User authentication
 
 ## 👤 User Flow
 
-### Registration & Login
-```
-[First Visit] → [Google Login] → [Profile Setup] → [Dashboard]
-```
-
 ### Cover Letter Generation
 ```
-[Job Posting URL Input] → [Company Info Confirmation] → [Cover Letter Generation] → [Review & Edit] → [Save/Download]
+[Job Posting URL Input] → [Company Info Confirmation] → [Cover Letter Generation] → [Results Review]
 ```
 
 ## ⚙️ Development & Deployment Environment
@@ -145,18 +132,10 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 ```
 
 ### Deployment Environment
-- **Render.com**: Automatic deployment when pushing to `production` branch
-- **Environment Switching**: Scripts provided for switching between development/production
+- **Render.com**: Deployed on `production` branch
 
-## 🚢 CI/CD Pipeline
-
-### GitHub Actions Configuration
-```
-[Code Push] → [Test] → [Build] → [Deploy (production branch only)]
-```
-
-### Branch Strategy
-- **develop**: For development and testing (not deployed)
+## Branch Strategy
+- **develop**: For development and testing
 - **production**: For production server deployment
 
 ## 📊 Monitoring & Logging
