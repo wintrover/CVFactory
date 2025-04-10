@@ -154,3 +154,6 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 ## 👨‍💻 Contributing
 All forms of contribution are welcome, including issue submission, pull requests, and documentation improvements. Please check the contribution guidelines before contributing.
+
+## 📬 Contact
+For any inquiries, please contact wintrover@gmail.com.
