@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>CVFactory</title>
+<link rel="stylesheet" href="{% static 'style.css' %}">
+<script>
+    window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
+<script src="{% static 'script.js' %}"></script>
+</head>
+<body>
+<header>
+  <div style="font-weight:bold">CVFactory</div>
+  <div>
+    <!-- <button class="black-btn" onclick="loginWithGoogle()">로그인</button>
+    <button class="white-btn">회원가입</button> -->
+  </div>
+</header>
+
+<main>
+  <h1>자기소개서를 만들기 위해 지원하려는 채용정보를 알려주세요!</h1>
+
+  <!-- 전체 화면 블러 & 로딩 애니메이션 -->
+  <div id="loading-overlay" style="display: none;">
+    <div id="lottie-container" 
+        data-animation="{% static 'lottie/factory-loading.json' %}"
+        style="width: 200px; height: 200px;">
+    </div>
+    <p>자기소개서를 생성하는 중입니다... </p>
+    <p>(최대 3분 정도 소요될 수 있습니다)</p>
+  </div>
+
+  <!-- 프롬프트 레이아웃 컨테이너 -->
+  <div class="prompt-container" style="width: 95%; max-width: 1200px;">
+    <!-- 왼쪽 열: 3개의 작은 프롬프트 -->
+    <div class="left-column">
+      <!-- 프롬프트 1 -->
+      <div class="chat-box small-prompt">
+        <textarea id="job_url" placeholder="공고 URL을 입력하세요."></textarea>
+      </div>
+      
+      <!-- 프롬프트 2 -->
+      <div class="chat-box small-prompt">
+        <textarea id="company_url" placeholder="지원하고자 하는 사이트 공식URL을 입력하세요."></textarea>
+      </div>
+      
+      <!-- 프롬프트 3 -->
+      <div class="chat-box">
+        <textarea id="user_story" placeholder="나의 성격과 역경을 적어주세요."></textarea>
+      </div>
+    </div>
+    
+    <!-- 오른쪽 열: 1개의 큰 프롬프트 -->
+    <div class="right-column" style="flex: 1.5;">
+      <!-- 프롬프트 4 -->
+      <div class="chat-box large-prompt">
+        <div>
+          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
+          <div class="actions">
+            <button type="button" onclick="generateResume()" class="black-btn">생성하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
