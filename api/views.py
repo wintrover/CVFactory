@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 import logging
 from .models import Resume
 from .groq_service import generate_resume, extract_job_keypoints, log_function_call
@@ -18,6 +18,8 @@ import re
 import validators  # URL 검증을 위한 라이브러리 추가
 import bleach  # 특수문자 필터링을 위한 라이브러리 추가
 from django.conf import settings
+from django.shortcuts import render
+from rest_framework.authtoken.models import Token
 
 # 로거 설정 - 환경에 따른 로그 레벨 조정
 logger = logging.getLogger('api')
@@ -73,18 +75,13 @@ def sanitize_input(text):
     return cleaned_text
 
 # 자기소개서 로깅 함수
-def log_resume_to_file(resume_id, generated_resume):
+def log_resume(resume_id, generated_resume):
     """
-    생성된 자기소개서를 resume.log 파일에 저장하는 함수
+    생성된 자기소개서를 Django 로깅 시스템을 통해 기록하는 함수
     """
     try:
-        # 로그 디렉토리 확인
-        log_dir = os.path.join(os.getcwd(), 'logs')
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        
-        # 로그 파일 경로
-        log_file = os.path.join(log_dir, 'resume.log')
+        # resume 로거 가져오기
+        resume_logger = logging.getLogger('resume')
         
         # 현재 시간
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -99,8 +96,8 @@ def log_resume_to_file(resume_id, generated_resume):
         phone_pattern = re.compile(r'\d{2,4}[-\s]?\d{3,4}[-\s]?\d{4}')
         masked_resume = phone_pattern.sub('[MASKED_PHONE]', masked_resume)
         
-        # 로그 형식
-        log_content = f"""
+        # 로그 메시지 구성
+        log_message = f"""
 ==================================================
 [RESUME ID: {resume_id}] - {now}
 ==================================================
@@ -108,19 +105,18 @@ def log_resume_to_file(resume_id, generated_resume):
 ==================================================
 """
         
-        # 파일에 기록
-        with open(log_file, 'a', encoding='utf-8') as f:
-            f.write(log_content)
+        # 로그 레벨에 따라 기록
+        resume_logger.info(f"자기소개서 생성 완료 - ID: {resume_id}")
+        resume_logger.debug(log_message)
         
-        logger.info(f"자기소개서 ID {resume_id}가 resume.log에 성공적으로 로깅되었습니다.")
         return True
     except Exception as e:
-        logger.error(f"자기소개서 로깅 실패: {str(e)}", exc_info=True)
+        resume_logger.error(f"자기소개서 로깅 실패: {str(e)}", exc_info=True)
         return False
 
 @csrf_protect
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def fetch_company_info(request):
     """
     회사 정보를 크롤링하는 API 엔드포인트
@@ -191,7 +187,7 @@ def fetch_company_info(request):
 
 
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
-@permission_classes([IsAuthenticated])  # 인증된 사용자만 API 호출 가능하도록 설정
+@permission_classes([AllowAny])  # 인증된 사용자만 API 호출 가능하도록 설정
 @ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
 @csrf_protect  # CSRF 보호 활성화
 def create_resume(request):
@@ -350,8 +346,8 @@ def create_resume(request):
             )
             logger.info(f" DB 저장 성공: Resume ID {resume.id}")
             
-            # 새로운 코드: 자기소개서 로그 파일에 전체 내용 저장
-            log_resume_to_file(resume.id, generated_resume)
+            # 새로운 코드: Django 로깅 시스템을 통한 자기소개서 로깅
+            log_resume(resume.id, generated_resume)
             
         except Exception as e:
             logger.error(f" 데이터베이스 저장 실패: {str(e)}", exc_info=True)
@@ -402,3 +398,8 @@ def test_groq_logging(request):
             'status': 'error',
             'message': str(e)
         }, status=500)
+
+def index(request):
+    """메인 페이지를 렌더링하는 뷰"""
+    api_key = os.getenv('API_KEY')  # 환경 변수에서 API 키 가져오기
+    return render(request, 'index.html', {'api_key': api_key})

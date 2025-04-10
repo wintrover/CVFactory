@@ -99,9 +99,8 @@ def main():
 
 if __name__ == "__main__":
     try:
-        # 서버 실행 명령일 경우(runserver)에만 로그 파일 초기화
-        if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
-            clear_log_files()
+        # 서버 실행 시 항상 로그 파일 초기화
+        clear_log_files()
             
         main()
     except KeyboardInterrupt:

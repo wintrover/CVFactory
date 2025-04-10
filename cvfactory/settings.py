@@ -38,16 +38,6 @@ elif not API_KEY and not DEBUG:
     logger = logging.getLogger('app')
     logger.error("프로덕션 환경에서 API_KEY가 설정되지 않았습니다. API 기능이 작동하지 않을 수 있습니다.")
 
-# Google OAuth 환경 변수
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-
-# 환경 변수가 설정되지 않은 경우 경고 로그 출력
-if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-    import logging
-    logger = logging.getLogger('app')
-    logger.warning("Google OAuth 자격 증명이 환경 변수로 설정되지 않았습니다. Google 로그인 기능이 작동하지 않을 수 있습니다.")
-
 # 자동 로그인 및 자동 계정 연결 허용
 ACCOUNT_ADAPTER = "data_management.adapters.MyAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "data_management.adapters.MySocialAccountAdapter"
@@ -112,8 +102,8 @@ SESSION_COOKIE_AGE = 3600  # 세션 만료 시간 (1시간)
 
 # CSRF 보안 설정
 CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() == 'true'
-CSRF_COOKIE_HTTPONLY = os.getenv('CSRF_COOKIE_HTTPONLY', 'True').lower() == 'true'
-CSRF_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
+CSRF_COOKIE_HTTPONLY = False  # JavaScript에서 CSRF 토큰에 접근할 수 있도록 설정
+CSRF_COOKIE_SAMESITE = 'None'  # SameSite 정책을 None으로 설정
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
 
 # 보안 헤더 설정
@@ -140,10 +130,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "allauth.account.middleware.AccountMiddleware",  # allauth 미들웨어 주석 처리 (버전 호환성 문제)
-    "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어
+    # "middleware.ApiKeyMiddleware",  # API 키 인증 미들웨어 - 비활성화
     "middleware.SecurityHeadersMiddleware",  # 보안 헤더 미들웨어
     "middleware.JWTUserStatusMiddleware",  # JWT 사용자 상태 확인 미들웨어 (CVE-2024-22513 완화)
-    "middleware.SecureApiAccessMiddleware",  # API 접근 제한 미들웨어 (인증 사용자 및 사이트 방문자)
     "middleware.RateLimitMiddleware",  # API 요청 속도 제한 미들웨어
 ]
 
@@ -175,8 +164,14 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "static_prod"
 
 # WhiteNoise 설정 - 배포 환경에서 정적 파일 제공 최적화
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_MANIFEST_STRICT = False
+STORAGES = {
+    "default": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 WSGI_APPLICATION = "cvfactory.wsgi.application"
 
@@ -192,16 +187,13 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',  
     ),
     'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser',  
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
     ),
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",  # AllowAny에서 IsAuthenticated로 변경
-    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ]
 }
 
 SIMPLE_JWT = {
@@ -230,9 +222,9 @@ SIMPLE_JWT = {
 }
 
 # 환경변수에서 로그 레벨 가져오기
-LOG_LEVEL = 'INFO'  # 로그 레벨을 INFO로 변경 (DEBUG에서 변경)
+LOG_LEVEL = 'DEBUG'  # 로그 레벨을 DEBUG로 변경
 LOG_TO_CONSOLE = True  # 콘솔 로깅 활성화
-LOG_SQL_QUERIES = False  # SQL 쿼리 로깅 비활성화 (True에서 변경)
+LOG_SQL_QUERIES = True  # SQL 쿼리 로깅 활성화
 
 # 로그 설정 - 환경별 차별화
 LOGGING = {
@@ -261,12 +253,12 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
         'file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'django.log'),
             'maxBytes': 20 * 1024 * 1024,
@@ -274,15 +266,23 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'api_file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'api.log'),
             'maxBytes': 20 * 1024 * 1024,
             'backupCount': 10,
             'formatter': 'verbose',
         },
+        'resume_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('logs', 'resume.log'),
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
         'security_file': {
-            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'security.log'),
             'maxBytes': 10 * 1024 * 1024,
@@ -290,15 +290,15 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'error_file': {
-            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'error.log'),
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 10,
-            'formatter': 'error_focused',  # 새로운 포맷터 적용
+            'formatter': 'error_focused',
         },
         'debug_file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'debug.log'),
             'maxBytes': 20 * 1024 * 1024,
@@ -312,61 +312,66 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'django.request': {
             'handlers': ['console', 'file', 'error_file'],
-            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'django.server': {
             'handlers': ['console', 'file', 'error_file'],
-            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'django.template': {
-            'handlers': ['error_file'],  # 불필요한 핸들러 제거
-            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'handlers': ['error_file'],
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'django.db.backends': {
-            'handlers': ['error_file'],  # 불필요한 핸들러 제거
-            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'handlers': ['error_file'],
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': False,
         },
         'django.security': {
             'handlers': ['console', 'security_file', 'error_file'],
-            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'api': {
             'handlers': ['console', 'api_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'groq_service': {
             'handlers': ['console', 'api_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
+            'propagate': True,
+        },
+        'resume': {
+            'handlers': ['console', 'resume_file', 'error_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'security': {
             'handlers': ['console', 'security_file', 'error_file'],
-            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         'crawlers': {
             'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
         '': {  # 루트 로거
             'handlers': ['console', 'error_file'],
-            'level': 'WARNING',  # DEBUG에서 WARNING으로 변경
+            'level': 'DEBUG',  # DEBUG로 변경
             'propagate': True,
         },
-        'django.utils.autoreload': {  # autoreload 로거 추가
-            'handlers': ['null'],  # 아무것도 로깅하지 않음
+        'django.utils.autoreload': {
+            'handlers': ['null'],
             'propagate': False,
         },
     },
@@ -395,24 +400,3 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-#  Google OAuth 설정 (하드코딩 포함)
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": GOOGLE_CLIENT_ID,
-            "secret": GOOGLE_CLIENT_SECRET,
-            "key": "",
-        },
-        "SCOPE": ["email", "profile", "openid", "https://www.googleapis.com/auth/userinfo.email",
-                  "https://www.googleapis.com/auth/userinfo.profile"],
-        "AUTH_PARAMS": {
-            "access_type": "offline",
-            "prompt": "consent",
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
-
-# 디버깅용 print 문 제거
-# print("Google OAuth 설정 완료")

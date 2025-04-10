@@ -1,0 +1,14 @@
+REQUEST: GET http://localhost:8000/
+RESPONSE: 200 http://localhost:8000/
+REQUEST: GET http://localhost:8000/static/style.css
+REQUEST: GET https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js
+REQUEST: GET http://localhost:8000/static/script.js
+RESPONSE: 200 http://localhost:8000/static/style.css
+RESPONSE: 200 http://localhost:8000/static/script.js
+RESPONSE: 200 https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js
+REQUEST: GET http://localhost:8000/api/create_resume/
+RESPONSE: 200 http://localhost:8000/api/create_resume/
+REQUEST: GET http://localhost:8000/static/lottie/factory-loading.json
+REQUEST: POST http://localhost:8000/api/create_resume/
+RESPONSE: 200 http://localhost:8000/static/lottie/factory-loading.json
+RESPONSE: 200 http://localhost:8000/api/create_resume/
