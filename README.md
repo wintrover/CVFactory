@@ -1,7 +1,7 @@
 # CVFactory
 
 <div align="center">
-  <img src="static_prod/images/logo.png" alt="CVFactory Logo" style="width:200px; height:auto;"/>
+  <img src="docs/images/logo.png" alt="CVFactory Logo" style="width:200px; height:auto;"/>
   <br>
   
   [![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.ko.md)
