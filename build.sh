@@ -15,6 +15,10 @@ pip install -r requirements.txt
 echo "정적 파일 수집 중..."
 python manage.py collectstatic --no-input
 
+# 데이터베이스 마이그레이션
+echo "데이터베이스 마이그레이션 실행 중..."
+python manage.py migrate --no-input
+
 # 필요한 디렉토리 생성
 echo "디렉토리 생성 중..."
 mkdir -p logs static_dev frontend static_prod
