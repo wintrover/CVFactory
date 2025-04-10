@@ -89,12 +89,23 @@ h1 {
 }
 
 .large-prompt {
-  height: 490px;
+  min-height: 490px;
+  height: auto;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.large-prompt > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
 }
 
 .large-textarea {
-  height: 420px;
+  flex: 1;
+  min-height: 350px;
 }
 
 /* 텍스트 영역 스타일 */
@@ -116,6 +127,7 @@ textarea {
   justify-content: right;
   border-top: 1px solid #eee;
   padding-top: 10px;
+  margin-top: auto;
 }
 
 /* 버튼 스타일 */
