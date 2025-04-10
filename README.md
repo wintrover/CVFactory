@@ -149,6 +149,15 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 - **Error Rate**: System stability evaluation
 - **User Activity**: Usage pattern analysis by feature
 
+## 👥 Team Members
+
+| Role | Name |
+|------|------|
+| Project Lead & Planning | Suhyuk Yoon |
+| Backend & API | Yangwhan Ryu |
+| Frontend & UI/UX | Dongchan Shin |
+| Crawling Modeler | Ihwan Moon |
+
 ## 📄 License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
