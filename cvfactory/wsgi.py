@@ -17,7 +17,7 @@ import time
 # 로깅 설정
 os.makedirs('logs', exist_ok=True)
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] - %(message)s',
     handlers=[
         logging.StreamHandler(),
@@ -68,9 +68,12 @@ try:
         method = environ.get('REQUEST_METHOD', '')
         query_string = environ.get('QUERY_STRING', '')
         remote_addr = environ.get('REMOTE_ADDR', '')
+        user_agent = environ.get('HTTP_USER_AGENT', '')
         
-        request_id = f"{int(time.time())}_{id(environ)}"
-        logger.debug(f"요청 시작 [{request_id}] - {method} {path_info}?{query_string} ({remote_addr})")
+        # Render의 상태 확인 요청은 로깅하지 않음
+        if 'Render' not in user_agent:
+            request_id = f"{int(time.time())}_{id(environ)}"
+            logger.debug(f"요청 시작 [{request_id}] - {method} {path_info}?{query_string} ({remote_addr})")
         
         try:
             start_process = time.time()
@@ -78,10 +81,12 @@ try:
             response = _application(environ, start_response)
             process_time = time.time() - start_process
             
-            # 요청 완료 로깅
-            response_time = datetime.now()
-            duration = (response_time - request_time).total_seconds()
-            logger.debug(f"요청 완료 [{request_id}] - 처리 시간: {process_time:.4f}초, 총 시간: {duration:.4f}초")
+            # Render의 상태 확인 요청이 아닌 경우에만 로깅
+            if 'Render' not in user_agent:
+                # 요청 완료 로깅
+                response_time = datetime.now()
+                duration = (response_time - request_time).total_seconds()
+                logger.debug(f"요청 완료 [{request_id}] - 처리 시간: {process_time:.4f}초, 총 시간: {duration:.4f}초")
             
             # 원본 응답 반환 (수정 없이)
             return response

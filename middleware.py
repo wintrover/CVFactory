@@ -40,6 +40,10 @@ class RequestLoggingMiddleware:
         self.get_response = get_response
         
     def __call__(self, request):
+        # Render 상태 확인 요청인 경우 로깅 없이 처리
+        if 'Render' in request.META.get('HTTP_USER_AGENT', ''):
+            return self.get_response(request)
+            
         # 요청 시작 시간
         start_time = time.time()
         request_id = f"{int(time.time())}_{id(request)}"

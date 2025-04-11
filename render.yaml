@@ -29,7 +29,7 @@ services:
           name: cvfactory-db
           property: connectionString
       - key: LOG_LEVEL
-        value: DEBUG
+        value: INFO
       - key: API_KEY
         generateValue: true
       - key: GROQ_API_KEY
@@ -42,6 +42,10 @@ services:
         value: "/opt/render/project/usr/bin/chromedriver"
       - key: ENVIRONMENT
         value: production
+      - key: DJANGO_SETTINGS_MODULE
+        value: cvfactory.settings.production
+      - key: LOG_SQL_QUERIES
+        value: False
     healthCheckPath: /
     plan: free
 
