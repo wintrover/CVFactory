@@ -4,7 +4,7 @@
 <head>
 <title>CVFactory - AI 자기소개서 생성 서비스</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="CVFactory를 통해 AI 기반으로 맞춤형 자기소개서를 빠르게 작성해보세요. 채용공고와 나의 스토리를 입력하면 최적화된 자기소개서를 생성합니다.">
 <meta name="keywords" content="자기소개서, 이력서, AI 자기소개서, 취업, 채용, 커리어">
 <meta name="author" content="CVFactory">
@@ -13,6 +13,22 @@
 <meta property="og:image" content="{% static 'docs/images/logo.png' %}">
 <meta property="og:url" content="https://cvfactory.kr">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="naver-site-verification" content="5c33cb08474ec4a3a63245f8cf9e38ffd476b472" />
+
+<!-- 모바일 최적화 메타 태그 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+
+<!-- 국내 검색엔진 최적화 -->
+<meta name="naver-site-verification" content="네이버_사이트_인증_코드"> <!-- 실제 인증 코드로 변경 필요 -->
+<meta property="al:ios:url" content="https://cvfactory.kr/">
+<meta property="al:ios:app_name" content="CVFactory">
+<meta property="al:android:url" content="https://cvfactory.kr/">
+<meta property="al:android:app_name" content="CVFactory">
+<meta property="al:web:url" content="https://cvfactory.kr/">
 
 <!-- 파비콘 설정 -->
 <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
@@ -23,6 +39,7 @@
 <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
 
 <link rel="stylesheet" href="{% static 'style.css' %}">
+<link rel="stylesheet" href="{% static 'responsive.css' %}">
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
 </script>
@@ -49,6 +66,37 @@
     "name": "CVFactory",
     "url": "https://cvfactory.kr",
     "logo": "https://cvfactory.kr{% static 'docs/images/logo.png' %}"
+  },
+  "inLanguage": "ko-KR",
+  "audience": {
+    "@type": "Audience",
+    "geographicArea": {
+      "@type": "Country", 
+      "name": "South Korea"
+    }
+  },
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "자기소개서"
+}
+</script>
+
+<!-- 지역 비즈니스 정보 구조화 데이터 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "CVFactory",
+  "url": "https://cvfactory.kr",
+  "logo": "https://cvfactory.kr{% static 'docs/images/logo.png' %}",
+  "address": {
+    "@type": "PostalAddress",
+    "addressCountry": "KR",
+    "addressRegion": "서울특별시"
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer service",
+    "email": "contact@cvfactory.kr"
   }
 }
 </script>

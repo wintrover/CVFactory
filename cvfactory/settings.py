@@ -178,6 +178,27 @@ STORAGES = {
     },
 }
 
+# 브라우저 캐싱 최적화 설정
+WHITENOISE_MAX_AGE = 604800  # 1주일 (초 단위)
+
+# 이미지 최적화 설정
+STATIC_IMAGE_COMPRESS = True
+
+# 브라우저 캐싱을 위한 HTTP 캐시 설정
+if not DEBUG:
+    CACHE_MIDDLEWARE_SECONDS = 86400  # 24시간
+    MIDDLEWARE.insert(3, 'django.middleware.cache.UpdateCacheMiddleware')
+    MIDDLEWARE.append('django.middleware.cache.FetchFromCacheMiddleware')
+    
+    # 캐시 설정
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'TIMEOUT': 86400,  # 24시간
+        }
+    }
+
 WSGI_APPLICATION = "cvfactory.wsgi.application"
 
 DATABASES = {
