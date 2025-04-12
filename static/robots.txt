@@ -2,5 +2,26 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /*.json$
+Disallow: /*?query=
 
-Sitemap: https://cvfactory.kr/sitemap.xml 
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+
+User-agent: Yeti
+Allow: /
+Disallow: /admin/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+
+User-agent: DaumOA
+Allow: /
+Disallow: /admin/
+
+Sitemap: https://cvfactory.kr/sitemap.xml
+Host: https://cvfactory.kr 

@@ -4,10 +4,11 @@ from django.contrib.sitemaps.views import sitemap
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-from myapp.sitemaps import StaticViewSitemap
+from myapp.sitemaps import StaticViewSitemap, BlogSitemap
 
 sitemaps = {
     'static': StaticViewSitemap,
+    'blog': BlogSitemap,
 }
 
 urlpatterns = [
@@ -23,6 +24,12 @@ urlpatterns = [
     path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
     path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
     path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
+    path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
+    path('faq/', TemplateView.as_view(template_name='faq.html'), name='faq'),
+    
+    # 블로그 관련 URL 패턴
+    path('blog/', TemplateView.as_view(template_name='blog/index.html'), name='blog'),
+    path('blog/<slug:slug>/', TemplateView.as_view(template_name='blog/detail.html'), name='blog-detail'),
 ]
 
 # 정적 파일과 미디어 파일을 제공하기 위한 설정 (개발 환경용)
