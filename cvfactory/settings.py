@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
 
     "rest_framework",
     "rest_framework.authtoken", 
@@ -74,6 +75,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_extensions",  # HTTPS 개발 서버 지원
     "cvfactory",  # 프로젝트 앱 - 사용자 정의 명령어 로드
+    "django_seo_js",
 ]
 
 # CORS 설정
@@ -120,6 +122,7 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 MIDDLEWARE = [
+    'django_seo_js.middleware.UserAgentMiddleware',
     "middleware.RequestLoggingMiddleware",  # 요청 로깅 미들웨어 (최상단에 배치)
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # WhiteNoise 정적 파일 제공 미들웨어
@@ -415,3 +418,17 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# SEO JS 설정 
+SEO_JS_ENABLED = True
+SEO_JS_BACKEND = "django_seo_js.backends.PrerenderIO"  # 또는 자체 구현 백엔드 사용
+SEO_JS_PRERENDER_TOKEN = "your-prerender-token"  # 실제 토큰으로 변경 필요
+SEO_JS_PRERENDER_URL = "https://service.prerender.io/"
+SEO_JS_PRERENDER_RECACHE_URL = "https://api.prerender.io/recache"
+
+# SEO JS 예외 URL 패턴
+SEO_JS_EXCLUDES = [
+    r'/admin/',
+    r'/api/',
+    r'/static/',
+]

@@ -1,15 +1,47 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<title>CVFactory</title>
+<title>CVFactory - 자기소개서 자동 생성 서비스</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CVFactory를 통해 AI 기반으로 맞춤형 자기소개서를 빠르게 작성해보세요. 채용공고와 나의 스토리를 입력하면 최적화된 자기소개서를 생성합니다.">
+<meta name="keywords" content="자기소개서, 이력서, AI 자기소개서, 취업, 채용, 커리어">
+<meta name="author" content="CVFactory">
+<meta property="og:title" content="CVFactory - 자기소개서 자동 생성 서비스">
+<meta property="og:description" content="AI가 채용공고에 최적화된 맞춤형 자기소개서를 생성해줍니다.">
+<meta property="og:image" content="{% static 'images/cvfactory-og-image.png' %}">
+<meta property="og:url" content="https://cvfactory.kr">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="{% static 'style.css' %}">
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
 <script src="{% static 'script.js' %}"></script>
+
+<!-- 구조화된 데이터(JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CVFactory",
+  "url": "https://cvfactory.kr",
+  "description": "채용공고와 나의 스토리를 입력하면 AI가 맞춤형 자기소개서를 생성해주는 서비스",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "KRW"
+  },
+  "creator": {
+    "@type": "Organization",
+    "name": "CVFactory",
+    "url": "https://cvfactory.kr"
+  }
+}
+</script>
 </head>
 <body>
 <header>
