@@ -13,8 +13,14 @@
 <meta property="og:image" content="{% static 'images/cvfactory-og-image.png' %}">
 <meta property="og:url" content="https://cvfactory.kr">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+
+<!-- 파비콘 설정 -->
+<link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+<link rel="manifest" href="{% static 'site.webmanifest' %}">
 <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+
 <link rel="stylesheet" href="{% static 'style.css' %}">
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
