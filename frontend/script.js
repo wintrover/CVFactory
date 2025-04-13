@@ -29,13 +29,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // 페이지 로드 시 CSRF 토큰 미리 가져오기
     fetchCSRFToken();
     
-    // Lottie 스크립트 지연 로딩
-    if (typeof lottie === 'undefined') {
-        const lottieScript = document.createElement('script');
-        lottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js';
-        lottieScript.defer = true;
-        document.head.appendChild(lottieScript);
-    }
+    // 이미지 최적화 적용
+    optimizeImages();
 });
 
 // CSRF 토큰 미리 가져오기
@@ -161,7 +156,8 @@ function fetchCompanyInfo() {
     });
 }
 
-// Lottie 애니메이션 로드 함수
+// Lottie 애니메이션 로드 함수 - 더 이상 사용하지 않음
+/*
 function loadLottieAnimation() {
     if (typeof lottie === 'undefined') {
         console.log('Lottie 라이브러리 로딩 중...');
@@ -177,7 +173,7 @@ function loadLottieAnimation() {
     }
 }
 
-// Lottie 애니메이션 초기화
+// Lottie 애니메이션 초기화 - 더 이상 사용하지 않음
 function initLottieAnimation() {
     let animationContainer = document.getElementById("lottie-container");
     
@@ -204,6 +200,7 @@ function initLottieAnimation() {
         }
     });
 }
+*/
 
 function generateResume() {
     let job_url = document.getElementById("job_url").value.trim();
@@ -243,8 +240,30 @@ function generateResume() {
     // 로딩 화면 표시
     document.getElementById("loading-overlay").style.display = "flex";
 
-    // Lottie 애니메이션 로드
-    loadLottieAnimation();
+    // Lottie 애니메이션 시도 (실패해도 계속 진행)
+    try {
+        let animationContainer = document.getElementById("lottie-container");
+        let animationPath = animationContainer.getAttribute("data-animation");
+        
+        // 기존 애니메이션이 있다면 제거 후 새로 실행
+        if (animationContainer.lottieInstance) {
+            animationContainer.lottieInstance.destroy();
+        }
+        
+        animationContainer.lottieInstance = lottie.loadAnimation({
+            container: animationContainer,
+            renderer: "svg",
+            loop: true,
+            autoplay: true,
+            path: animationPath,
+            rendererSettings: {
+                progressiveLoad: true
+            }
+        });
+    } catch (error) {
+        console.warn("Lottie 애니메이션 로드 실패:", error);
+        // 애니메이션 실패해도 계속 진행
+    }
 
     // CSRF 토큰 가져오기
     const csrftoken = getCookie("csrftoken");
