@@ -27,11 +27,31 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ffffff">
 
+<!-- 캐싱 최적화 메타 태그 -->
+<meta http-equiv="Cache-Control" content="max-age=86400">
+<meta http-equiv="Expires" content="86400">
+
+<!-- 성능 최적화 메타 태그 -->
+<meta http-equiv="x-dns-prefetch-control" content="on">
+<meta name="image-rendering" content="optimizeQuality">
+
 <!-- DNS 프리페치 및 프리커넥트 -->
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+
+<!-- 웹폰트 렌더링 최적화 -->
+<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/NotoSansKR-Regular.woff2' %}" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/NotoSansKR-Bold.woff2' %}" crossorigin>
+
+<!-- 폰트 표시 최적화 -->
+<style>
+  /* 폰트 표시 최적화 */
+  html {
+    font-display: swap;
+  }
+</style>
 
 <!-- 국내 검색엔진 최적화 -->
 <meta name="naver-site-verification" content="5c33cb08474ec4a3a63245f8cf9e38ffd476b472">
@@ -42,12 +62,16 @@
 <meta property="al:web:url" content="https://cvfactory.kr/">
 
 <!-- 파비콘 설정 -->
-<link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+<link rel="apple-touch-icon" href="{% static 'optimized_images/apple-touch-icon.png' %}">
 <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
 <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
 <link rel="manifest" href="{% static 'site.webmanifest' %}">
 <link rel="icon" href="{% static 'favicon.ico' %}">
 <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+
+<!-- 현대적 브라우저용 WebP 이미지 제공 -->
+<link rel="preload" as="image" href="{% static 'optimized_images/apple-touch-icon.webp' %}" type="image/webp">
+<link rel="preload" as="image" href="{% static 'optimized_images/android-chrome-192x192.webp' %}" type="image/webp">
 
 <!-- Critical CSS를 인라인으로 포함 -->
 <style>

@@ -254,40 +254,135 @@ function fetchCompanyInfo() {
     });
 }
 
-/**
- * 로티 애니메이션을 최적화하여 초기화하는 함수
- * @param {HTMLElement} container - 애니메이션을 표시할 컨테이너 요소
- * @param {string} animationPath - 애니메이션 JSON 파일 경로
- * @returns {object} - 생성된 로티 애니메이션 인스턴스
- */
+// 이미지 최적화 적용
+function optimizeImages() {
+    // 이미지 지연 로딩 적용
+    const images = document.querySelectorAll('img:not([loading])');
+    images.forEach(img => {
+        if (!img.hasAttribute('loading')) {
+            img.setAttribute('loading', 'lazy');
+        }
+        
+        // 이미지 디코딩 힌트 추가
+        if (!img.hasAttribute('decoding')) {
+            img.setAttribute('decoding', 'async');
+        }
+        
+        // srcset이 없는 경우 원본 크기 확인 후 srcset 생성 고려
+        if (!img.hasAttribute('srcset') && img.src && !img.src.startsWith('data:')) {
+            // 이미지 크기가 큰 경우에만 처리
+            const tmpImg = new Image();
+            tmpImg.onload = function() {
+                if (this.width > 800) {
+                    createResponsiveImage(img);
+                }
+            };
+            tmpImg.src = img.src;
+        }
+        
+        // 콘텐츠 보존 공간 확보 (CLS 최적화)
+        const setImageDimensions = () => {
+            if (!img.width && !img.height && !img.hasAttribute('width') && !img.hasAttribute('height')) {
+                // 이미지가 로드되면 크기 설정
+                img.onload = function() {
+                    if (this.width && this.height) {
+                        this.setAttribute('width', this.width);
+                        this.setAttribute('height', this.height);
+                    }
+                };
+            }
+        };
+        
+        setImageDimensions();
+    });
+    
+    // 배경 이미지 최적화
+    const withBgImages = document.querySelectorAll('[style*="background-image"]');
+    withBgImages.forEach(el => {
+        // 배경 이미지는 IntersectionObserver로 지연 로딩 고려
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // 화면에 들어오면 배경 이미지 로드
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            rootMargin: '200px' // 화면에 들어오기 전 미리 로드
+        });
+        
+        observer.observe(el);
+    });
+}
+
+// 최적화된 로티 애니메이션 초기화
 function initOptimizedLottie(container, animationPath) {
-    // lottie 객체가 로드되지 않은 경우 처리
-    if (typeof lottie === 'undefined') {
-        console.warn('Lottie 라이브러리가 아직 로드되지 않았습니다. 애니메이션을 초기화할 수 없습니다.');
+    if (!container || !animationPath) {
+        console.warn("로티 애니메이션 초기화 실패: 컨테이너 또는 경로 누락");
         return null;
     }
-
-    // 기존 애니메이션이 있다면 제거
+    
+    // 이미 인스턴스가 있으면 재사용
     if (container.lottieInstance) {
-        container.lottieInstance.destroy();
+        return container.lottieInstance;
     }
     
-    // 로티 애니메이션 최적화 옵션
-    const animOptions = {
-        container: container,
-        renderer: "svg",
-        loop: true,
-        autoplay: true,
-        path: animationPath,
-        rendererSettings: {
-            progressiveLoad: true,
-            hideOnTransparent: true,  // 투명 배경 최적화
-            className: 'lottie-animation'  // 스타일링을 위한 클래스 추가
-        }
-    };
+    // 로티 객체가 로드되었는지 확인
+    if (typeof lottie === 'undefined') {
+        console.warn("로티 라이브러리가 로드되지 않았습니다");
+        
+        // 로티 로드 이벤트 등록
+        document.addEventListener('lottieReady', () => {
+            console.log("로티 지연 로드 완료, 애니메이션 초기화 시도");
+            initOptimizedLottie(container, animationPath);
+        }, { once: true });
+        
+        return null;
+    }
     
-    // 애니메이션 인스턴스 생성 및 반환
-    return lottie.loadAnimation(animOptions);
+    try {
+        // 성능 최적화 옵션 설정
+        const animationOptions = {
+            container: container,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: animationPath,
+            rendererSettings: {
+                progressiveLoad: true,
+                preserveAspectRatio: 'xMidYMid slice',
+                clearCanvas: false,
+                hideOnTransparent: true
+            }
+        };
+        
+        // 모바일 디바이스에서는 더 낮은 품질로 설정
+        if (isMobileDevice()) {
+            animationOptions.rendererSettings.clearCanvas = true;
+            animationOptions.rendererSettings.progressiveLoad = true;
+        }
+        
+        // 애니메이션 성능 모니터링
+        const startTime = performance.now();
+        const animation = lottie.loadAnimation(animationOptions);
+        
+        // 애니메이션 로드 완료 시 성능 측정
+        animation.addEventListener('DOMLoaded', () => {
+            const loadTime = performance.now() - startTime;
+            console.log(`로티 애니메이션 로드 시간: ${loadTime.toFixed(2)}ms`);
+            
+            // 너무 느리면 품질 저하 고려
+            if (loadTime > 500 && isMobileDevice()) {
+                animation.setQuality('low');
+            }
+        });
+        
+        return animation;
+        
+    } catch (error) {
+        console.error("로티 애니메이션 초기화 중 오류:", error);
+        return null;
+    }
 }
 
 function generateResume() {
@@ -458,42 +553,6 @@ function getCookie(name) {
 }
 
 // 이미지 최적화 헬퍼 함수들
-
-/**
- * 이미지에 지연 로딩 적용
- * 페이지 성능 향상을 위해 모든 이미지에 지연 로딩 속성 추가
- */
-function optimizeImages() {
-    const images = document.querySelectorAll('img:not([loading])');
-    
-    images.forEach(img => {
-        // 지연 로딩 속성 추가
-        img.setAttribute('loading', 'lazy');
-        
-        // 이미지 크기가 설정되어 있지 않은 경우 처리
-        if (!img.hasAttribute('width') && !img.hasAttribute('height')) {
-            // 이미지가 로드된 후 크기 설정
-            img.onload = function() {
-                // 이미지가 이미 로드된 후에만 크기 설정
-                if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-                    img.setAttribute('width', img.naturalWidth);
-                    img.setAttribute('height', img.naturalHeight);
-                }
-            };
-            
-            // 이미지가 이미 로드된 경우 바로 크기 설정
-            if (img.complete && img.naturalWidth > 0) {
-                img.setAttribute('width', img.naturalWidth);
-                img.setAttribute('height', img.naturalHeight);
-            }
-        }
-        
-        // alt 속성이 없는 경우 빈 alt 추가 (접근성 개선)
-        if (!img.hasAttribute('alt')) {
-            img.setAttribute('alt', '');
-        }
-    });
-}
 
 /**
  * 반응형 이미지 생성 헬퍼 함수

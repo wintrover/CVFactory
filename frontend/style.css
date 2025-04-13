@@ -7,6 +7,8 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow-y: auto;
+  text-rendering: optimizeSpeed; /* 텍스트 렌더링 성능 향상 */
+  -webkit-font-smoothing: antialiased; /* 폰트 렌더링 최적화 */
 }
 
 /* CSS 리셋 - 브라우저 기본 스타일 재정의 */
@@ -25,6 +27,7 @@ header {
   justify-content: space-between;
   padding: 15px;
   border-bottom: 1px solid #eee;
+  will-change: transform; /* 하드웨어 가속 적용 */
 }
 
 /* 메인 컨텐츠 영역 */
@@ -35,6 +38,7 @@ main {
   align-items: center;
   justify-content: flex-start;
   padding: 20px;
+  will-change: contents; /* 하드웨어 가속 적용 */
 }
 
 /* 제목 스타일 */
@@ -44,6 +48,7 @@ main .page-title {
   font-size: 1.8rem;
   font-weight: bold;
   line-height: 1.4;
+  contain: content; /* 렌더링 최적화 */
 }
 
 main .title-part {
