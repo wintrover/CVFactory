@@ -316,23 +316,21 @@ main .page-title {
 </script>
 </head>
 <body>
-<header role="banner">
+<header>
   <div style="font-weight:bold">
     CVFactory
   </div>
-  <nav role="navigation" aria-label="메인 네비게이션">
+  <div>
     <!-- <button class="black-btn" onclick="loginWithGoogle()">로그인</button>
     <button class="white-btn">회원가입</button> -->
-  </nav>
+  </div>
 </header>
 
-<main role="main">
-  <section class="intro-section">
-    <h1 class="page-title"><span class="title-part">자기소개서를 만들기 위해</span> <span class="title-part">지원하려는 채용정보를 알려주세요!</span></h1>
-  </section>
+<main>
+  <h1 class="page-title"><span class="title-part">자기소개서를 만들기 위해</span> <span class="title-part">지원하려는 채용정보를 알려주세요!</span></h1>
 
   <!-- 전체 화면 블러 & 로딩 애니메이션 -->
-  <div id="loading-overlay" aria-hidden="true" style="display: none;">
+  <div id="loading-overlay" style="display: none;">
     <div id="lottie-container" 
         data-animation="{% static 'lottie/factory-loading.json' %}"
         style="width: 200px; height: 200px;"
@@ -348,17 +346,17 @@ main .page-title {
     <div class="left-column">
       <!-- 프롬프트 1 -->
       <div class="chat-box small-prompt">
-        <textarea id="job_url" placeholder="채용공고 URL을 입력하세요." aria-label="채용공고 URL 입력란"></textarea>
+        <textarea id="job_url" placeholder="채용공고 URL을 입력하세요."></textarea>
       </div>
       
       <!-- 프롬프트 2 -->
       <div class="chat-box small-prompt">
-        <textarea id="company_url" placeholder="지원하고자 하는 회사의 홈페이지를 입력하세요." aria-label="회사 홈페이지 URL 입력란"></textarea>
+        <textarea id="company_url" placeholder="지원하고자 하는 회사의 홈페이지를 입력하세요."></textarea>
       </div>
       
       <!-- 프롬프트 3 -->
       <div class="chat-box">
-        <textarea id="user_story" placeholder="나의 스토리를 적어주세요." aria-label="나의 스토리 입력란"></textarea>
+        <textarea id="user_story" placeholder="나의 스토리를 적어주세요."></textarea>
       </div>
     </div>
     
@@ -367,9 +365,9 @@ main .page-title {
       <!-- 프롬프트 4 -->
       <div class="chat-box large-prompt">
         <div>
-          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea" aria-label="생성된 자기소개서 결과창"></textarea>
+          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
           <div class="actions">
-            <button type="button" onclick="generateResume()" class="black-btn" aria-label="자기소개서 작성하기">작성하기</button>
+            <button type="button" onclick="generateResume()" class="black-btn">작성하기</button>
           </div>
         </div>
       </div>
@@ -377,10 +375,5 @@ main .page-title {
   </div>
 </main>
 
-<footer role="contentinfo">
-  <div class="copyright">
-    <small>© 2024 CVFactory. All rights reserved.</small>
-  </div>
-</footer>
 </body>
 </html>
