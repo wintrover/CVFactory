@@ -205,24 +205,31 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / "static_prod"
 
-# WhiteNoise 설정 - 배포 환경에서 정적 파일 제공 최적화
+# WhiteNoise 설정 - 단순화된 버전으로 변경
 STORAGES = {
     "default": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# 정적 파일 매니페스트 엄격 모드 비활성화
+# 정적 파일 매니페스트 설정 변경
 STATICFILES_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_ROOT = os.path.join(BASE_DIR, 'static')
 
-# WhiteNoise 최적화 설정
-WHITENOISE_MAX_AGE = 604800  # 1주일 (초 단위)
-WHITENOISE_COMPRESSION_QUALITY = 90
-WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True if url.endswith('.css') or url.endswith('.js') else False
-WHITENOISE_AUTOREFRESH = False if not DEBUG else True
+# 디버깅을 위한 설정
+if DEBUG:
+    STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static_prod'))
+    # 정적 파일 디버깅 로그 추가
+    LOGGING['loggers']['django.contrib.staticfiles'] = {
+        'handlers': ['console', 'debug_file'],
+        'level': 'DEBUG',
+        'propagate': False,
+    }
 
 # 이미지 최적화 설정
 STATIC_IMAGE_COMPRESS = True
@@ -477,22 +484,22 @@ LOGGING = {
         'django': {
             'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'django.request': {
             'handlers': ['console', 'file', 'error_file', 'debug_file', 'request_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'django.server': {
             'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'django.template': {
             'handlers': ['error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'django.db.backends': {
             'handlers': ['error_file', 'sql_file', 'advanced_debug_file'],
@@ -502,37 +509,37 @@ LOGGING = {
         'django.security': {
             'handlers': ['console', 'security_file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'api': {
             'handlers': ['console', 'api_file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'groq_service': {
             'handlers': ['console', 'api_file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'resume': {
             'handlers': ['console', 'resume_file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'security': {
             'handlers': ['console', 'security_file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'crawlers': {
             'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         '': {  # 루트 로거
             'handlers': ['console', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'django.utils.autoreload': {
             'handlers': ['null'],
@@ -541,12 +548,17 @@ LOGGING = {
         'cvfactory': {
             'handlers': ['console', 'file', 'error_file', 'debug_file', 'startup_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'middleware': {
             'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
+        },
+        'django.contrib.staticfiles': {
+            'handlers': ['console', 'debug_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
