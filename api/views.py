@@ -20,6 +20,7 @@ import bleach  # 특수문자 필터링을 위한 라이브러리 추가
 from django.conf import settings
 from django.shortcuts import render
 from rest_framework.authtoken.models import Token
+import traceback
 
 # 로거 설정 - 환경에 따른 로그 레벨 조정
 logger = logging.getLogger('api')
@@ -400,6 +401,32 @@ def test_groq_logging(request):
         }, status=500)
 
 def index(request):
-    """메인 페이지를 렌더링하는 뷰"""
-    api_key = os.getenv('API_KEY')  # 환경 변수에서 API 키 가져오기
-    return render(request, 'index.html', {'api_key': api_key})
+    """
+    메인 페이지 뷰 - API 키 정보 포함
+    """
+    try:
+        # 디버깅을 위해 정적 파일 경로 확인
+        from django.contrib.staticfiles import finders
+        from django.conf import settings
+        import os
+        
+        # 폰트 파일 경로 로깅
+        font_path = 'fonts/NotoSansKR-Regular.woff2'
+        absolute_path = finders.find(font_path)
+        logger.debug(f"폰트 파일 경로 검색: {font_path}")
+        logger.debug(f"폰트 파일 절대 경로: {absolute_path}")
+        logger.debug(f"STATIC_ROOT: {settings.STATIC_ROOT}")
+        logger.debug(f"STATICFILES_DIRS: {settings.STATICFILES_DIRS}")
+        
+        # STATICFILES_DIRS에서 직접 파일 존재 확인
+        for static_dir in settings.STATICFILES_DIRS:
+            full_path = os.path.join(static_dir, font_path)
+            exists = os.path.exists(full_path)
+            logger.debug(f"폰트 파일 확인 ({static_dir}): {exists}, 경로: {full_path}")
+        
+        api_key = settings.API_KEY
+        return render(request, 'index.html', {'api_key': api_key})
+    except Exception as e:
+        logger.error(f"인덱스 페이지 렌더링 중 오류: {e}")
+        logger.debug(f"상세 오류: {traceback.format_exc()}")
+        return render(request, 'error.html', {'error': str(e)})

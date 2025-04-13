@@ -336,9 +336,9 @@ SIMPLE_JWT = {
 }
 
 # 환경변수에서 로그 레벨 가져오기
-LOG_LEVEL = 'INFO'  # 로그 레벨을 DEBUG에서 INFO로 변경
+LOG_LEVEL = 'DEBUG'  # 로그 레벨을 INFO에서 DEBUG로 변경
 LOG_TO_CONSOLE = True  # 콘솔 로깅 활성화
-LOG_SQL_QUERIES = False  # SQL 쿼리 로깅 비활성화
+LOG_SQL_QUERIES = True  # SQL 쿼리 로깅 활성화
 
 # 로그 설정 - 환경별 차별화
 LOGGING = {
@@ -356,6 +356,14 @@ LOGGING = {
             'format': '\n******** ERROR ********\n[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s]\n%(message)s\n%(exc_info)s\n************************',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
+        'debug_detailed': {
+            'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] [%(funcName)s] - %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'advanced_debug': {
+            'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] [%(funcName)s] [%(process)d:%(thread)d] - %(message)s\n%(exc_info)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
     },
     'filters': {
         'require_debug_true': {
@@ -371,13 +379,13 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'debug_detailed',
             'filters': ['ignore_render_healthcheck'],
         },
         'file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'django.log'),
             'maxBytes': 20 * 1024 * 1024,
@@ -386,7 +394,7 @@ LOGGING = {
             'filters': ['ignore_render_healthcheck'],
         },
         'api_file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'api.log'),
             'maxBytes': 20 * 1024 * 1024,
@@ -395,7 +403,7 @@ LOGGING = {
             'filters': ['ignore_render_healthcheck'],
         },
         'resume_file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'resume.log'),
             'maxBytes': 20 * 1024 * 1024,
@@ -404,7 +412,7 @@ LOGGING = {
             'filters': ['ignore_render_healthcheck'],
         },
         'security_file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'security.log'),
             'maxBytes': 10 * 1024 * 1024,
@@ -412,7 +420,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'error_file': {
-            'level': 'ERROR',  # DEBUG에서 ERROR로 변경
+            'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'error.log'),
             'maxBytes': 10 * 1024 * 1024,
@@ -420,87 +428,125 @@ LOGGING = {
             'formatter': 'error_focused',
         },
         'debug_file': {
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join('logs', 'debug.log'),
             'maxBytes': 20 * 1024 * 1024,
             'backupCount': 10,
-            'formatter': 'verbose',
+            'formatter': 'debug_detailed',
+            'filters': ['ignore_render_healthcheck'],
+        },
+        'advanced_debug_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('logs', 'advanced_debug.log'),
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'advanced_debug',
             'filters': ['ignore_render_healthcheck'],
         },
         'null': {
             'class': 'logging.NullHandler',
         },
+        'sql_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('logs', 'sql.log'),
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'debug_detailed',
+        },
+        'startup_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('logs', 'startup.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 3,
+            'formatter': 'debug_detailed',
+        },
+        'request_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('logs', 'request.log'),
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'advanced_debug',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'file', 'error_file', 'debug_file', 'request_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.server': {
-            'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.template': {
-            'handlers': ['error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.db.backends': {
-            'handlers': ['error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['error_file', 'sql_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         'django.security': {
-            'handlers': ['console', 'security_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'security_file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'api': {
-            'handlers': ['console', 'api_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'api_file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'groq_service': {
-            'handlers': ['console', 'api_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'api_file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'resume': {
-            'handlers': ['console', 'resume_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'resume_file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'security': {
-            'handlers': ['console', 'security_file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'security_file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'crawlers': {
-            'handlers': ['console', 'file', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         '': {  # 루트 로거
-            'handlers': ['console', 'error_file'],
-            'level': 'INFO',  # DEBUG에서 INFO로 변경
+            'handlers': ['console', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.utils.autoreload': {
             'handlers': ['null'],
             'propagate': False,
         },
-        'wsgi': {
-            'handlers': ['null'],  # 콘솔에 출력하지 않음
-            'level': 'WARNING',  # 경고 이상만 기록
-            'propagate': False,
+        'cvfactory': {
+            'handlers': ['console', 'file', 'error_file', 'debug_file', 'startup_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'middleware': {
+            'handlers': ['console', 'file', 'error_file', 'debug_file', 'advanced_debug_file'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
     },
 }
