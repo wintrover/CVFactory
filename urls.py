@@ -4,12 +4,13 @@ from django.contrib.sitemaps.views import sitemap
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-from myapp.sitemaps import StaticViewSitemap, BlogSitemap
+from myapp.sitemaps import StaticViewSitemap, BlogSitemap, ImageSitemap
 from django.http import HttpResponse
 
 sitemaps = {
     'static': StaticViewSitemap,
     'blog': BlogSitemap,
+    'images': ImageSitemap,
 }
 
 # 네이버 사이트맵 생성 함수
