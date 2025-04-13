@@ -229,25 +229,6 @@ class SecurityHeadersMiddleware:
         ]
         response['Content-Security-Policy'] = '; '.join(csp_directives)
         
-        # 캐싱 최적화 헤더 추가
-        if request.path.endswith(('.css', '.js')):
-            # 정적 자원 장기 캐싱 (1년)
-            response['Cache-Control'] = 'public, max-age=31536000, immutable'
-        elif request.path.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico')):
-            # 이미지 자원 장기 캐싱 (1년)
-            response['Cache-Control'] = 'public, max-age=31536000, immutable'
-        elif request.path.endswith(('.woff', '.woff2', '.ttf', '.eot')):
-            # 폰트 자원 장기 캐싱 (1년)
-            response['Cache-Control'] = 'public, max-age=31536000, immutable'
-        elif request.path == '/' or request.path == '/index.html':
-            # 메인 페이지 짧은 캐싱 (5분)
-            response['Cache-Control'] = 'public, max-age=300, must-revalidate'
-        elif request.path.startswith('/api/'):
-            # API 응답은 캐싱하지 않음
-            response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-            response['Pragma'] = 'no-cache'
-            response['Expires'] = '0'
-        
         return response
 
 class JWTUserStatusMiddleware:
@@ -455,4 +436,44 @@ class RateLimitMiddleware:
             else:
                 data['timestamps'] = new_timestamps
                 data['count'] = len(new_timestamps)
-                self.user_requests[user_id] = data 
+                self.user_requests[user_id] = data
+
+class CloudflareMiddleware:
+    """
+    Cloudflare CDN 최적화를 위한 미들웨어
+    
+    Cloudflare 캐싱과 성능 최적화를 위한 응답 헤더 추가
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # 정적 파일에 대한 캐시 헤더 설정
+        path = request.path_info
+        if path.startswith('/static/') or path.endswith(('.css', '.js', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.woff', '.woff2')):
+            # 정적 파일 캐싱 (1년)
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        elif path.endswith(('.html', '/')):
+            # HTML 페이지 캐싱 (설정에 따라 조정)
+            html_cache_ttl = getattr(settings, 'HTML_CACHE_TTL', 3600)  # 기본 1시간
+            response['Cache-Control'] = f'public, max-age={html_cache_ttl}'
+        else:
+            # API 및 기타 동적 응답
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            
+        # Cloudflare 엣지 캐싱 제어
+        if not settings.DEBUG:
+            response['CF-Cache-Status'] = 'DYNAMIC'  # Cloudflare 캐싱 상태 표시
+            
+            # HTML 페이지에 대한 Cloudflare 캐싱 설정
+            if path.endswith(('.html', '/')) and request.method == 'GET':
+                response['CF-Cache-Status'] = 'HIT'
+                response['CDN-Cache-Control'] = 'public, max-age=3600'  # 1시간
+            
+            # 성능 최적화 헤더
+            response['CF-Edge-Cache'] = 'cache, cache-max-age=3600'
+        
+        return response 

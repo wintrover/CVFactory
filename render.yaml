@@ -4,7 +4,7 @@ services:
     type: web
     env: python
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn cvfactory.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+    startCommand: gunicorn cvfactory.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --threads 2 --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout 120 --max-requests 1000 --max-requests-jitter 50
     envVars:
       - fromGroup: cvfactory-env
     healthCheckPath: /

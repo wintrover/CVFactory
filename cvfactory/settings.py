@@ -80,7 +80,31 @@ INSTALLED_APPS = [
 
 # CORS 설정
 CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000,https://cvfactory.kr').split(',')
+CORS_ALLOW_CREDENTIALS = True
+
+# Cloudflare 관련 CORS 추가 설정
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'cf-connecting-ip',  # Cloudflare IP 헤더
+    'cf-ipcountry',      # Cloudflare 국가 헤더
+]
 
 AUTH_USER_MODEL = "data_management.User" 
 
@@ -107,7 +131,7 @@ SESSION_COOKIE_AGE = 3600  # 세션 만료 시간 (1시간)
 CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() == 'true'
 CSRF_COOKIE_HTTPONLY = False  # JavaScript에서 CSRF 토큰에 접근할 수 있도록 설정
 CSRF_COOKIE_SAMESITE = 'None'  # SameSite 정책을 None으로 설정
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000,https://cvfactory.kr,https://*.cvfactory.kr').split(',')
 
 # 보안 헤더 설정
 SECURE_BROWSER_XSS_FILTER = True
@@ -121,11 +145,13 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
+# 기본 미들웨어 설정
 MIDDLEWARE = [
-    'django_seo_js.middleware.UserAgentMiddleware',
-    "middleware.RequestLoggingMiddleware",  # 요청 로깅 미들웨어 (최상단에 배치)
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # WhiteNoise 정적 파일 제공 미들웨어
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.middleware.cache.UpdateCacheMiddleware",  # 캐시 미들웨어를 상단에 배치
+    'django_seo_js.middleware.UserAgentMiddleware',
+    "middleware.RequestLoggingMiddleware",  # 요청 로깅 미들웨어
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -138,6 +164,8 @@ MIDDLEWARE = [
     "middleware.SecurityHeadersMiddleware",  # 보안 헤더 미들웨어
     "middleware.JWTUserStatusMiddleware",  # JWT 사용자 상태 확인 미들웨어 (CVE-2024-22513 완화)
     "middleware.RateLimitMiddleware",  # API 요청 속도 제한 미들웨어
+    "middleware.CloudflareMiddleware",  # Cloudflare CDN 최적화 미들웨어
+    "django.middleware.cache.FetchFromCacheMiddleware",  # 페어로 하단에 배치
 ]
 
 ROOT_URLCONF = "cvfactory.urls"
@@ -159,6 +187,15 @@ TEMPLATES = [
     },
 ]
 
+# 프로덕션 환경에서 템플릿 캐싱 활성화
+if not DEBUG:
+    TEMPLATES[0]['OPTIONS']['loaders'] = [
+        ('django.template.loaders.cached.Loader', [
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader',
+        ]),
+    ]
+
 # 정적 파일 설정
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
@@ -178,35 +215,83 @@ STORAGES = {
     },
 }
 
-# 브라우저 캐싱 최적화 설정
+# WhiteNoise 최적화 설정
 WHITENOISE_MAX_AGE = 604800  # 1주일 (초 단위)
+WHITENOISE_COMPRESSION_QUALITY = 90
+WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True if url.endswith('.css') or url.endswith('.js') else False
+WHITENOISE_AUTOREFRESH = False if not DEBUG else True
 
 # 이미지 최적화 설정
 STATIC_IMAGE_COMPRESS = True
 
 # 브라우저 캐싱을 위한 HTTP 캐시 설정
-if not DEBUG:
+if DEBUG:
+    # 개발 환경에서도 캐싱 적용 (더 짧은 시간)
+    CACHE_MIDDLEWARE_SECONDS = 10  # 10초
+    # 캐시 설정
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake-dev',
+            'TIMEOUT': 10,  # 10초
+        }
+    }
+else:
+    # 프로덕션 환경 캐싱 설정 (Cloudflare 최적화)
     CACHE_MIDDLEWARE_SECONDS = 86400  # 24시간
-    MIDDLEWARE.insert(3, 'django.middleware.cache.UpdateCacheMiddleware')
-    MIDDLEWARE.append('django.middleware.cache.FetchFromCacheMiddleware')
-    
     # 캐시 설정
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'unique-snowflake',
             'TIMEOUT': 86400,  # 24시간
+            'OPTIONS': {
+                'MAX_ENTRIES': 5000,  # 캐시 항목 최대 개수
+                'CULL_FREQUENCY': 3,  # 캐시 항목이 최대치에 도달했을 때 제거할 항목 비율 (1/3)
+            }
+        },
+        'cloudflare': {  # Cloudflare 전용 캐시
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'cloudflare-cache',
+            'TIMEOUT': 604800,  # 1주일
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
         }
     }
+    
+    # 응답 헤더에 캐시 제어 설정 추가
+    CACHE_MIDDLEWARE_ALIAS = 'default'
+    CACHE_MIDDLEWARE_KEY_PREFIX = 'cvfactory'
+    
+    # HTML 응답에 대한 캐시 제어 설정
+    HTML_CACHE_TTL = 3600  # 1시간
 
 WSGI_APPLICATION = "cvfactory.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.config(
         default="sqlite:///" + str(BASE_DIR / "db.sqlite3"),
-        conn_max_age=600
+        conn_max_age=600,
+        options={
+            'timeout': 20,
+            'connect_timeout': 10,
+        }
     )
 }
+
+# CDN 설정 (프로덕션 환경)
+if not DEBUG:
+    # Cloudflare CDN 설정 활성화
+    STATIC_URL = 'https://cvfactory.kr/static/'
+    
+    # Cloudflare 관련 보안 설정
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    
+    # Cloudflare 캐시 최적화
+    WHITENOISE_MAX_AGE = 31536000  # 1년 (초 단위)
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
