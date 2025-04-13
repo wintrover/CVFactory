@@ -265,17 +265,18 @@ footer {
   
   /* 제목 최적화 */
   h1 {
-    font-size: 1.05rem;
-    margin-bottom: 14px;
-    padding: 0 5px;
-    line-height: 1.2;
+    font-size: 1.05rem !important;
+    margin-bottom: 14px !important;
+    padding: 0 5px !important;
+    line-height: 1.2 !important;
+    font-weight: normal !important;
   }
   
   /* 제목 줄바꿈 처리 */
   .title-part {
-    display: block;
-    line-height: 1.2;
-    margin-bottom: 2px;
+    display: block !important;
+    line-height: 1.2 !important;
+    margin-bottom: 2px !important;
   }
   
   /* 레이아웃 최적화 */
@@ -330,8 +331,8 @@ footer {
 @media (max-width: 375px) {
   /* 제목 추가 최적화 */
   h1 {
-    font-size: 0.95rem;
-    margin-bottom: 12px;
+    font-size: 0.95rem !important;
+    margin-bottom: 12px !important;
   }
   
   /* 채팅 박스 최적화 */
