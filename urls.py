@@ -6,6 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from myapp.sitemaps import StaticViewSitemap, BlogSitemap, ImageSitemap
 from django.http import HttpResponse
+from django.views.decorators.http import require_GET
 
 sitemaps = {
     'static': StaticViewSitemap,
@@ -13,31 +14,40 @@ sitemaps = {
     'images': ImageSitemap,
 }
 
-# 네이버 사이트맵 생성 함수
+@require_GET
 def naver_sitemap(request):
-    return HttpResponse("""<?xml version="1.0" encoding="UTF-8"?>
+    sitemap_content = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 <url>
-<loc>https://cvfactory.kr/</loc>
-<lastmod>2024-05-15T15:30:00+09:00</lastmod>
+<loc>https://cvfactory.dev/</loc>
+<lastmod>2024-06-01</lastmod>
+<changefreq>daily</changefreq>
 <priority>1.0</priority>
+<mobile:mobile/>
 </url>
 <url>
-<loc>https://cvfactory.kr/about/</loc>
-<lastmod>2024-05-15T15:30:00+09:00</lastmod>
+<loc>https://cvfactory.dev/about/</loc>
+<lastmod>2024-05-01</lastmod>
+<changefreq>monthly</changefreq>
 <priority>0.8</priority>
+<mobile:mobile/>
 </url>
 <url>
-<loc>https://cvfactory.kr/privacy/</loc>
-<lastmod>2024-05-15T15:30:00+09:00</lastmod>
-<priority>0.7</priority>
+<loc>https://cvfactory.dev/privacy/</loc>
+<lastmod>2024-05-01</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
+<mobile:mobile/>
 </url>
 <url>
-<loc>https://cvfactory.kr/terms/</loc>
-<lastmod>2024-05-15T15:30:00+09:00</lastmod>
-<priority>0.7</priority>
+<loc>https://cvfactory.dev/terms/</loc>
+<lastmod>2024-05-01</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
+<mobile:mobile/>
 </url>
-</urlset>""", content_type='application/xml')
+</urlset>"""
+    return HttpResponse(sitemap_content, content_type='application/xml')
 
 # 네이버 인증 파일 직접 제공 함수
 def naver_verification_file(request):

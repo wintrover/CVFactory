@@ -24,6 +24,6 @@ Allow: /
 Disallow: /admin/
 
 # 사이트맵 정보
-Sitemap: https://cvfactory.kr/sitemap.xml
-Sitemap: https://cvfactory.kr/naver-sitemap.xml
-Host: https://cvfactory.kr 
+Sitemap: https://cvfactory.dev/sitemap.xml
+Sitemap: https://cvfactory.dev/naver-sitemap.xml
+Host: https://cvfactory.dev 

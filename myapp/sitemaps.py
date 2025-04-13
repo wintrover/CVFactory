@@ -94,7 +94,7 @@ class ImageSitemap(Sitemap):
     # Google 이미지 사이트맵 확장용 메서드들
     def image_location(self, item):
         # 이미지의 절대 URL
-        return f'https://cvfactory.kr{item["image_url"]}'
+        return f'https://cvfactory.dev{item["image_url"]}'
         
     def image_title(self, item):
         # 이미지의 제목
