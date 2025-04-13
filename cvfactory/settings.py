@@ -215,6 +215,9 @@ STORAGES = {
     },
 }
 
+# 정적 파일 매니페스트 엄격 모드 비활성화
+STATICFILES_MANIFEST_STRICT = False
+
 # WhiteNoise 최적화 설정
 WHITENOISE_MAX_AGE = 604800  # 1주일 (초 단위)
 WHITENOISE_COMPRESSION_QUALITY = 90
