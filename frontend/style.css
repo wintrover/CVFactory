@@ -27,9 +27,14 @@ main {
   padding: 20px;
 }
 
+/* 제목 스타일 */
 h1 {
   text-align: center;
   margin-bottom: 30px;
+}
+
+.title-part {
+  display: inline;
 }
 
 /* 로딩 오버레이 스타일 */
@@ -263,6 +268,13 @@ footer {
     font-size: 1.4rem;
     margin-bottom: 20px;
     padding: 0 10px;
+  }
+  
+  /* 제목 줄바꿈 처리 */
+  .title-part {
+    display: block;
+    line-height: 1.4;
+    margin-bottom: 4px;
   }
   
   /* 레이아웃 최적화 */
