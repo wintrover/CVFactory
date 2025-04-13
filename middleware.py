@@ -229,6 +229,25 @@ class SecurityHeadersMiddleware:
         ]
         response['Content-Security-Policy'] = '; '.join(csp_directives)
         
+        # 캐싱 최적화 헤더 추가
+        if request.path.endswith(('.css', '.js')):
+            # 정적 자원 장기 캐싱 (1년)
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        elif request.path.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico')):
+            # 이미지 자원 장기 캐싱 (1년)
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        elif request.path.endswith(('.woff', '.woff2', '.ttf', '.eot')):
+            # 폰트 자원 장기 캐싱 (1년)
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        elif request.path == '/' or request.path == '/index.html':
+            # 메인 페이지 짧은 캐싱 (5분)
+            response['Cache-Control'] = 'public, max-age=300, must-revalidate'
+        elif request.path.startswith('/api/'):
+            # API 응답은 캐싱하지 않음
+            response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+        
         return response
 
 class JWTUserStatusMiddleware:
