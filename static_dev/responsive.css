@@ -93,37 +93,4 @@
   .large-textarea {
     border: none;
   }
-}
-
-/* 다크 모드 지원 */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #1a1a1a;
-    color: #f0f0f0;
-  }
-  
-  .chat-box {
-    border-color: #333;
-    background-color: #252525;
-    box-shadow: 0 2px 5px rgba(0,0,0,.2);
-  }
-  
-  textarea {
-    background-color: #252525;
-    color: #f0f0f0;
-  }
-  
-  .black-btn {
-    background: #333;
-  }
-  
-  .white-btn {
-    background: #252525;
-    color: #f0f0f0;
-    border-color: #333;
-  }
-  
-  header, footer {
-    border-color: #333;
-  }
 } 
