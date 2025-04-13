@@ -158,32 +158,32 @@ All forms of contribution are welcome, including issue submission, pull requests
 ## 📬 Contact
 For any inquiries, please contact wintrover@gmail.com.
 
-## SEO 설정 가이드
+## SEO Configuration Guide
 
-CVFactory는 다음과 같은 SEO 최적화가 적용되어 있습니다:
+CVFactory has the following SEO optimizations applied:
 
-1. **메타 태그**: 검색 엔진이 사이트 내용을 이해할 수 있도록 메타 태그를 추가했습니다.
-2. **구조화된 데이터(JSON-LD)**: Schema.org 마크업을 통해 검색 엔진에 더 많은 정보를 제공합니다.
-3. **사이트맵**: 검색 엔진 크롤러가 모든 페이지를 찾을 수 있도록 사이트맵을 생성합니다.
-4. **robots.txt**: 크롤러의 접근 제어를 위한 설정입니다.
-5. **URL 구조 최적화**: 사용자와 검색 엔진이 이해하기 쉬운 URL 구조를 유지합니다.
-6. **SSR 지원**: django-seo-js를 통해 자바스크립트 콘텐츠의 SEO 최적화를 지원합니다.
+1. **Meta Tags**: Added meta tags to help search engines understand the site content.
+2. **Structured Data (JSON-LD)**: Provides additional information to search engines through Schema.org markup.
+3. **Sitemap**: Generated to help search engine crawlers find all pages.
+4. **robots.txt**: Controls crawler access to different areas of the site.
+5. **URL Structure Optimization**: Maintains user and search engine-friendly URL structures.
+6. **SSR Support**: Supports SEO optimization for JavaScript content through django-seo-js.
 7. **Cloudflare CDN**: Performance optimization and improved loading speed via caching to enhance SEO scores.
 
-### Prerender.io 설정
+### Prerender.io Setup
 
-Prerender.io 서비스를 사용하려면 다음 절차를 따르세요:
+Follow these steps to use the Prerender.io service:
 
-1. Prerender.io 계정 생성: https://prerender.io/
-2. 발급받은 토큰을 `settings.py`의 `SEO_JS_PRERENDER_TOKEN` 값으로 설정
-3. 프로덕션 환경에서 `SEO_JS_ENABLED = True` 확인
+1. Create a Prerender.io account: https://prerender.io/
+2. Set the token you received as the `SEO_JS_PRERENDER_TOKEN` value in `settings.py`
+3. Ensure `SEO_JS_ENABLED = True` in the production environment
 
-### 새 페이지 추가 시 SEO 설정
+### SEO Settings When Adding New Pages
 
-새 페이지를 추가할 때 다음 항목을 확인하세요:
+When adding new pages, check the following items:
 
-1. 적절한 `<title>` 태그와 메타 설명 추가
-2. 페이지에 맞는 구조화된 데이터(JSON-LD) 추가
-3. 사이트맵에 페이지 추가
-4. 페이지 내 적절한 헤딩 구조(h1, h2 등) 사용
-5. 이미지에 alt 태그 추가
+1. Add appropriate `<title>` tags and meta descriptions
+2. Add structured data (JSON-LD) relevant to the page
+3. Add the page to the sitemap
+4. Use proper heading structure (h1, h2, etc.) within the page
+5. Add alt tags to images
