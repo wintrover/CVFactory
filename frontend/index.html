@@ -74,110 +74,14 @@
 <link rel="preload" as="image" href="{% static 'optimized_images/apple-touch-icon.webp' %}" type="image/webp">
 <link rel="preload" as="image" href="{% static 'optimized_images/android-chrome-192x192.webp' %}" type="image/webp">
 
-<!-- Critical CSS를 인라인으로 포함 -->
-<style>
-/* 핵심 스타일 (Critical CSS) */
-body {
-  font-family: sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  overflow-y: auto;
-}
-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px;
-  border-bottom: 1px solid #eee;
-}
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 20px;
-}
-main .page-title {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 1.8rem;
-  font-weight: bold;
-}
-#loading-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(5px);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-.prompt-container {
-  width: 95%;
-  max-width: 1200px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-/* 터치 영역 최적화 */
-.chat-box textarea,
-.actions button {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 10px;
-}
-
-/* 모바일 최적화 인라인 CSS */
-@media (max-width: 768px) {
-  main .page-title {
-    font-size: 1.4rem;
-    margin-bottom: 16px;
-    padding: 0 5px;
-    line-height: 1.3;
-    font-weight: normal;
-  }
-  
-  main .title-part {
-    display: block;
-    line-height: 1.3;
-    margin-bottom: 2px;
-  }
-  
-  textarea {
-    font-size: 16px; /* iOS에서 확대 방지 */
-  }
-}
-
-/* 불필요한 애니메이션 최소화 */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-</style>
-
-<!-- 메인 스타일시트 지연 로딩 -->
-<link rel="preload" href="{% static 'style.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="{% static 'style.css' %}"></noscript>
+<!-- CSS 스타일시트 -->
+<link rel="stylesheet" href="{% static 'style.css' %}">
 
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
 </script>
 <!-- Lottie 스크립트 최적화 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js" defer></script>
-<!-- 스크립트 프리로드 최적화 -->
-<link rel="preload" href="{% static 'script.js' %}" as="script">
 <script src="{% static 'script.js' %}" defer></script>
 
 <!-- 구조화된 데이터(JSON-LD) -->
