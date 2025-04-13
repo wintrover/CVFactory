@@ -6,6 +6,51 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 // API 키를 템플릿에서 가져오기
 const API_KEY = window.API_KEY;
 
+// 웹 성능 측정
+const logCoreWebVitals = () => {
+    // 페이지 로딩 성능 측정
+    if ('performance' in window && 'getEntriesByType' in window.performance) {
+        const pageNav = performance.getEntriesByType('navigation')[0];
+        if (pageNav) {
+            console.log(`DOM 로드 시간: ${pageNav.domContentLoadedEventEnd - pageNav.startTime}ms`);
+            console.log(`페이지 완전 로드 시간: ${pageNav.loadEventEnd - pageNav.startTime}ms`);
+        }
+    }
+    
+    // LCP (Largest Contentful Paint) 측정
+    if ('PerformanceObserver' in window) {
+        try {
+            const lcpObserver = new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                const lastEntry = entries[entries.length - 1];
+                console.log(`LCP: ${lastEntry.startTime}ms`);
+            });
+            lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+            
+            // FID (First Input Delay) 측정
+            const fidObserver = new PerformanceObserver((entryList) => {
+                const firstInput = entryList.getEntries()[0];
+                console.log(`FID: ${firstInput.processingStart - firstInput.startTime}ms`);
+            });
+            fidObserver.observe({ type: 'first-input', buffered: true });
+            
+            // CLS (Cumulative Layout Shift) 측정
+            let clsValue = 0;
+            const clsObserver = new PerformanceObserver((entryList) => {
+                for (const entry of entryList.getEntries()) {
+                    if (!entry.hadRecentInput) {
+                        clsValue += entry.value;
+                    }
+                }
+                console.log(`CLS: ${clsValue}`);
+            });
+            clsObserver.observe({ type: 'layout-shift', buffered: true });
+        } catch (e) {
+            console.warn('PerformanceObserver API 사용 중 오류 발생:', e);
+        }
+    }
+};
+
 function loginWithGoogle() {
     window.location.href = `${API_BASE_URL}/accounts/google/login/`;
 }
@@ -34,6 +79,11 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // lottie 스크립트 로드 확인
     checkLottieLoaded();
+    
+    // Core Web Vitals 측정 (개발 모드에서만)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setTimeout(logCoreWebVitals, 3000); // 3초 후 성능 측정
+    }
 });
 
 // CSRF 토큰 미리 가져오기

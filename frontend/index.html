@@ -27,6 +27,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ffffff">
 
+<!-- DNS 프리페치 및 프리커넥트 -->
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="dns-prefetch" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+
 <!-- 국내 검색엔진 최적화 -->
 <meta name="naver-site-verification" content="5c33cb08474ec4a3a63245f8cf9e38ffd476b472">
 <meta property="al:ios:url" content="https://cvfactory.kr/">
@@ -43,7 +49,64 @@
 <link rel="icon" href="{% static 'favicon.ico' %}">
 <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
 
-<link rel="stylesheet" href="{% static 'style.css' %}">
+<!-- Critical CSS를 인라인으로 포함 -->
+<style>
+/* 핵심 스타일 (Critical CSS) */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+#loading-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.prompt-container {
+  width: 95%;
+  max-width: 1200px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+</style>
+
+<!-- 메인 스타일시트 지연 로딩 -->
+<link rel="preload" href="{% static 'style.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{% static 'style.css' %}"></noscript>
+
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
 </script>
