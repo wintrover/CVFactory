@@ -10,14 +10,14 @@
 <meta name="author" content="CVFactory">
 <meta property="og:title" content="CVFactory - 맞춤형 AI 자기소개서 자동 생성 서비스">
 <meta property="og:description" content="채용공고에 최적화된 맞춤형 자기소개서를 AI가 단 몇 분만에 생성해드립니다. 취업 성공률을 높이는 스마트한 선택!">
-<meta property="og:image" content="https://cvfactory.kr{% static 'og-image.webp' %}">
+<meta property="og:image" content="{% static 'favicon-32x32.png' %}">
 <meta property="og:url" content="https://cvfactory.kr">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CVFactory">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CVFactory - 맞춤형 AI 자기소개서 자동 생성 서비스">
 <meta name="twitter:description" content="채용공고에 최적화된 맞춤형 자기소개서를 AI가 단 몇 분만에 생성해드립니다.">
-<meta name="twitter:image" content="https://cvfactory.kr{% static 'twitter-card.webp' %}">
+<meta name="twitter:image" content="{% static 'favicon-32x32.png' %}">
 <meta name="naver-site-verification" content="5c33cb08474ec4a3a63245f8cf9e38ffd476b472" />
 
 <!-- 모바일 최적화 메타 태그 -->
@@ -62,7 +62,7 @@
 <meta property="al:web:url" content="https://cvfactory.kr/">
 
 <!-- 파비콘 설정 -->
-<link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+<link rel="apple-touch-icon" href="{% static 'optimized_images/apple-touch-icon.png' %}">
 <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
 <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
 <link rel="manifest" href="{% static 'site.webmanifest' %}">
@@ -70,14 +70,8 @@
 <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
 
 <!-- 현대적 브라우저용 WebP 이미지 제공 -->
-<link rel="preload" as="image" href="{% static 'apple-touch-icon.webp' %}" type="image/webp">
-<link rel="preload" as="image" href="{% static 'android-chrome-192x192.webp' %}" type="image/webp">
-
-<!-- SEO용 이미지 메타태그 최적화 -->
-<meta property="og:image" content="https://cvfactory.kr{% static 'og-image.webp' %}">
-<meta name="twitter:image" content="https://cvfactory.kr{% static 'twitter-card.webp' %}">
-<meta name="thumbnail" content="https://cvfactory.kr{% static 'android-chrome-192x192.webp' %}">
-<link rel="image_src" href="https://cvfactory.kr{% static 'og-image.webp' %}">
+<link rel="preload" as="image" href="{% static 'optimized_images/apple-touch-icon.webp' %}" type="image/webp">
+<link rel="preload" as="image" href="{% static 'optimized_images/android-chrome-192x192.webp' %}" type="image/webp">
 
 <!-- Critical CSS를 인라인으로 포함 -->
 <style>
@@ -322,21 +316,23 @@ main .page-title {
 </script>
 </head>
 <body>
-<header>
+<header role="banner">
   <div style="font-weight:bold">
     CVFactory
   </div>
-  <div>
+  <nav role="navigation" aria-label="메인 네비게이션">
     <!-- <button class="black-btn" onclick="loginWithGoogle()">로그인</button>
     <button class="white-btn">회원가입</button> -->
-  </div>
+  </nav>
 </header>
 
-<main>
-  <h1 class="page-title"><span class="title-part">자기소개서를 만들기 위해</span> <span class="title-part">지원하려는 채용정보를 알려주세요!</span></h1>
+<main role="main">
+  <section class="intro-section">
+    <h1 class="page-title"><span class="title-part">자기소개서를 만들기 위해</span> <span class="title-part">지원하려는 채용정보를 알려주세요!</span></h1>
+  </section>
 
   <!-- 전체 화면 블러 & 로딩 애니메이션 -->
-  <div id="loading-overlay" style="display: none;">
+  <div id="loading-overlay" aria-hidden="true" style="display: none;">
     <div id="lottie-container" 
         data-animation="{% static 'lottie/factory-loading.json' %}"
         style="width: 200px; height: 200px;"
@@ -352,17 +348,17 @@ main .page-title {
     <div class="left-column">
       <!-- 프롬프트 1 -->
       <div class="chat-box small-prompt">
-        <textarea id="job_url" placeholder="채용공고 URL을 입력하세요."></textarea>
+        <textarea id="job_url" placeholder="채용공고 URL을 입력하세요." aria-label="채용공고 URL 입력란"></textarea>
       </div>
       
       <!-- 프롬프트 2 -->
       <div class="chat-box small-prompt">
-        <textarea id="company_url" placeholder="지원하고자 하는 회사의 홈페이지를 입력하세요."></textarea>
+        <textarea id="company_url" placeholder="지원하고자 하는 회사의 홈페이지를 입력하세요." aria-label="회사 홈페이지 URL 입력란"></textarea>
       </div>
       
       <!-- 프롬프트 3 -->
       <div class="chat-box">
-        <textarea id="user_story" placeholder="나의 스토리를 적어주세요."></textarea>
+        <textarea id="user_story" placeholder="나의 스토리를 적어주세요." aria-label="나의 스토리 입력란"></textarea>
       </div>
     </div>
     
@@ -371,9 +367,9 @@ main .page-title {
       <!-- 프롬프트 4 -->
       <div class="chat-box large-prompt">
         <div>
-          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
+          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea" aria-label="생성된 자기소개서 결과창"></textarea>
           <div class="actions">
-            <button type="button" onclick="generateResume()" class="black-btn">작성하기</button>
+            <button type="button" onclick="generateResume()" class="black-btn" aria-label="자기소개서 작성하기">작성하기</button>
           </div>
         </div>
       </div>
@@ -381,5 +377,10 @@ main .page-title {
   </div>
 </main>
 
+<footer role="contentinfo">
+  <div class="copyright">
+    <small>© 2024 CVFactory. All rights reserved.</small>
+  </div>
+</footer>
 </body>
 </html>
