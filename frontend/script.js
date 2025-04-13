@@ -28,6 +28,14 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // 페이지 로드 시 CSRF 토큰 미리 가져오기
     fetchCSRFToken();
+    
+    // Lottie 스크립트 지연 로딩
+    if (typeof lottie === 'undefined') {
+        const lottieScript = document.createElement('script');
+        lottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js';
+        lottieScript.defer = true;
+        document.head.appendChild(lottieScript);
+    }
 });
 
 // CSRF 토큰 미리 가져오기
@@ -153,6 +161,50 @@ function fetchCompanyInfo() {
     });
 }
 
+// Lottie 애니메이션 로드 함수
+function loadLottieAnimation() {
+    if (typeof lottie === 'undefined') {
+        console.log('Lottie 라이브러리 로딩 중...');
+        const lottieScript = document.createElement('script');
+        lottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js';
+        lottieScript.onload = function() {
+            console.log('Lottie 라이브러리 로드 완료');
+            initLottieAnimation();
+        };
+        document.head.appendChild(lottieScript);
+    } else {
+        initLottieAnimation();
+    }
+}
+
+// Lottie 애니메이션 초기화
+function initLottieAnimation() {
+    let animationContainer = document.getElementById("lottie-container");
+    
+    if (!animationContainer) {
+        console.error('애니메이션 컨테이너를 찾을 수 없습니다.');
+        return;
+    }
+    
+    let animationPath = animationContainer.getAttribute("data-animation");
+    
+    // 기존 애니메이션이 있다면 제거 후 새로 실행
+    if (animationContainer.lottieInstance) {
+        animationContainer.lottieInstance.destroy();
+    }
+    
+    animationContainer.lottieInstance = lottie.loadAnimation({
+        container: animationContainer,
+        renderer: "svg",
+        loop: true,
+        autoplay: true,
+        path: animationPath,
+        rendererSettings: {
+            progressiveLoad: true
+        }
+    });
+}
+
 function generateResume() {
     let job_url = document.getElementById("job_url").value.trim();
     let company_url = document.getElementById("company_url").value.trim();
@@ -191,27 +243,8 @@ function generateResume() {
     // 로딩 화면 표시
     document.getElementById("loading-overlay").style.display = "flex";
 
-    // Lottie 애니메이션 시도 (실패해도 계속 진행)
-    try {
-        let animationContainer = document.getElementById("lottie-container");
-        let animationPath = animationContainer.getAttribute("data-animation");
-
-        // 기존 애니메이션이 있다면 제거 후 새로 실행
-        if (animationContainer.lottieInstance) {
-            animationContainer.lottieInstance.destroy();
-        }
-
-        animationContainer.lottieInstance = lottie.loadAnimation({
-            container: animationContainer,
-            renderer: "svg",
-            loop: true,
-            autoplay: true,
-            path: animationPath
-        });
-    } catch (error) {
-        console.warn("Lottie 애니메이션 로드 실패:", error);
-        // 애니메이션 실패해도 계속 진행
-    }
+    // Lottie 애니메이션 로드
+    loadLottieAnimation();
 
     // CSRF 토큰 가져오기
     const csrftoken = getCookie("csrftoken");
@@ -328,4 +361,147 @@ function getCookie(name) {
         }
     }
     return cookieValue;
-} 
+}
+
+// 이미지 최적화 헬퍼 함수들
+
+/**
+ * 이미지에 지연 로딩 적용
+ * 페이지 성능 향상을 위해 모든 이미지에 지연 로딩 속성 추가
+ */
+function optimizeImages() {
+    const images = document.querySelectorAll('img:not([loading])');
+    
+    images.forEach(img => {
+        // 지연 로딩 속성 추가
+        img.setAttribute('loading', 'lazy');
+        
+        // 이미지 크기가 설정되어 있지 않은 경우 처리
+        if (!img.hasAttribute('width') && !img.hasAttribute('height')) {
+            // 이미지가 로드된 후 크기 설정
+            img.onload = function() {
+                // 이미지가 이미 로드된 후에만 크기 설정
+                if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                    img.setAttribute('width', img.naturalWidth);
+                    img.setAttribute('height', img.naturalHeight);
+                }
+            };
+            
+            // 이미지가 이미 로드된 경우 바로 크기 설정
+            if (img.complete && img.naturalWidth > 0) {
+                img.setAttribute('width', img.naturalWidth);
+                img.setAttribute('height', img.naturalHeight);
+            }
+        }
+        
+        // alt 속성이 없는 경우 빈 alt 추가 (접근성 개선)
+        if (!img.hasAttribute('alt')) {
+            img.setAttribute('alt', '');
+        }
+    });
+}
+
+/**
+ * 반응형 이미지 생성 헬퍼 함수
+ * 일반 이미지 태그를 반응형 picture 요소로 변환
+ * @param {string} imgSelector - 이미지 선택자
+ * @param {object} options - 설정 옵션
+ */
+function createResponsiveImage(imgSelector, options = {}) {
+    const img = document.querySelector(imgSelector);
+    if (!img) return;
+    
+    const defaults = {
+        smallBreakpoint: 768,
+        mediumBreakpoint: 1024,
+        webpSupport: true,
+        lazy: true,
+        sizes: '100vw'
+    };
+    
+    const settings = { ...defaults, ...options };
+    
+    // 원래 이미지 경로에서 파일 확장자 추출
+    const imgSrc = img.getAttribute('src');
+    const extension = imgSrc.split('.').pop();
+    const baseSrc = imgSrc.substring(0, imgSrc.lastIndexOf('.'));
+    
+    // alt 텍스트 가져오기
+    const altText = img.getAttribute('alt') || '';
+    
+    // picture 요소 생성
+    const picture = document.createElement('picture');
+    
+    // WebP 지원하는 경우 WebP 소스 추가
+    if (settings.webpSupport) {
+        // 모바일용 WebP
+        const sourceSmallWebp = document.createElement('source');
+        sourceSmallWebp.setAttribute('srcset', `${baseSrc}-small.webp`);
+        sourceSmallWebp.setAttribute('media', `(max-width: ${settings.smallBreakpoint}px)`);
+        sourceSmallWebp.setAttribute('type', 'image/webp');
+        picture.appendChild(sourceSmallWebp);
+        
+        // 태블릿용 WebP
+        const sourceMediumWebp = document.createElement('source');
+        sourceMediumWebp.setAttribute('srcset', `${baseSrc}-medium.webp`);
+        sourceMediumWebp.setAttribute('media', `(max-width: ${settings.mediumBreakpoint}px)`);
+        sourceMediumWebp.setAttribute('type', 'image/webp');
+        picture.appendChild(sourceMediumWebp);
+        
+        // 데스크톱용 WebP
+        const sourceWebp = document.createElement('source');
+        sourceWebp.setAttribute('srcset', `${baseSrc}.webp`);
+        sourceWebp.setAttribute('type', 'image/webp');
+        picture.appendChild(sourceWebp);
+    }
+    
+    // 원본 포맷 소스 추가
+    
+    // 모바일용
+    const sourceSmall = document.createElement('source');
+    sourceSmall.setAttribute('srcset', `${baseSrc}-small.${extension}`);
+    sourceSmall.setAttribute('media', `(max-width: ${settings.smallBreakpoint}px)`);
+    picture.appendChild(sourceSmall);
+    
+    // 태블릿용
+    const sourceMedium = document.createElement('source');
+    sourceMedium.setAttribute('srcset', `${baseSrc}-medium.${extension}`);
+    sourceMedium.setAttribute('media', `(max-width: ${settings.mediumBreakpoint}px)`);
+    picture.appendChild(sourceMedium);
+    
+    // 새 이미지 요소 생성
+    const newImg = document.createElement('img');
+    newImg.setAttribute('src', imgSrc);
+    newImg.setAttribute('alt', altText);
+    
+    if (settings.lazy) {
+        newImg.setAttribute('loading', 'lazy');
+    }
+    
+    if (img.hasAttribute('width')) {
+        newImg.setAttribute('width', img.getAttribute('width'));
+    }
+    
+    if (img.hasAttribute('height')) {
+        newImg.setAttribute('height', img.getAttribute('height'));
+    }
+    
+    // sizes 속성 설정
+    newImg.setAttribute('sizes', settings.sizes);
+    
+    // 이미지를 picture 요소에 추가
+    picture.appendChild(newImg);
+    
+    // 원래 이미지를 picture 요소로 교체
+    img.parentNode.replaceChild(picture, img);
+    
+    return picture;
+}
+
+// 페이지 로드 시 이미지 최적화 실행
+document.addEventListener('DOMContentLoaded', function() {
+    // 기존 코드...
+    
+    // 이미지 최적화 적용
+    optimizeImages();
+}); 
