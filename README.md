@@ -132,7 +132,7 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 ```
 
 ### Deployment Environment
-- **Render.com**: Deployed on `production` branch
+- **Render.com**: Manual deployment from `production` branch
 
 ## Branch Strategy
 - **develop**: For development and testing

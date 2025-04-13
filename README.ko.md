@@ -132,7 +132,7 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 ```
 
 ### 배포 환경
-- **Render.com**: `production` 브랜치에 배포
+- **Render.com**: `production` 브랜치에서 수동 배포
 
 ## 브랜치 전략
 - **develop**: 개발 및 테스트용
