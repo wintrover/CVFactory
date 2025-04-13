@@ -31,6 +31,9 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // 이미지 최적화 적용
     optimizeImages();
+    
+    // lottie 스크립트 로드 확인
+    checkLottieLoaded();
 });
 
 // CSRF 토큰 미리 가져오기
@@ -77,21 +80,16 @@ function fetchCompanyInfo() {
     // 로딩 화면 표시
     document.getElementById("loading-overlay").style.display = "flex";
     
+    // 최적화된 로티 애니메이션 초기화
     let animationContainer = document.getElementById("lottie-container");
     let animationPath = animationContainer.getAttribute("data-animation");
     
-    // 기존 애니메이션이 있다면 제거 후 새로 실행
-    if (animationContainer.lottieInstance) {
-      animationContainer.lottieInstance.destroy();
+    try {
+        animationContainer.lottieInstance = initOptimizedLottie(animationContainer, animationPath);
+    } catch (error) {
+        console.warn("Lottie 애니메이션 로드 실패:", error);
+        // 애니메이션 실패해도 계속 진행
     }
-    
-    animationContainer.lottieInstance = lottie.loadAnimation({
-      container: animationContainer,
-      renderer: "svg",
-      loop: true,
-      autoplay: true,
-      path: animationPath
-    });
     
     // CSRF 토큰 가져오기
     const csrftoken = getCookie("csrftoken");
@@ -156,51 +154,41 @@ function fetchCompanyInfo() {
     });
 }
 
-// Lottie 애니메이션 로드 함수 - 더 이상 사용하지 않음
-/*
-function loadLottieAnimation() {
+/**
+ * 로티 애니메이션을 최적화하여 초기화하는 함수
+ * @param {HTMLElement} container - 애니메이션을 표시할 컨테이너 요소
+ * @param {string} animationPath - 애니메이션 JSON 파일 경로
+ * @returns {object} - 생성된 로티 애니메이션 인스턴스
+ */
+function initOptimizedLottie(container, animationPath) {
+    // lottie 객체가 로드되지 않은 경우 처리
     if (typeof lottie === 'undefined') {
-        console.log('Lottie 라이브러리 로딩 중...');
-        const lottieScript = document.createElement('script');
-        lottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js';
-        lottieScript.onload = function() {
-            console.log('Lottie 라이브러리 로드 완료');
-            initLottieAnimation();
-        };
-        document.head.appendChild(lottieScript);
-    } else {
-        initLottieAnimation();
+        console.warn('Lottie 라이브러리가 아직 로드되지 않았습니다. 애니메이션을 초기화할 수 없습니다.');
+        return null;
     }
-}
 
-// Lottie 애니메이션 초기화 - 더 이상 사용하지 않음
-function initLottieAnimation() {
-    let animationContainer = document.getElementById("lottie-container");
-    
-    if (!animationContainer) {
-        console.error('애니메이션 컨테이너를 찾을 수 없습니다.');
-        return;
+    // 기존 애니메이션이 있다면 제거
+    if (container.lottieInstance) {
+        container.lottieInstance.destroy();
     }
     
-    let animationPath = animationContainer.getAttribute("data-animation");
-    
-    // 기존 애니메이션이 있다면 제거 후 새로 실행
-    if (animationContainer.lottieInstance) {
-        animationContainer.lottieInstance.destroy();
-    }
-    
-    animationContainer.lottieInstance = lottie.loadAnimation({
-        container: animationContainer,
+    // 로티 애니메이션 최적화 옵션
+    const animOptions = {
+        container: container,
         renderer: "svg",
         loop: true,
         autoplay: true,
         path: animationPath,
         rendererSettings: {
-            progressiveLoad: true
+            progressiveLoad: true,
+            hideOnTransparent: true,  // 투명 배경 최적화
+            className: 'lottie-animation'  // 스타일링을 위한 클래스 추가
         }
-    });
+    };
+    
+    // 애니메이션 인스턴스 생성 및 반환
+    return lottie.loadAnimation(animOptions);
 }
-*/
 
 function generateResume() {
     let job_url = document.getElementById("job_url").value.trim();
@@ -240,26 +228,13 @@ function generateResume() {
     // 로딩 화면 표시
     document.getElementById("loading-overlay").style.display = "flex";
 
-    // Lottie 애니메이션 시도 (실패해도 계속 진행)
+    // 최적화된 Lottie 애니메이션 시도 (실패해도 계속 진행)
     try {
         let animationContainer = document.getElementById("lottie-container");
         let animationPath = animationContainer.getAttribute("data-animation");
         
-        // 기존 애니메이션이 있다면 제거 후 새로 실행
-        if (animationContainer.lottieInstance) {
-            animationContainer.lottieInstance.destroy();
-        }
-        
-        animationContainer.lottieInstance = lottie.loadAnimation({
-            container: animationContainer,
-            renderer: "svg",
-            loop: true,
-            autoplay: true,
-            path: animationPath,
-            rendererSettings: {
-                progressiveLoad: true
-            }
-        });
+        // 최적화된 로티 애니메이션 초기화
+        animationContainer.lottieInstance = initOptimizedLottie(animationContainer, animationPath);
     } catch (error) {
         console.warn("Lottie 애니메이션 로드 실패:", error);
         // 애니메이션 실패해도 계속 진행
@@ -517,10 +492,25 @@ function createResponsiveImage(imgSelector, options = {}) {
     return picture;
 }
 
-// 페이지 로드 시 이미지 최적화 실행
-document.addEventListener('DOMContentLoaded', function() {
-    // 기존 코드...
+/**
+ * lottie 라이브러리가 로드되었는지 확인하는 함수
+ * 정해진 시간 내에 로드되지 않으면 경고 출력
+ */
+function checkLottieLoaded() {
+    let checkAttempts = 0;
+    const maxAttempts = 10;
     
-    // 이미지 최적화 적용
-    optimizeImages();
-}); 
+    const checkInterval = setInterval(() => {
+        if (typeof lottie !== 'undefined') {
+            console.log('Lottie 라이브러리가 정상적으로 로드되었습니다.');
+            clearInterval(checkInterval);
+            return;
+        }
+        
+        checkAttempts++;
+        if (checkAttempts >= maxAttempts) {
+            console.warn('Lottie 라이브러리 로드 실패. 애니메이션이 작동하지 않을 수 있습니다.');
+            clearInterval(checkInterval);
+        }
+    }, 500); // 500ms 간격으로 확인
+} 
