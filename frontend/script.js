@@ -67,7 +67,49 @@ function saveInput(id) {
     alert("저장되었습니다!");
 }
 
-// 페이지 로드 후 강제로 로딩 오버레이 숨기기 (혹시 CSS 적용이 안될 경우 대비)
+// 모바일 디바이스 감지 함수
+function isMobileDevice() {
+    return (window.innerWidth <= 768) || 
+           ('ontouchstart' in window) || 
+           (navigator.maxTouchPoints > 0) || 
+           (navigator.msMaxTouchPoints > 0);
+}
+
+// 모바일 최적화 적용 함수
+function applyMobileOptimizations() {
+    const isMobile = isMobileDevice();
+    
+    // body에 모바일 클래스 추가
+    document.body.classList.toggle('mobile-device', isMobile);
+    
+    // 텍스트 영역 자동 높이 조정
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        // 모바일에서는 textarea 높이를 자동조정
+        if (isMobile) {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+    });
+    
+    // 모바일에서 터치 피드백 개선
+    if (isMobile) {
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.98)';
+            }, { passive: true });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            }, { passive: true });
+        });
+    }
+}
+
+// 페이지 로드 후 실행되는 코드
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("loading-overlay").style.display = "none";
     
@@ -80,10 +122,18 @@ document.addEventListener("DOMContentLoaded", function () {
     // lottie 스크립트 로드 확인
     checkLottieLoaded();
     
+    // 모바일 최적화 적용
+    applyMobileOptimizations();
+    
     // Core Web Vitals 측정 (개발 모드에서만)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         setTimeout(logCoreWebVitals, 3000); // 3초 후 성능 측정
     }
+});
+
+// 화면 크기 변경 시 모바일 최적화 다시 적용
+window.addEventListener('resize', function() {
+    applyMobileOptimizations();
 });
 
 // CSRF 토큰 미리 가져오기
