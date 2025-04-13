@@ -16,8 +16,8 @@ logger = logging.getLogger("api")
 # groq_service 전용 로거 설정
 groq_logger = logging.getLogger("groq_service")
 
-# 개발 환경에서만 디버그 메시지 출력
-if settings.DEBUG:
+# 개발 환경에서만 디버그 메시지 출력 - 핸들러 중복 등록 방지
+if settings.DEBUG and not groq_logger.handlers:
     # 파일 핸들러 설정
     log_dir = os.path.join("logs")
     os.makedirs(log_dir, exist_ok=True)  # 로그 디렉토리 확인
