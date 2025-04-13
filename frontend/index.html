@@ -4,7 +4,8 @@
 <head>
 <title>CVFactory - AI 자기소개서 생성 서비스</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<meta name="HandheldFriendly" content="true">
 <meta name="description" content="CVFactory에서 AI 기술로 채용공고와 맞춤형 자기소개서를 쉽고 빠르게 작성하세요. 채용공고 분석부터 맞춤형 자소서 생성까지 단 몇 분만에 완성됩니다. 취업 성공률을 높이는 AI 자소서 서비스.">
 <meta name="keywords" content="자기소개서, 이력서, AI 자기소개서, 취업, 채용, 커리어, 자소서 생성, 맞춤형 자기소개서, 취업 준비, 면접 준비, AI 이력서, 자소서 작성, 자소서 예시, 취업 성공, 자소서 팁">
 <meta name="author" content="CVFactory">
@@ -34,12 +35,22 @@
 <!-- 성능 최적화 메타 태그 -->
 <meta http-equiv="x-dns-prefetch-control" content="on">
 <meta name="image-rendering" content="optimizeQuality">
+<!-- 리소스 우선순위 설정 -->
+<meta http-equiv="Priority" content="High">
 
 <!-- DNS 프리페치 및 프리커넥트 -->
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+
+<!-- 웹폰트 렌더링 최적화 -->
+<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/NotoSansKR-Regular.woff2' %}" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/NotoSansKR-Bold.woff2' %}" crossorigin>
+
+<!-- 주요 이미지 프리로드 추가 - LCP 최적화 -->
+<link rel="preload" as="image" href="{% static 'optimized_images/apple-touch-icon.webp' %}" type="image/webp" fetchpriority="high">
+<link rel="preload" as="image" href="{% static 'optimized_images/android-chrome-192x192.webp' %}" type="image/webp">
 
 <!-- 국내 검색엔진 최적화 -->
 <meta name="naver-site-verification" content="5c33cb08474ec4a3a63245f8cf9e38ffd476b472">
@@ -50,22 +61,201 @@
 <meta property="al:web:url" content="https://cvfactory.kr/">
 
 <!-- 파비콘 설정 -->
-<link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+<link rel="apple-touch-icon" href="{% static 'optimized_images/apple-touch-icon.png' %}">
 <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
 <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
 <link rel="manifest" href="{% static 'site.webmanifest' %}">
 <link rel="icon" href="{% static 'favicon.ico' %}">
 <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
 
+<!-- Critical CSS를 인라인으로 포함 - LCP 최적화 -->
+<style>
+/* 핵심 스타일 (Critical CSS) - 첫 화면에 보이는 요소만 포함 */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+}
+main .page-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+#loading-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  contain: layout size;
+}
+.prompt-container {
+  width: 95%;
+  max-width: 1200px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+  contain: layout;
+  min-height: 400px;
+}
+
+/* 터치 영역 최적화 */
+.chat-box textarea,
+.actions button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px;
+}
+
+/* CLS 최적화 - 이미지 영역 사전 설정 */
+.image-container {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 200px;
+  background-color: #f0f0f0;
+}
+
+/* 로딩 애니메이션 컨테이너 크기 고정 - CLS 최적화 */
+#lottie-container {
+  width: 200px;
+  height: 200px;
+  contain: layout paint size;
+}
+
+/* 텍스트 영역 크기 고정 - CLS 최적화 */
+.chat-box textarea {
+  min-height: 100px;
+  height: 100%;
+  contain: content;
+}
+
+/* 대형 텍스트 영역 크기 고정 - CLS 최적화 */
+.large-textarea {
+  min-height: 300px;
+  height: 100%;
+  contain: content;
+}
+
+/* 렌더링 최적화 CSS - GPU 가속 */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 화면 밖 콘텐츠 렌더링 최적화 */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 5000px;
+}
+
+/* 모바일 최적화 인라인 CSS */
+@media (max-width: 768px) {
+  main .page-title {
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+    padding: 0 5px;
+    line-height: 1.3;
+    font-weight: normal;
+  }
+  
+  main .title-part {
+    display: block;
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+  
+  textarea {
+    font-size: 16px; /* iOS에서 확대 방지 */
+  }
+}
+
+/* 불필요한 애니메이션 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 폰트 FOUT 방지 - CLS 최적화 */
+html {
+  font-display: optional;
+}
+</style>
+
 <!-- 메인 스타일시트 지연 로딩 -->
 <link rel="preload" href="{% static 'style.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="{% static 'style.css' %}"></noscript>
 
+<!-- 페인트 타이밍 API 활성화 - 성능 측정 -->
+<script>
+  // 성능 측정을 위한 코드
+  if (window.PerformanceObserver) {
+    const perfObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        // 콘솔에 성능 지표 로깅
+        console.log('LCP:', entry.startTime, entry);
+      }
+    });
+    perfObserver.observe({type: 'largest-contentful-paint', buffered: true});
+  }
+</script>
+
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
 </script>
+
+<!-- FID 최적화 - 스크립트 최적화 -->
+<script type="module">
+  // 중요 기능만 즉시 로드
+  document.addEventListener('DOMContentLoaded', () => {
+    const generateButton = document.querySelector('button.black-btn');
+    if (generateButton) {
+      generateButton.addEventListener('click', () => {
+        // 필수 클릭 이벤트만 즉시 처리
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) loadingOverlay.style.display = 'flex';
+        
+        // 기존 함수 호출 (스크립트 모듈화 미지원 시)
+        if (typeof window.generateResume === 'function') {
+          window.generateResume();
+        }
+      });
+    }
+  });
+</script>
+
 <!-- Lottie 스크립트 최적화 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js" defer></script>
+<!-- 스크립트 프리로드 및 defer 적용 -->
+<link rel="preload" href="{% static 'script.js' %}" as="script">
 <script src="{% static 'script.js' %}" defer></script>
 
 <!-- 구조화된 데이터(JSON-LD) -->
@@ -170,6 +360,61 @@
   }]
 }
 </script>
+
+<!-- 블로그 포스트 구조화된 데이터 예시 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "효과적인 자기소개서 작성법",
+  "image": "https://cvfactory.kr/static/blog-images/effective-resume.jpg",
+  "author": {
+    "@type": "Person",
+    "name": "CVFactory 팀"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "CVFactory",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://cvfactory.kr/static/favicon-32x32.png"
+    }
+  },
+  "datePublished": "2024-05-10",
+  "dateModified": "2024-05-15",
+  "description": "취업에 성공하는 자기소개서 작성 방법과 팁을 소개합니다.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://cvfactory.kr/blog/effective-resume-writing/"
+  },
+  "articleBody": "좋은 자기소개서는 취업 성공의 첫 단계입니다. 채용 담당자가 주목할 만한 자기소개서를 작성하는 방법을 알아보세요."
+}
+</script>
+
+<!-- 서비스 구조화된 데이터 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "자기소개서 생성 서비스",
+  "provider": {
+    "@type": "Organization",
+    "name": "CVFactory",
+    "url": "https://cvfactory.kr"
+  },
+  "areaServed": {
+    "@type": "Country",
+    "name": "대한민국"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "KRW"
+  },
+  "serviceOutput": "맞춤형 자기소개서",
+  "description": "AI 기술을 활용하여 채용공고와 개인 경험을 바탕으로 최적화된 자기소개서를 생성하는 서비스입니다."
+}
+</script>
 </head>
 <body>
 <header>
@@ -185,19 +430,19 @@
 <main>
   <h1 class="page-title"><span class="title-part">자기소개서를 만들기 위해</span> <span class="title-part">지원하려는 채용정보를 알려주세요!</span></h1>
 
-  <!-- 전체 화면 블러 & 로딩 애니메이션 -->
-  <div id="loading-overlay">
+  <!-- 전체 화면 블러 & 로딩 애니메이션 - CLS 최적화 -->
+  <div id="loading-overlay" style="display: none; width: 100%; height: 100%; contain: layout size;">
     <div id="lottie-container" 
         data-animation="{% static 'lottie/factory-loading.json' %}"
+        style="width: 200px; height: 200px;"
         aria-label="자기소개서 생성 중 로딩 애니메이션">
-        <!-- 애니메이션은 스크립트를 통해 동적으로 로드됩니다 -->
     </div>
     <p>자기소개서를 생성하는 중입니다... </p>
     <p>(최대 3분 정도 소요될 수 있습니다)</p>
   </div>
 
-  <!-- 프롬프트 레이아웃 컨테이너 -->
-  <div class="prompt-container" style="width: 95%; max-width: 1200px;">
+  <!-- 프롬프트 레이아웃 컨테이너 - CLS 최적화 -->
+  <div class="prompt-container gpu-accelerated" style="width: 95%; max-width: 1200px; min-height: 400px; contain: layout;">
     <!-- 왼쪽 열: 3개의 작은 프롬프트 -->
     <div class="left-column">
       <!-- 프롬프트 1 -->
@@ -223,7 +468,7 @@
         <div>
           <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
           <div class="actions">
-            <button type="button" onclick="generateResume()" class="black-btn">작성하기</button>
+            <button type="button" id="generate-btn" class="black-btn">작성하기</button>
           </div>
         </div>
       </div>
