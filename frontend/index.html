@@ -4,7 +4,8 @@
 <head>
 <title>CVFactory - AI 자기소개서 생성 서비스</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<meta name="HandheldFriendly" content="true">
 <meta name="description" content="CVFactory에서 AI 기술로 채용공고와 맞춤형 자기소개서를 쉽고 빠르게 작성하세요. 채용공고 분석부터 맞춤형 자소서 생성까지 단 몇 분만에 완성됩니다. 취업 성공률을 높이는 AI 자소서 서비스.">
 <meta name="keywords" content="자기소개서, 이력서, AI 자기소개서, 취업, 채용, 커리어, 자소서 생성, 맞춤형 자기소개서, 취업 준비, 면접 준비, AI 이력서, 자소서 작성, 자소서 예시, 취업 성공, 자소서 팁">
 <meta name="author" content="CVFactory">
@@ -128,6 +129,14 @@ main .page-title {
   margin-bottom: 20px;
 }
 
+/* 터치 영역 최적화 */
+.chat-box textarea,
+.actions button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px;
+}
+
 /* 모바일 최적화 인라인 CSS */
 @media (max-width: 768px) {
   main .page-title {
@@ -143,6 +152,18 @@ main .page-title {
     line-height: 1.3;
     margin-bottom: 2px;
   }
+  
+  textarea {
+    font-size: 16px; /* iOS에서 확대 방지 */
+  }
+}
+
+/* 불필요한 애니메이션 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 
@@ -155,6 +176,8 @@ main .page-title {
 </script>
 <!-- Lottie 스크립트 최적화 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js" defer></script>
+<!-- 스크립트 프리로드 최적화 -->
+<link rel="preload" href="{% static 'script.js' %}" as="script">
 <script src="{% static 'script.js' %}" defer></script>
 
 <!-- 구조화된 데이터(JSON-LD) -->
