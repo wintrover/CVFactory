@@ -168,6 +168,7 @@ CVFactory는 다음과 같은 SEO 최적화가 적용되어 있습니다:
 4. **robots.txt**: 크롤러의 접근 제어를 위한 설정입니다.
 5. **URL 구조 최적화**: 사용자와 검색 엔진이 이해하기 쉬운 URL 구조를 유지합니다.
 6. **SSR 지원**: django-seo-js를 통해 자바스크립트 콘텐츠의 SEO 최적화를 지원합니다.
+7. **Cloudflare CDN**: Performance optimization and improved loading speed via caching to enhance SEO scores.
 
 ### Prerender.io 설정
 
