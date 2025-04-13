@@ -265,16 +265,16 @@ footer {
   
   /* 제목 최적화 */
   h1 {
-    font-size: 1.2rem;
-    margin-bottom: 16px;
-    padding: 0 10px;
-    line-height: 1.3;
+    font-size: 1.05rem;
+    margin-bottom: 14px;
+    padding: 0 5px;
+    line-height: 1.2;
   }
   
   /* 제목 줄바꿈 처리 */
   .title-part {
     display: block;
-    line-height: 1.3;
+    line-height: 1.2;
     margin-bottom: 2px;
   }
   
@@ -330,8 +330,8 @@ footer {
 @media (max-width: 375px) {
   /* 제목 추가 최적화 */
   h1 {
-    font-size: 1.1rem;
-    margin-bottom: 14px;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
   }
   
   /* 채팅 박스 최적화 */
