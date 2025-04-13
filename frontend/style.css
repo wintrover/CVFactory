@@ -9,6 +9,16 @@ body {
   overflow-y: auto;
 }
 
+/* CSS 리셋 - 브라우저 기본 스타일 재정의 */
+html, body, div, span, h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
 /* 헤더 스타일 */
 header {
   display: flex;
@@ -28,12 +38,15 @@ main {
 }
 
 /* 제목 스타일 */
-h1 {
+main .page-title {
   text-align: center;
   margin-bottom: 30px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  line-height: 1.4;
 }
 
-.title-part {
+main .title-part {
   display: inline;
 }
 
@@ -264,19 +277,19 @@ footer {
   }
   
   /* 제목 최적화 */
-  h1 {
-    font-size: 1.05rem !important;
-    margin-bottom: 14px !important;
-    padding: 0 5px !important;
-    line-height: 1.2 !important;
-    font-weight: normal !important;
+  main .page-title {
+    font-size: 1.05rem;
+    margin-bottom: 14px;
+    padding: 0 5px;
+    line-height: 1.2;
+    font-weight: normal;
   }
   
   /* 제목 줄바꿈 처리 */
-  .title-part {
-    display: block !important;
-    line-height: 1.2 !important;
-    margin-bottom: 2px !important;
+  main .title-part {
+    display: block;
+    line-height: 1.2;
+    margin-bottom: 2px;
   }
   
   /* 레이아웃 최적화 */
@@ -330,9 +343,9 @@ footer {
 /* 작은 모바일 기기 (iPhone SE 등) */
 @media (max-width: 375px) {
   /* 제목 추가 최적화 */
-  h1 {
-    font-size: 0.95rem !important;
-    margin-bottom: 12px !important;
+  main .page-title {
+    font-size: 0.95rem;
+    margin-bottom: 12px;
   }
   
   /* 채팅 박스 최적화 */
