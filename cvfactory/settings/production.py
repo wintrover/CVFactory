@@ -189,4 +189,24 @@ LOGGING = {
             'propagate': False,
         },
     },
-} 
+}
+
+# 정적 파일 스토리지 설정 (폰트 로드 문제 해결)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# 정적 파일 매니페스트 설정 변경
+STATICFILES_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_ROOT = os.path.join(BASE_DIR, 'static')
+
+# 중복 로그 방지를 위한 propagate 설정 (모든 로거에 propagate=False 설정)
+for logger_name in LOGGING['loggers']:
+    LOGGING['loggers'][logger_name]['propagate'] = False 
