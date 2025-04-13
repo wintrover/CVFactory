@@ -49,6 +49,11 @@ h1 {
   flex-direction: column;
 }
 
+/* 로딩 오버레이 텍스트 간격 조정 */
+#loading-overlay p {
+  margin: 5px 0;
+}
+
 /* 프롬프트 컨테이너 레이아웃 */
 .prompt-container {
   width: 95%;
