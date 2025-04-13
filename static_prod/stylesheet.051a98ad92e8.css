@@ -7,6 +7,8 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow-y: auto;
+  background-color: #fff;
+  color: #000;
 }
 
 /* 헤더 스타일 */
@@ -15,6 +17,7 @@ header {
   justify-content: space-between;
   padding: 15px;
   border-bottom: 1px solid #eee;
+  background-color: #fff;
 }
 
 /* 메인 컨텐츠 영역 */
@@ -30,23 +33,6 @@ main {
 h1 {
   text-align: center;
   margin-bottom: 30px;
-}
-
-/* 로딩 오버레이 스타일 */
-#loading-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(5px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
 }
 
 /* 프롬프트 컨테이너 레이아웃 */
@@ -76,7 +62,7 @@ h1 {
 }
 
 .right-column {
-  flex: 1.5;
+  flex: 1;
   min-width: 300px;
 }
 
@@ -91,6 +77,7 @@ h1 {
   display: flex;
   flex-direction: column; /* 자식 요소를 세로로 배치 */
   height: 100%; /* 부모 컨테이너의 높이를 모두 차지 */
+  background-color: #fff;
 }
 
 .small-prompt {
@@ -106,21 +93,23 @@ h1 {
 }
 
 .large-prompt {
-  height: 490px;
+  min-height: 490px;
+  height: auto;
   margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .large-prompt > div {
   display: flex;
   flex-direction: column;
+  flex: 1;
   height: 100%;
-  width: 100%;
 }
 
 .large-textarea {
-  height: calc(100% - 50px); /* 버튼 영역의 높이를 고려하여 계산 */
+  flex: 1;
   min-height: 350px;
-  flex-grow: 1;
 }
 
 /* 텍스트 영역 스타일 */
@@ -134,11 +123,8 @@ textarea {
   resize: none;
   overflow-y: auto;
   box-sizing: border-box;
-  flex-grow: 1; /* 사용 가능한 공간을 모두 채우도록 함 */
-}
-
-#generated_resume {
-  margin-bottom: 0; /* 액션 버튼과의 간격 조정 */
+  background-color: #fff;
+  color: #000;
 }
 
 /* 액션 버튼 영역 */
@@ -147,16 +133,7 @@ textarea {
   justify-content: right;
   border-top: 1px solid #eee;
   padding-top: 10px;
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: auto; /* 아래쪽으로 버튼 영역을 밀어냄 */
-}
-
-/* 작은 버튼 스타일 */
-.small-btn {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  margin-top: 10px;
+  margin-top: auto;
 }
 
 /* 버튼 스타일 */
@@ -181,6 +158,7 @@ textarea {
 
 .gray-btn {
   background: #f7f7f8;
+  color: #000;
   border: none;
   border-radius: 8px;
   padding: 6px 12px;
@@ -236,4 +214,4 @@ footer {
   padding: 10px;
   color: #666;
   border-top: 1px solid #eee;
-} 
+}

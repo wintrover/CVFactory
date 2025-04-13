@@ -1,0 +1,28 @@
+/* 필수 미디어 쿼리만 유지 */
+
+/* 모바일 반응형은 비활성화됨 */
+
+/* 고해상도 디스플레이 (Retina) 최적화 */
+@media 
+(-webkit-min-device-pixel-ratio: 2), 
+(min-resolution: 192dpi) {
+  /* 고해상도 이미지 처리 */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* 인쇄 스타일 최적화 */
+@media print {
+  .actions, header {
+    display: none;
+  }
+  
+  body {
+    font-size: 12pt;
+  }
+  
+  .large-textarea {
+    border: none;
+  }
+} 

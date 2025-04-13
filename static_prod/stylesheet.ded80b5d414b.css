@@ -7,6 +7,8 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow-y: auto;
+  background-color: #ffffff;
+  color: #333333;
 }
 
 /* 헤더 스타일 */
@@ -14,7 +16,8 @@ header {
   display: flex;
   justify-content: space-between;
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #ffffff;
 }
 
 /* 메인 컨텐츠 영역 */
@@ -25,28 +28,13 @@ main {
   align-items: center;
   justify-content: flex-start;
   padding: 20px;
+  background-color: #f8f9fa;
 }
 
 h1 {
   text-align: center;
   margin-bottom: 30px;
-}
-
-/* 로딩 오버레이 스타일 */
-#loading-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(5px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  color: #333333;
 }
 
 /* 프롬프트 컨테이너 레이아웃 */
@@ -76,14 +64,14 @@ h1 {
 }
 
 .right-column {
-  flex: 1.5;
+  flex: 1;
   min-width: 300px;
 }
 
 /* 채팅 박스 스타일 */
 .chat-box {
   width: 100%;
-  border: 1px solid #eee;
+  border: 1px solid #e0e0e0;
   border-radius: 10px;
   padding: 12px;
   box-shadow: 0 2px 5px rgba(0,0,0,.05);
@@ -91,6 +79,7 @@ h1 {
   display: flex;
   flex-direction: column; /* 자식 요소를 세로로 배치 */
   height: 100%; /* 부모 컨테이너의 높이를 모두 차지 */
+  background-color: #ffffff;
 }
 
 .small-prompt {
@@ -103,24 +92,30 @@ h1 {
   width: 100%; /* 부모 컨테이너의 너비를 모두 차지 */
   box-sizing: border-box; /* 패딩과 테두리를 포함한 크기 계산 */
   resize: none; /* 사용자가 크기를 조정하지 못하게 함 */
+  background-color: #ffffff;
+  color: #333333;
 }
 
 .large-prompt {
-  height: 490px;
+  min-height: 490px;
+  height: auto;
   margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .large-prompt > div {
   display: flex;
   flex-direction: column;
+  flex: 1;
   height: 100%;
-  width: 100%;
 }
 
 .large-textarea {
-  height: calc(100% - 50px); /* 버튼 영역의 높이를 고려하여 계산 */
+  flex: 1;
   min-height: 350px;
-  flex-grow: 1;
+  background-color: #ffffff;
+  color: #333333;
 }
 
 /* 텍스트 영역 스타일 */
@@ -134,34 +129,22 @@ textarea {
   resize: none;
   overflow-y: auto;
   box-sizing: border-box;
-  flex-grow: 1; /* 사용 가능한 공간을 모두 채우도록 함 */
-}
-
-#generated_resume {
-  margin-bottom: 0; /* 액션 버튼과의 간격 조정 */
+  background-color: #ffffff;
+  color: #333333;
 }
 
 /* 액션 버튼 영역 */
 .actions {
   display: flex;
   justify-content: right;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e0e0e0;
   padding-top: 10px;
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: auto; /* 아래쪽으로 버튼 영역을 밀어냄 */
-}
-
-/* 작은 버튼 스타일 */
-.small-btn {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  margin-top: 10px;
+  margin-top: auto;
 }
 
 /* 버튼 스타일 */
 .black-btn {
-  background: #000;
+  background: #4285f4;
   color: #fff;
   border: none;
   border-radius: 20px;
@@ -171,8 +154,8 @@ textarea {
 
 .white-btn {
   background: #fff;
-  color: #000;
-  border: 1px solid #eee;
+  color: #333333;
+  border: 1px solid #e0e0e0;
   border-radius: 20px;
   padding: 8px 16px;
   margin-left: 10px;
@@ -180,12 +163,13 @@ textarea {
 }
 
 .gray-btn {
-  background: #f7f7f8;
+  background: #f1f3f4;
   border: none;
   border-radius: 8px;
   padding: 6px 12px;
   margin-right: 5px;
   cursor: pointer;
+  color: #333333;
 }
 
 /* 소셜 아이콘 스타일 */
@@ -208,8 +192,8 @@ textarea {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #f7f7f8;
-  color: #333;
+  background-color: #f1f3f4;
+  color: #333333;
   transition: all 0.3s ease;
   text-decoration: none;
 }
@@ -224,8 +208,8 @@ textarea {
 }
 
 .social-link:hover {
-  background-color: #fff;
-  color: #fff;
+  background-color: #e8eaed;
+  color: #1a73e8;
   transform: translateY(-4px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
@@ -234,6 +218,7 @@ textarea {
 footer {
   text-align: center;
   padding: 10px;
-  color: #666;
-  border-top: 1px solid #eee;
-} 
+  color: #5f6368;
+  border-top: 1px solid #e0e0e0;
+  background-color: #ffffff;
+}
