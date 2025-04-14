@@ -79,6 +79,9 @@ function isMobileDevice() {
 function applyMobileOptimizations() {
     const isMobile = isMobileDevice();
     
+    // 디버깅용 로그 추가
+    console.log('모바일 디바이스 감지:', isMobile);
+    
     // body에 모바일 클래스 추가
     document.body.classList.toggle('mobile-device', isMobile);
     
@@ -95,19 +98,74 @@ function applyMobileOptimizations() {
         // main 요소 직접 스크롤 가능하도록 설정
         const mainElement = document.querySelector('main');
         if (mainElement) {
+            console.log('main 요소 발견, 스크롤 설정 적용');
+            
+            // 스크롤 가능하다는 것을 시각적으로 표시 (디버깅용)
+            mainElement.setAttribute('data-scrollable', 'true');
+            
             mainElement.style.overflowY = 'auto';
             mainElement.style.webkitOverflowScrolling = 'touch';
             mainElement.style.touchAction = 'pan-y';
+            mainElement.style.position = 'relative';
+            mainElement.style.zIndex = '1';
             
-            // 터치 이벤트 리스너 추가 - 스크롤 동작 개선
-            mainElement.addEventListener('touchstart', function(e) {
-                // 스크롤 시작 위치 기록
-                this._touchStartY = e.touches[0].clientY;
-            }, { passive: true });
+            // 기존 터치 이벤트 리스너 제거 후 새로 추가
+            mainElement.removeEventListener('touchstart', mainTouchStartHandler);
+            mainElement.removeEventListener('touchmove', mainTouchMoveHandler);
+            mainElement.removeEventListener('touchend', mainTouchEndHandler);
             
-            mainElement.addEventListener('touchmove', function(e) {
-                // 스크롤 동작을 수동으로 관리하지 않고 브라우저에 위임
-                // passive true로 설정하여 성능 개선
+            // 터치 이벤트 디버깅용 로그 추가
+            let touchStartY = 0;
+            let touchMoveCount = 0;
+            
+            function mainTouchStartHandler(e) {
+                touchStartY = e.touches[0].clientY;
+                touchMoveCount = 0;
+                console.log('MAIN TOUCH START:', { 
+                    y: touchStartY,
+                    time: new Date().getTime(),
+                    target: e.target.tagName,
+                    scrollTop: mainElement.scrollTop,
+                    scrollHeight: mainElement.scrollHeight,
+                    clientHeight: mainElement.clientHeight 
+                });
+            }
+            
+            function mainTouchMoveHandler(e) {
+                touchMoveCount++;
+                const currentY = e.touches[0].clientY;
+                const deltaY = touchStartY - currentY;
+                
+                // 10px 이상 움직였을 때만 로그
+                if (touchMoveCount % 5 === 0 || Math.abs(deltaY) > 10) {
+                    console.log('MAIN TOUCH MOVE:', { 
+                        deltaY: deltaY, 
+                        moveCount: touchMoveCount,
+                        currentScrollTop: mainElement.scrollTop,
+                        canScrollUp: mainElement.scrollTop > 0,
+                        canScrollDown: mainElement.scrollTop + mainElement.clientHeight < mainElement.scrollHeight
+                    });
+                }
+            }
+            
+            function mainTouchEndHandler(e) {
+                console.log('MAIN TOUCH END:', { 
+                    moveCount: touchMoveCount,
+                    finalScrollTop: mainElement.scrollTop
+                });
+            }
+            
+            // 이벤트 리스너 추가
+            mainElement.addEventListener('touchstart', mainTouchStartHandler, { passive: true });
+            mainElement.addEventListener('touchmove', mainTouchMoveHandler, { passive: true });
+            mainElement.addEventListener('touchend', mainTouchEndHandler, { passive: true });
+            
+            // 스크롤 이벤트 모니터링
+            mainElement.addEventListener('scroll', function(e) {
+                console.log('MAIN SCROLL:', { 
+                    scrollTop: mainElement.scrollTop,
+                    timestamp: new Date().getTime()
+                });
             }, { passive: true });
             
             // 프롬프트 컨테이너도 스크롤 가능하도록 설정
@@ -116,8 +174,17 @@ function applyMobileOptimizations() {
                 promptContainer.style.overflowY = 'auto';
                 promptContainer.style.webkitOverflowScrolling = 'touch';
                 promptContainer.style.touchAction = 'pan-y';
+                promptContainer.style.position = 'relative';
+                promptContainer.style.zIndex = '2';
             }
+        } else {
+            console.warn('main 요소를 찾을 수 없음');
         }
+        
+        // 터치 이벤트 디버깅용 글로벌 핸들러
+        document.addEventListener('touchstart', function(e) {
+            console.log('DOCUMENT TOUCH START: ', e.target.tagName);
+        }, { passive: true });
     }
     
     // 텍스트 영역 자동 높이 조정
