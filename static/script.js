@@ -82,6 +82,44 @@ function applyMobileOptimizations() {
     // body에 모바일 클래스 추가
     document.body.classList.toggle('mobile-device', isMobile);
     
+    // 문서 전체에 터치 이벤트 개선
+    if (isMobile) {
+        // body와 html에 스크롤 관련 속성 설정
+        document.documentElement.style.height = '100%';
+        document.documentElement.style.overflowY = 'auto';
+        document.documentElement.style.webkitOverflowScrolling = 'touch';
+        document.body.style.height = '100%';
+        document.body.style.overflowY = 'auto';
+        document.body.style.webkitOverflowScrolling = 'touch';
+        
+        // main 요소 직접 스크롤 가능하도록 설정
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.style.overflowY = 'auto';
+            mainElement.style.webkitOverflowScrolling = 'touch';
+            mainElement.style.touchAction = 'pan-y';
+            
+            // 터치 이벤트 리스너 추가 - 스크롤 동작 개선
+            mainElement.addEventListener('touchstart', function(e) {
+                // 스크롤 시작 위치 기록
+                this._touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            mainElement.addEventListener('touchmove', function(e) {
+                // 스크롤 동작을 수동으로 관리하지 않고 브라우저에 위임
+                // passive true로 설정하여 성능 개선
+            }, { passive: true });
+            
+            // 프롬프트 컨테이너도 스크롤 가능하도록 설정
+            const promptContainer = document.querySelector('.prompt-container');
+            if (promptContainer) {
+                promptContainer.style.overflowY = 'auto';
+                promptContainer.style.webkitOverflowScrolling = 'touch';
+                promptContainer.style.touchAction = 'pan-y';
+            }
+        }
+    }
+    
     // 텍스트 영역 자동 높이 조정
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {

@@ -4,6 +4,27 @@
 
 /* 모바일 최적화 추가 */
 @media (max-width: 768px) {
+  body, html {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  main {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    position: relative;
+    height: auto;
+    min-height: 100%;
+    width: 100%;
+    padding-bottom: 40px;
+  }
+
   header {
     padding: 10px;
     position: sticky;
@@ -102,13 +123,6 @@
   /* 모바일에서 요소 눌렀을 때 피드백 개선 */
   .chat-box:active {
     background-color: rgba(0,0,0,0.01);
-  }
-  
-  /* 모바일 스크롤 영역 최적화 */
-  main {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
   }
 }
 
