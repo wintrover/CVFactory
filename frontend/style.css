@@ -150,6 +150,7 @@ main .title-part {
   height: calc(100% - 50px); /* 버튼 영역의 높이를 고려하여 계산 */
   min-height: 350px;
   flex-grow: 1;
+  width: 100%;
 }
 
 /* 텍스트 영역 스타일 */
@@ -307,6 +308,23 @@ textarea {
   .large-prompt {
     height: auto;
     min-height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .large-prompt > div {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+  }
+  
+  .large-textarea {
+    min-height: 320px;
+    height: 100%;
+    flex: 1;
+    box-sizing: border-box;
+    width: 100%;
   }
 
   .black-btn, .white-btn {
@@ -356,6 +374,14 @@ textarea {
   #lottie-container {
     width: 150px !important;
     height: 150px !important;
+  }
+
+  .large-prompt {
+    min-height: 350px;
+  }
+  
+  .large-textarea {
+    min-height: 280px;
   }
 }
 
