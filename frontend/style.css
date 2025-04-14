@@ -166,6 +166,7 @@ textarea {
   box-sizing: border-box;
   flex-grow: 1; /* 사용 가능한 공간을 모두 채우도록 함 */
   touch-action: manipulation; /* 더블탭 확대 방지 */
+  -webkit-overflow-scrolling: touch; /* iOS 스크롤 가속 */
 }
 
 #generated_resume {
@@ -310,6 +311,8 @@ textarea {
     min-height: 400px;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow: hidden;
   }
   
   .large-prompt > div {
@@ -317,6 +320,8 @@ textarea {
     flex-direction: column;
     flex: 1;
     height: 100%;
+    position: relative;
+    overflow: hidden;
   }
   
   .large-textarea {
@@ -325,6 +330,10 @@ textarea {
     flex: 1;
     box-sizing: border-box;
     width: 100%;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    position: relative;
+    z-index: 1;
   }
 
   .black-btn, .white-btn {
@@ -346,6 +355,23 @@ textarea {
   textarea {
     padding: 12px;
     line-height: 1.5;
+  }
+
+  /* 모바일에서 터치 동작 최적화 */
+  .chat-box, textarea, button, .actions {
+    touch-action: manipulation;
+  }
+  
+  /* 모바일에서 요소 눌렀을 때 피드백 개선 */
+  .chat-box:active {
+    background-color: rgba(0,0,0,0.01);
+  }
+  
+  /* 모바일 스크롤 영역 최적화 */
+  main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 }
 

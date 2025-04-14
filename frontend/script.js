@@ -114,31 +114,45 @@ function applyMobileOptimizations() {
             }, { passive: true });
         });
         
-        // 모바일 스크롤 성능 개선 - 핀치 줌만 방지하고 일반 스크롤은 허용
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-        
-        document.addEventListener('gesturechange', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-        
-        document.addEventListener('gestureend', function(e) {
-            e.preventDefault();
-        }, { passive: false });
+        // 모바일 스크롤과 탭 상호작용 개선
+        // main 요소와 그 내부의 요소들의 터치 이벤트 처리 개선
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            // 터치 동작 최적화
+            mainElement.style.touchAction = 'manipulation';
+            
+            // 클릭/터치 이벤트가 제대로 동작하도록 설정
+            mainElement.addEventListener('touchstart', function(e) {
+                // 스크롤 가능한 영역에서는 이벤트 전파 유지
+            }, { passive: true });
+            
+            // textarea 요소의 터치 이벤트 최적화
+            const textareas = mainElement.querySelectorAll('textarea');
+            textareas.forEach(textarea => {
+                textarea.style.touchAction = 'pan-y';
+                textarea.style.webkitOverflowScrolling = 'touch'; // iOS 스크롤 가속
+            });
+            
+            // 커스텀 스크롤을 보장하는 요소 선택
+            const scrollableElements = mainElement.querySelectorAll('.chat-box, .large-prompt, .large-textarea');
+            scrollableElements.forEach(element => {
+                element.style.webkitOverflowScrolling = 'touch'; // iOS에서 부드러운 스크롤
+                element.style.touchAction = 'pan-y'; // 수직 스크롤만 허용
+            });
+        }
         
         // 텍스트 영역 입력 시 모바일 키보드로 인한 레이아웃 시프트 최소화
         const adjustViewportOnFocus = () => {
             // 현재 포커스된 요소가 텍스트 영역인지 확인
             if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') {
-                // iOS에서 메타 뷰포트 조정
+                // iOS에서 메타 뷰포트 조정 (모바일에서 줌인/줌아웃 방지)
                 const viewportMeta = document.querySelector('meta[name="viewport"]');
                 if (viewportMeta) {
                     viewportMeta.setAttribute('content', 
                         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
                 }
                 
-                // 스크롤 위치 조정
+                // 스크롤 위치 조정 - 포커스 요소가 키보드에 가려지지 않도록
                 setTimeout(() => {
                     window.scrollTo({
                         top: document.activeElement.offsetTop - 100,
@@ -149,7 +163,7 @@ function applyMobileOptimizations() {
         };
         
         const resetViewportOnBlur = () => {
-            // 포커스가 해제되면 원래 뷰포트 설정 복원
+            // 포커스가 해제되면 원래 뷰포트 설정 복원 (모바일에서 줌인/줌아웃 허용)
             const viewportMeta = document.querySelector('meta[name="viewport"]');
             if (viewportMeta) {
                 viewportMeta.setAttribute('content', 
