@@ -199,8 +199,6 @@ if not DEBUG:
 # 정적 파일 설정
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static_dev",
-    BASE_DIR / "frontend",
     BASE_DIR / "static",
 ]
 STATIC_ROOT = BASE_DIR / "static_prod"
