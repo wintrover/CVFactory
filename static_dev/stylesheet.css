@@ -98,6 +98,8 @@ h1 {
   margin: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
 .large-prompt > div {
@@ -105,11 +107,17 @@ h1 {
   flex-direction: column;
   flex: 1;
   height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 .large-textarea {
   flex: 1;
   min-height: 350px;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  position: relative;
+  z-index: 1;
 }
 
 /* 텍스트 영역 스타일 */
@@ -125,6 +133,8 @@ textarea {
   box-sizing: border-box;
   background-color: #fff;
   color: #000;
+  touch-action: manipulation; /* 더블탭 확대 방지 */
+  -webkit-overflow-scrolling: touch; /* iOS 스크롤 가속 */
 }
 
 /* 액션 버튼 영역 */
