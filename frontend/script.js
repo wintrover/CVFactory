@@ -114,11 +114,17 @@ function applyMobileOptimizations() {
             }, { passive: true });
         });
         
-        // 모바일 스크롤 성능 개선
-        document.addEventListener('touchmove', function(e) {
-            if (e.scale !== 1) { 
-                e.preventDefault(); 
-            }
+        // 모바일 스크롤 성능 개선 - 핀치 줌만 방지하고 일반 스크롤은 허용
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
         }, { passive: false });
         
         // 텍스트 영역 입력 시 모바일 키보드로 인한 레이아웃 시프트 최소화
