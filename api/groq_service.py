@@ -531,11 +531,8 @@ def extract_job_keypoints(job_description):
         
         result = response.choices[0].message.content
         
-        # JSON 결과 로깅 추가
-        logger.info(f"채용공고 분석 JSON 결과:\n{result}")
-        groq_logger.info(f"채용공고 분석 JSON 결과:\n{result}")
-        resume_logger = logging.getLogger("resume")
-        resume_logger.info(f"채용공고 분석 JSON 결과:\n{result}")
+        # JSON 결과 로깅 - 한 번만 명확하게 로깅
+        logger.warning(f"채용공고 분석 JSON 결과:\n{result}")
         
         # 출력 및 처리 과정 로깅
         additional_info = {

@@ -313,6 +313,15 @@ def create_resume(request):
             logger.debug(f"🔹 user_story: {safe_user_story}...")
             logger.debug(f"🔹 company_info: {company_info[:100]}...")
             
+            # 추가: 채용공고 분석 JSON 추출
+            logger.info("채용공고 키포인트 추출 시작")
+            try:
+                job_keypoints_json = extract_job_keypoints(job_description)
+                logger.info(f"채용공고 키포인트 추출 성공")
+            except Exception as e:
+                logger.error(f"채용공고 키포인트 추출 실패: {str(e)}", exc_info=True)
+                job_keypoints_json = "{}"
+            
             logger.debug("GPT API 호출 시작")
             generated_resume = generate_resume(job_description, user_story, company_info)
             logger.debug("GPT API 호출 완료")
@@ -381,20 +390,33 @@ def create_resume(request):
 def test_groq_logging(request):
     """
     테스트 목적의 API 엔드포인트
+    
+    로그 파일에 기록하지 않고 응답으로만 결과를 반환합니다.
     """
     try:
-        # 간단한 로깅 테스트
-        log_function_call('test_function', {'test_input': request.data}, {'test_output': 'success'})
+        # 간단한 테스트 데이터
+        test_input = request.data or {'test': 'data'}
         
-        # 실제 groq_service 함수 호출 테스트
-        result = extract_job_keypoints('소프트웨어 개발자 모집. 주요 업무는 웹 개발입니다. 필수 자격요건은 Python, JavaScript 경험입니다.')
+        # 기존 로깅 대신 콘솔에만 출력
+        print(f"테스트 로깅 API 호출: {test_input}")
+        
+        # 채용 공고 분석 테스트 (로그에 기록하지 않음)
+        sample_job = '소프트웨어 개발자 모집. 주요 업무는 웹 개발입니다. 필수 자격요건은 Python, JavaScript 경험입니다.'
+        from .groq_service import extract_job_keypoints
+        
+        # 특별히 로그 핸들러를 비활성화
+        logger.info("테스트 모드로 GPT 분석 실행 (로그 파일에 기록하지 않음)")
+        
+        # 로깅 없이 함수만 실행
+        result = extract_job_keypoints(sample_job)
         
         return Response({
             'status': 'success',
-            'message': '로깅 테스트 완료',
+            'message': '테스트 완료 (로그 파일에 기록되지 않음)',
             'result': result
         })
     except Exception as e:
+        logger.error(f"테스트 함수 실행 중 오류: {str(e)}")
         return Response({
             'status': 'error',
             'message': str(e)
