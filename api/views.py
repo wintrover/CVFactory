@@ -377,7 +377,7 @@ def create_resume(request):
         return Response({"error": "서버에서 오류가 발생했습니다."}, status=500)
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def test_groq_logging(request):
     """
     테스트 목적의 API 엔드포인트
