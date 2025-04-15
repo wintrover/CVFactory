@@ -125,26 +125,16 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### Tesseract OCR 설치
-채용공고 이미지에서 텍스트를 추출하기 위해 Tesseract OCR 엔진이 필요합니다.
+### Naver Clova OCR API 설정
+채용공고 이미지에서 텍스트를 추출하기 위해 Naver Clova OCR API를 사용합니다.
 
-#### Windows
-1. [Tesseract OCR 다운로드](https://github.com/UB-Mannheim/tesseract/wiki)에서 최신 버전 설치
-2. 설치 중 "한국어(Korean)" 언어 패키지 선택
-3. 설치 후 환경 변수 PATH에 Tesseract 경로 추가 (예: `C:\Program Files\Tesseract-OCR`)
-
-#### macOS
-```bash
-brew install tesseract
-brew install tesseract-lang  # 언어 패키지 설치
-```
-
-#### Linux (Ubuntu/Debian)
-```bash
-sudo apt update
-sudo apt install tesseract-ocr
-sudo apt install tesseract-ocr-kor  # 한국어 언어 패키지
-```
+1. [Naver Cloud Platform](https://www.ncloud.com/) 가입
+2. [Naver Cloud Console](https://console.ncloud.com/)에서 OCR 서비스 신청
+3. General OCR 템플릿 생성 및 API 키 획득
+4. `.env` 파일에 아래 환경 변수 추가:
+   ```
+   NAVER_CLOVA_OCR_SECRET_KEY=발급받은_시크릿_키_입력
+   ```
 
 ### Docker 개발 환경
 ```bash

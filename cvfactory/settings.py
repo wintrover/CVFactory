@@ -598,3 +598,9 @@ SEO_JS_EXCLUDES = [
     r'/api/',
     r'/static/',
 ]
+
+# Groq API Key
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+
+# Naver Clova OCR API Key
+NAVER_CLOVA_OCR_SECRET_KEY = os.getenv('NAVER_CLOVA_OCR_SECRET_KEY', '')

@@ -4,13 +4,14 @@ import logging
 import re
 import os
 import io
+import json
+import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from django.conf import settings
 from PIL import Image
-import pytesseract
 
 # Django 로깅 설정 사용
 logger = logging.getLogger('crawlers')
@@ -183,7 +184,7 @@ def save_to_file(text: str, filename: str = "output.txt"):
         logger.error(f" [파일 저장 오류] {filename} 저장 실패 - {str(e)}", exc_info=True)
 
 def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> str:
-    """HTML에서 이미지를 추출하고 OCR 처리하여 텍스트 반환"""
+    """HTML에서 이미지를 추출하고 Naver Clova OCR로 처리하여 텍스트 반환"""
     try:
         # 채용공고와 관련된 이미지들 찾기 (특정 클래스나 ID를 가진 영역의 이미지)
         # 사이트마다 다른 구조를 가질 수 있으므로 일반적인 패턴으로 처리
@@ -242,15 +243,12 @@ def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> s
                 img_response = session.get(img_url, timeout=10)
                 img_response.raise_for_status()
                 
-                # 이미지 객체로 변환
-                img = Image.open(io.BytesIO(img_response.content))
-                
-                # Tesseract OCR 실행 (한국어와 영어 모두 인식)
-                text = pytesseract.image_to_string(img, lang='kor+eng')
+                # Naver Clova OCR API 호출
+                ocr_text = call_naver_clova_ocr(img_response.content)
                 
                 # 결과에 추가
-                if text.strip():
-                    ocr_results.append(text.strip())
+                if ocr_text:
+                    ocr_results.append(ocr_text)
                     logger.debug(f" 이미지에서 텍스트 추출 성공: {img_url[:50]}...")
             except Exception as e:
                 logger.error(f" 이미지 OCR 처리 실패: {img_url[:50]}... - {str(e)}", exc_info=settings.DEBUG)
@@ -264,6 +262,64 @@ def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> s
             
     except Exception as e:
         logger.error(f" 이미지 추출 및 OCR 처리 실패: {str(e)}", exc_info=settings.DEBUG)
+        return ""
+
+def call_naver_clova_ocr(image_bytes):
+    """Naver Clova OCR API를 호출하여 이미지에서 텍스트 추출"""
+    try:
+        # API 설정
+        api_url = "https://7fwt1z6g89.apigw.ntruss.com/custom/v1/27108/32883fe7fac9dda5cdff0f8bafe33c10c09bcf6f6736e67ee7f0a36e0f0a63fb/general"
+        secret_key = settings.NAVER_CLOVA_OCR_SECRET_KEY
+        
+        # API 호출을 위한 UUID 생성
+        request_id = str(uuid.uuid4())
+        timestamp = int(datetime.now().timestamp() * 1000)
+        
+        # 요청 헤더 설정
+        headers = {
+            "Content-Type": "application/json",
+            "X-OCR-SECRET": secret_key
+        }
+        
+        # 이미지를 base64로 인코딩
+        import base64
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        
+        # API 요청 본문 구성
+        request_json = {
+            "images": [
+                {
+                    "format": "jpg",
+                    "name": "job_posting",
+                    "data": base64_image
+                }
+            ],
+            "requestId": request_id,
+            "timestamp": timestamp,
+            "version": "V2",
+            "lang": "ko"
+        }
+        
+        # API 호출
+        response = requests.post(api_url, headers=headers, json=request_json)
+        response.raise_for_status()
+        
+        # 응답 처리
+        result = response.json()
+        
+        # 텍스트 추출
+        extracted_text = ""
+        if 'images' in result and len(result['images']) > 0:
+            if 'fields' in result['images'][0]:
+                fields = result['images'][0]['fields']
+                for field in fields:
+                    if 'inferText' in field:
+                        extracted_text += field['inferText'] + " "
+                        
+        return extracted_text.strip()
+        
+    except Exception as e:
+        logger.error(f" Naver Clova OCR API 호출 실패: {str(e)}", exc_info=settings.DEBUG)
         return ""
 
 # urlparse를 위한 함수 추가
