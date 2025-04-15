@@ -125,15 +125,17 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### Naver Clova OCR API 설정
-채용공고 이미지에서 텍스트를 추출하기 위해 Naver Clova OCR API를 사용합니다.
+### Azure Computer Vision API 설정
+채용공고 이미지에서 텍스트를 추출하기 위해 Microsoft Azure Computer Vision API를 사용합니다.
 
-1. [Naver Cloud Platform](https://www.ncloud.com/) 가입
-2. [Naver Cloud Console](https://console.ncloud.com/)에서 OCR 서비스 신청
-3. General OCR 템플릿 생성 및 API 키 획득
-4. `.env` 파일에 아래 환경 변수 추가:
+1. [Azure Portal](https://portal.azure.com/)에 가입하고 로그인
+2. [Azure Computer Vision 리소스 생성](https://portal.azure.com/#create/Microsoft.CognitiveServicesComputerVision)
+3. 리소스 그룹, 지역, 이름 등을 설정하고 F0(무료) 가격 계층 선택
+4. 생성 후 리소스로 이동하여 '키 및 엔드포인트' 메뉴에서 정보 확인
+5. `.env` 파일에 아래 환경 변수 추가:
    ```
-   NAVER_CLOVA_OCR_SECRET_KEY=발급받은_시크릿_키_입력
+   AZURE_VISION_KEY=발급받은_API_키
+   AZURE_VISION_ENDPOINT=https://your-resource-name.cognitiveservices.azure.com/
    ```
 
 ### Docker 개발 환경

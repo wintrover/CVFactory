@@ -602,5 +602,6 @@ SEO_JS_EXCLUDES = [
 # Groq API Key
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
 
-# Naver Clova OCR API Key
-NAVER_CLOVA_OCR_SECRET_KEY = os.getenv('NAVER_CLOVA_OCR_SECRET_KEY', '')
+# Azure Computer Vision API 설정
+AZURE_VISION_KEY = os.getenv('AZURE_VISION_KEY', '')
+AZURE_VISION_ENDPOINT = os.getenv('AZURE_VISION_ENDPOINT', '')

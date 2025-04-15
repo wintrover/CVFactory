@@ -184,7 +184,7 @@ def save_to_file(text: str, filename: str = "output.txt"):
         logger.error(f" [파일 저장 오류] {filename} 저장 실패 - {str(e)}", exc_info=True)
 
 def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> str:
-    """HTML에서 이미지를 추출하고 Naver Clova OCR로 처리하여 텍스트 반환"""
+    """HTML에서 이미지를 추출하고 Azure Computer Vision OCR로 처리하여 텍스트 반환"""
     try:
         # 채용공고와 관련된 이미지들 찾기 (특정 클래스나 ID를 가진 영역의 이미지)
         # 사이트마다 다른 구조를 가질 수 있으므로 일반적인 패턴으로 처리
@@ -243,8 +243,8 @@ def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> s
                 img_response = session.get(img_url, timeout=10)
                 img_response.raise_for_status()
                 
-                # Naver Clova OCR API 호출
-                ocr_text = call_naver_clova_ocr(img_response.content)
+                # Azure Computer Vision OCR API 호출
+                ocr_text = call_azure_ocr(img_response.content)
                 
                 # 결과에 추가
                 if ocr_text:
@@ -264,62 +264,57 @@ def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> s
         logger.error(f" 이미지 추출 및 OCR 처리 실패: {str(e)}", exc_info=settings.DEBUG)
         return ""
 
-def call_naver_clova_ocr(image_bytes):
-    """Naver Clova OCR API를 호출하여 이미지에서 텍스트 추출"""
+def call_azure_ocr(image_bytes):
+    """Azure Computer Vision API를 호출하여 이미지에서 텍스트 추출"""
     try:
-        # API 설정
-        api_url = "https://7fwt1z6g89.apigw.ntruss.com/custom/v1/27108/32883fe7fac9dda5cdff0f8bafe33c10c09bcf6f6736e67ee7f0a36e0f0a63fb/general"
-        secret_key = settings.NAVER_CLOVA_OCR_SECRET_KEY
-        
-        # API 호출을 위한 UUID 생성
-        request_id = str(uuid.uuid4())
-        timestamp = int(datetime.now().timestamp() * 1000)
+        # Azure Computer Vision API 설정
+        subscription_key = settings.AZURE_VISION_KEY
+        endpoint = settings.AZURE_VISION_ENDPOINT
+        ocr_url = f"{endpoint}/vision/v3.2/read/analyze"
         
         # 요청 헤더 설정
         headers = {
-            "Content-Type": "application/json",
-            "X-OCR-SECRET": secret_key
-        }
-        
-        # 이미지를 base64로 인코딩
-        import base64
-        base64_image = base64.b64encode(image_bytes).decode('utf-8')
-        
-        # API 요청 본문 구성
-        request_json = {
-            "images": [
-                {
-                    "format": "jpg",
-                    "name": "job_posting",
-                    "data": base64_image
-                }
-            ],
-            "requestId": request_id,
-            "timestamp": timestamp,
-            "version": "V2",
-            "lang": "ko"
+            'Content-Type': 'application/octet-stream',
+            'Ocp-Apim-Subscription-Key': subscription_key
         }
         
         # API 호출
-        response = requests.post(api_url, headers=headers, json=request_json)
+        response = requests.post(ocr_url, headers=headers, data=image_bytes)
         response.raise_for_status()
         
-        # 응답 처리
-        result = response.json()
+        # 비동기 API이므로 작업 상태 확인을 위한 URL 가져오기
+        operation_url = response.headers["Operation-Location"]
         
-        # 텍스트 추출
+        # 결과 가져오기
+        result_headers = {'Ocp-Apim-Subscription-Key': subscription_key}
+        
+        # 작업 완료 대기 (최대 10초)
+        import time
+        poll_count = 0
+        max_polls = 10
+        poll_delay = 1  # 초 단위
+        
+        while poll_count < max_polls:
+            result_response = requests.get(operation_url, headers=result_headers)
+            result = result_response.json()
+            
+            if "status" in result and result["status"] == "succeeded":
+                break
+            
+            time.sleep(poll_delay)
+            poll_count += 1
+        
+        # 결과 처리
         extracted_text = ""
-        if 'images' in result and len(result['images']) > 0:
-            if 'fields' in result['images'][0]:
-                fields = result['images'][0]['fields']
-                for field in fields:
-                    if 'inferText' in field:
-                        extracted_text += field['inferText'] + " "
-                        
+        if "analyzeResult" in result and "readResults" in result["analyzeResult"]:
+            for read_result in result["analyzeResult"]["readResults"]:
+                for line in read_result["lines"]:
+                    extracted_text += line["text"] + " "
+        
         return extracted_text.strip()
         
     except Exception as e:
-        logger.error(f" Naver Clova OCR API 호출 실패: {str(e)}", exc_info=settings.DEBUG)
+        logger.error(f" Azure Computer Vision OCR API 호출 실패: {str(e)}", exc_info=settings.DEBUG)
         return ""
 
 # urlparse를 위한 함수 추가
