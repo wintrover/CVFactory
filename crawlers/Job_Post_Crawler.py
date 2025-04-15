@@ -31,11 +31,14 @@ def log_crawling_result(url, result):
     file_name = f"job_post_{domain_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
     file_path = os.path.join(log_dir, file_name)
     
+    # 결과 텍스트에 50글자마다 줄바꿈 추가
+    formatted_result = format_text_by_line(result, line_length=50)
+    
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(f"URL: {url}\n")
         f.write(f"Timestamp: {datetime.now().isoformat()}\n")
         f.write("="*80 + "\n")
-        f.write(result)
+        f.write(formatted_result)
         
     logger.debug(f"크롤링 결과를 파일에 저장: {file_path}")
     
