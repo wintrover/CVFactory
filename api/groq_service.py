@@ -497,15 +497,22 @@ def extract_job_keypoints(job_description):
         logger.debug(f"입력 job_description 길이: {len(job_description)}")
         groq_logger.debug(f"입력 job_description 길이: {len(job_description)}")
         
-        prompt = f"""다음 채용공고에서 핵심 내용만 추출해주세요:
+        prompt = f"""다음은 채용사이트에서 크롤링한 텍스트입니다. 이 텍스트에서 웹사이트 메뉴, 네비게이션, 버튼, 광고, 저작권, 사이트 안내, 푸터 정보 등의 불필요한 내용은 모두 무시하고, 실제 채용 정보 중에서 지원자격, 주요업무, 우대사항 위주로 정보를 추출해 JSON 형식으로 제공해주세요:
 
-채용공고:
-{job_description}
+출력 형식:
+{{
+  "company_name": "회사명",
+  "position": "채용 직무/포지션명",
+  "qualifications": ["자격요건1", "자격요건2", ...],
+  "responsibilities": ["주요업무1", "주요업무2", ...],
+  "preferred": ["우대사항1", "우대사항2", ...],
+  "keywords": ["관련 직무/기술 키워드1", "키워드2", ...]
+}}
 
-다음 형식으로 추출해주세요:
-1. 주요 업무 (3-4줄)
-2. 필수 자격요건 (3-4줄)
-3. 우대사항 (2-3줄)"""
+채용 내용에 명확하게 주요업무가 적혀있지 않다면, 채용 직무와 관련된 일반적인 업무를 유추하지 말고 "responsibilities" 필드를 빈 배열로 남겨두세요.
+
+크롤링 텍스트:
+{job_description}"""
 
         logger.debug(f"프롬프트 길이: {len(prompt)}")
         groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
@@ -523,6 +530,12 @@ def extract_job_keypoints(job_description):
         logger.debug(f"=== extract_job_keypoints 완료 ===")
         
         result = response.choices[0].message.content
+        
+        # JSON 결과 로깅 추가
+        logger.info(f"채용공고 분석 JSON 결과:\n{result}")
+        groq_logger.info(f"채용공고 분석 JSON 결과:\n{result}")
+        resume_logger = logging.getLogger("resume")
+        resume_logger.info(f"채용공고 분석 JSON 결과:\n{result}")
         
         # 출력 및 처리 과정 로깅
         additional_info = {
