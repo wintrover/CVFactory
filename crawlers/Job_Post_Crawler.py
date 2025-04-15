@@ -3,11 +3,14 @@ from bs4 import BeautifulSoup
 import logging
 import re
 import os
+import io
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from django.conf import settings
+from PIL import Image
+import pytesseract
 
 # Django 로깅 설정 사용
 logger = logging.getLogger('crawlers')
@@ -88,11 +91,20 @@ def fetch_job_description(url: str) -> Optional[str]:
 
         #  HTML 파싱
         soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # 이미지 추출 및 OCR 처리
+        image_text = extract_and_process_images(soup, url, session)
+        
         raw_text = soup.get_text(separator='\n')
         logger.info(" HTML 파싱 및 텍스트 추출 완료")
 
         #  텍스트 정제
         cleaned_text = clean_text(raw_text)
+        
+        # 이미지에서 추출한 텍스트가 있으면 결합
+        if image_text:
+            cleaned_text = f"{cleaned_text}\n\n[이미지에서 추출한 텍스트]\n{image_text}"
+            logger.info(" 이미지 OCR 텍스트 결합 완료")
         
         # 개발 환경에서만 결과 로깅
         if settings.DEBUG:
@@ -169,3 +181,93 @@ def save_to_file(text: str, filename: str = "output.txt"):
         logger.info(f" 결과가 파일에 저장됨: {filename}")
     except Exception as e:
         logger.error(f" [파일 저장 오류] {filename} 저장 실패 - {str(e)}", exc_info=True)
+
+def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> str:
+    """HTML에서 이미지를 추출하고 OCR 처리하여 텍스트 반환"""
+    try:
+        # 채용공고와 관련된 이미지들 찾기 (특정 클래스나 ID를 가진 영역의 이미지)
+        # 사이트마다 다른 구조를 가질 수 있으므로 일반적인 패턴으로 처리
+        
+        # 이미지 태그 중 채용정보를 담고 있을 가능성이 높은 이미지 필터링
+        job_post_images = []
+        
+        # 일반적인 이미지 태그 찾기
+        images = soup.find_all('img')
+        for img in images:
+            # 이미지 소스 URL 가져오기
+            img_src = img.get('src', '')
+            img_alt = img.get('alt', '').lower()
+            img_class = img.get('class', [])
+            
+            # 채용공고 관련 이미지일 가능성이 높은 이미지 필터링
+            # 클래스명이나, alt 텍스트에 '채용', '공고', '모집', 'job', 'recruit' 등의 키워드가 있는지 확인
+            is_job_related = False
+            job_keywords = ['채용', '공고', '모집', '자격', '우대', '경력', 'job', 'recruit', 'career']
+            
+            if any(keyword in img_alt for keyword in job_keywords):
+                is_job_related = True
+            
+            if isinstance(img_class, list) and any(any(keyword in cls.lower() for keyword in job_keywords) for cls in img_class):
+                is_job_related = True
+                
+            # 이미지 크기 속성이 있는 경우 확인 (작은 아이콘 제외)
+            width = img.get('width', '')
+            height = img.get('height', '')
+            if width and height:
+                try:
+                    if int(width) > 200 and int(height) > 200:
+                        is_job_related = True
+                except ValueError:
+                    pass
+            
+            # 상대 경로인 경우 절대 경로로 변환
+            if img_src and not img_src.startswith(('http://', 'https://', 'data:')):
+                img_src = urljoin(base_url, img_src)
+                
+            if img_src and is_job_related:
+                job_post_images.append(img_src)
+                
+        # 이미지가 없으면 빈 문자열 반환
+        if not job_post_images:
+            logger.info(" 채용공고 관련 이미지를 찾을 수 없습니다.")
+            return ""
+            
+        logger.info(f" 총 {len(job_post_images)}개의 채용공고 관련 이미지를 찾았습니다.")
+        
+        # 추출된 이미지들에서 OCR 처리
+        ocr_results = []
+        for img_url in job_post_images:
+            try:
+                # 이미지 다운로드
+                img_response = session.get(img_url, timeout=10)
+                img_response.raise_for_status()
+                
+                # 이미지 객체로 변환
+                img = Image.open(io.BytesIO(img_response.content))
+                
+                # Tesseract OCR 실행 (한국어와 영어 모두 인식)
+                text = pytesseract.image_to_string(img, lang='kor+eng')
+                
+                # 결과에 추가
+                if text.strip():
+                    ocr_results.append(text.strip())
+                    logger.debug(f" 이미지에서 텍스트 추출 성공: {img_url[:50]}...")
+            except Exception as e:
+                logger.error(f" 이미지 OCR 처리 실패: {img_url[:50]}... - {str(e)}", exc_info=settings.DEBUG)
+                continue
+                
+        # 결과 병합
+        if ocr_results:
+            return "\n\n".join(ocr_results)
+        else:
+            return ""
+            
+    except Exception as e:
+        logger.error(f" 이미지 추출 및 OCR 처리 실패: {str(e)}", exc_info=settings.DEBUG)
+        return ""
+
+# urlparse를 위한 함수 추가
+def urljoin(base, url):
+    """URL 결합 유틸리티 함수"""
+    from urllib.parse import urljoin as urllib_urljoin
+    return urllib_urljoin(base, url)

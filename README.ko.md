@@ -125,6 +125,27 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+### Tesseract OCR 설치
+채용공고 이미지에서 텍스트를 추출하기 위해 Tesseract OCR 엔진이 필요합니다.
+
+#### Windows
+1. [Tesseract OCR 다운로드](https://github.com/UB-Mannheim/tesseract/wiki)에서 최신 버전 설치
+2. 설치 중 "한국어(Korean)" 언어 패키지 선택
+3. 설치 후 환경 변수 PATH에 Tesseract 경로 추가 (예: `C:\Program Files\Tesseract-OCR`)
+
+#### macOS
+```bash
+brew install tesseract
+brew install tesseract-lang  # 언어 패키지 설치
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install tesseract-ocr
+sudo apt install tesseract-ocr-kor  # 한국어 언어 패키지
+```
+
 ### Docker 개발 환경
 ```bash
 cd 'D:\Coding\CVFactory'

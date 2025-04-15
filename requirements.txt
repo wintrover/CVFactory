@@ -20,6 +20,7 @@ beautifulsoup4==4.12.2
 requests>=2.32.0  # Session 객체 인증서 검증 취약점 패치 (CVE-2024-35195)
 selenium==4.15.2
 webdriver-manager==4.0.1
+pytesseract==0.3.13  # OCR 라이브러리
 
 # AI API
 groq>=0.4.0,<0.5.0  # 실행 환경과 호환되는 버전 범위 지정
