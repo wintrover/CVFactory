@@ -27,12 +27,28 @@ logger = logging.getLogger()
 def clear_log_files():
     """서버 시작 시 로그 파일들을 초기화합니다."""
     try:
+        # 기본 로그 파일 초기화
         log_files = glob.glob(os.path.join('logs', '*.log'))
         for log_file in log_files:
             with open(log_file, 'w') as f:
                 # 파일 내용을 비우고 닫기
                 pass
         logger.info(f"{len(log_files)}개의 로그 파일을 초기화했습니다.")
+        
+        # 크롤링 로그 디렉토리 초기화
+        crawling_log_dir = os.path.join('logs', 'crawling')
+        if os.path.exists(crawling_log_dir):
+            crawling_logs = glob.glob(os.path.join(crawling_log_dir, '*.txt'))
+            for log_file in crawling_logs:
+                try:
+                    os.remove(log_file)
+                except Exception as e:
+                    logger.error(f"크롤링 로그 파일 삭제 중 오류: {log_file} - {e}")
+            logger.info(f"{len(crawling_logs)}개의 크롤링 로그 파일을 초기화했습니다.")
+        else:
+            os.makedirs(crawling_log_dir, exist_ok=True)
+            logger.info("크롤링 로그 디렉토리를 생성했습니다.")
+            
     except Exception as e:
         logger.error(f"로그 파일 초기화 중 오류 발생: {e}")
 
