@@ -2,10 +2,12 @@
 """
 이미지 파일을 static 폴더에서 static_prod 폴더로 직접 복사하는 스크립트
 먼저 static_prod 디렉토리를 초기화하고, 투명도가 보존된 이미지를 복사합니다.
+frontend 디렉토리의 이미지도 처리할 수 있는 옵션이 추가되었습니다.
 """
 import os
 import shutil
 import sys
+import argparse
 from PIL import Image
 
 # 프로젝트 루트 디렉토리
@@ -14,6 +16,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 # 원본 디렉토리와 대상 디렉토리
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATIC_PROD_DIR = os.path.join(BASE_DIR, 'static_prod')
+FRONTEND_DIR = os.path.join(BASE_DIR, 'frontend')  # frontend 디렉토리 추가
 
 # 이미지 목록 파일 경로
 IMAGE_LIST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'image_list.txt')
@@ -138,17 +141,64 @@ def copy_images():
         import traceback
         traceback.print_exc()
 
+# 새로 추가: frontend 디렉토리의 WebP 생성 함수
+def create_frontend_webp():
+    """frontend 디렉토리의 PNG 파일에서 투명도가 보존된 WebP 파일을 생성합니다."""
+    print("=== frontend 디렉토리 WebP 생성 시작 ===")
+    
+    # frontend 디렉토리의 PNG 파일 목록
+    png_files = [
+        "favicon-16x16.png",
+        "favicon-32x32.png",
+        "apple-touch-icon.png",
+        "android-chrome-192x192.png",
+        "android-chrome-512x512.png",
+        "og-image.png",
+        "twitter-card.png"
+    ]
+    
+    for filename in png_files:
+        src_path = os.path.join(FRONTEND_DIR, filename)
+        webp_path = os.path.join(FRONTEND_DIR, os.path.splitext(filename)[0] + ".webp")
+        
+        print(f"  파일: {filename}")
+        print(f"  PNG 경로: {src_path}")
+        print(f"  WebP 경로: {webp_path}")
+        
+        if os.path.exists(src_path):
+            try:
+                # WebP 변환 (투명도 유지)
+                img = Image.open(src_path)
+                img.save(
+                    webp_path, 
+                    format="WebP", 
+                    lossless=True,  # 무손실 압축으로 투명도 보존
+                    quality=100
+                )
+                print(f"  WebP 생성 완료: {os.path.basename(webp_path)}")
+            except Exception as e:
+                print(f"  WebP 생성 실패: {filename} - {e}")
+        else:
+            print(f"  원본 파일 없음: {filename}")
+    
+    print("\n=== frontend 디렉토리 WebP 생성 완료 ===")
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="정적 이미지 파일 처리 스크립트")
+    parser.add_argument("--clean", action="store_true", help="static_prod 디렉토리 초기화")
+    parser.add_argument("--frontend", action="store_true", help="frontend 디렉토리 WebP 생성")
+    
+    args = parser.parse_args()
+    
     try:
-        # 실행 순서:
-        # 1. static_prod 디렉토리 초기화 (staticfiles.json 유지) - 옵션 사용 시
-        # 2. 이미지 파일 복사 및 WebP 변환
-        
-        if '--clean' in sys.argv:
-            clean_static_prod()
-        
-        # 이미지 복사 및 WebP 변환
-        copy_images()
+        # frontend 모드
+        if args.frontend:
+            create_frontend_webp()
+        else:
+            # 기존 모드: static_prod 처리
+            if args.clean:
+                clean_static_prod()
+            copy_images()
     except Exception as e:
         print(f"치명적 오류: {e}")
         import traceback
