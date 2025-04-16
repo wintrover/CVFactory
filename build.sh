@@ -16,6 +16,10 @@ echo "폰트 디렉토리 준비 중..."
 mkdir -p static/fonts
 mkdir -p static_prod/fonts
 
+# 정적 파일 수집 전에 static_prod 디렉토리 초기화 (선택 사항)
+echo "static_prod 디렉토리 초기화 중..."
+python scripts/static/copy_images.py --clean
+
 # 정적 파일 수집
 echo "정적 파일 수집 중..."
 python manage.py collectstatic --no-input
@@ -31,5 +35,9 @@ mkdir -p logs frontend static_prod
 # settings.py 파일 수정 (manifest_strict 설정)
 echo "STATICFILES_MANIFEST_STRICT = False 설정 확인 중..."
 grep -q "STATICFILES_MANIFEST_STRICT = False" cvfactory/settings.py || echo "STATICFILES_MANIFEST_STRICT = False" >> cvfactory/settings.py
+
+# 투명도가 보존된 이미지 파일 복사 (collectstatic 후에 실행)
+echo "투명도가 보존된 이미지 파일 복사 중..."
+python scripts/static/copy_images.py
 
 echo "빌드 완료!" 
