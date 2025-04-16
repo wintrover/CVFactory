@@ -139,7 +139,7 @@ TEMPLATES = [
 # 정적 파일 설정
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static_dev",
+    BASE_DIR / "static",
     BASE_DIR / "frontend",
 ]
 STATIC_ROOT = BASE_DIR / "static_prod"

@@ -49,7 +49,8 @@ CVFactory/
 ├── myapp/              # 주요 Django 앱
 ├── logs/               # 로그 파일 저장소
 ├── scripts/            # 유틸리티 스크립트
-└── static_dev/static_prod/ # 정적 파일 (개발/배포용)
+└── static/ # 정적 파일 (개발용)
+└── static_prod/ # 정적 파일 (배포용)
 ```
 
 ### 핵심 모듈

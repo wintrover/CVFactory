@@ -26,7 +26,7 @@ python manage.py migrate --no-input
 
 # 필요한 디렉토리 생성
 echo "디렉토리 생성 중..."
-mkdir -p logs static_dev frontend static_prod
+mkdir -p logs frontend static_prod
 
 # settings.py 파일 수정 (manifest_strict 설정)
 echo "STATICFILES_MANIFEST_STRICT = False 설정 확인 중..."

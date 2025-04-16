@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install 'whitenoise[brotli]' django-extensions werkzeug pyOpenSSL gunicorn django-debug-toolbar
 
 # 로그 및 정적 파일 디렉토리 생성
-RUN mkdir -p /app/logs /app/static_dev /app/frontend /app/static_prod /app/ssl
+RUN mkdir -p /app/logs /app/frontend /app/static_prod /app/ssl
 
 # entrypoint 스크립트 복사 및 권한 설정
 COPY entrypoints/entrypoint-dev.sh /app/

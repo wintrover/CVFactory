@@ -49,7 +49,8 @@ CVFactory/
 ├── myapp/              # Main Django app
 ├── logs/               # Log files storage
 ├── scripts/            # Utility scripts
-└── static_dev/static_prod/ # Static files (development/production)
+└── static/ # Static files (development)
+└── static_prod/ # Static files (production)
 ```
 
 ### Core Modules
