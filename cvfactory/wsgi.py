@@ -14,14 +14,13 @@ import traceback
 from datetime import datetime
 import time
 
-# 로깅 설정
+# 로깅 설정 - 콘솔 출력만 사용
 os.makedirs('logs', exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] - %(message)s',
     handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(os.path.join('logs', 'wsgi.log'), 'a')
+        logging.StreamHandler()
     ]
 )
 logger = logging.getLogger('wsgi')

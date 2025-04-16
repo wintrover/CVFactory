@@ -10,13 +10,12 @@ import glob
 # logs 디렉토리 생성
 os.makedirs('logs', exist_ok=True)
 
-# 기본 로깅 설정
+# 기본 로깅 설정 - 콘솔 출력만 사용
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] - %(funcName)s() - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join('logs', 'startup.log'), mode='a')
     ]
 )
 
@@ -25,17 +24,40 @@ logger = logging.getLogger()
 
 
 def clear_log_files():
-    """서버 시작 시 로그 파일들을 초기화합니다."""
+    """서버 시작 시 로그 파일들을 유형별로 통합합니다."""
     try:
-        # 기본 로그 파일 초기화
-        log_files = glob.glob(os.path.join('logs', '*.log'))
-        for log_file in log_files:
-            with open(log_file, 'w') as f:
-                # 파일 내용을 비우고 닫기
-                pass
-        logger.info(f"{len(log_files)}개의 로그 파일을 초기화했습니다.")
+        # 기본 로그 디렉토리 확인
+        log_dir = os.path.join('logs')
+        os.makedirs(log_dir, exist_ok=True)
         
-        # 크롤링 로그 디렉토리 초기화
+        # 통합 로그 파일 목록 정의
+        LOG_FILES = ['application.log', 'api.log', 'errors.log', 'security.log']
+        
+        # 1. 먼저 모든 로그 파일 삭제 시도
+        all_logs = glob.glob(os.path.join('logs', '*.log'))
+        for log_file in all_logs:
+            try:
+                os.remove(log_file)
+            except Exception as e:
+                # 삭제 실패 시 내용만 비우기
+                try:
+                    with open(log_file, 'w') as f:
+                        pass
+                except:
+                    logger.warning(f"로그 파일을 비울 수 없습니다: {log_file}")
+        
+        # 2. 필요한 로그 파일 초기화
+        for log_name in LOG_FILES:
+            log_path = os.path.join(log_dir, log_name)
+            try:
+                with open(log_path, 'w') as f:
+                    f.write(f"==== 로그 시작: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====\n\n")
+            except Exception as e:
+                logger.warning(f"로그 파일 초기화 실패: {log_path} - {e}")
+        
+        logger.info("로그 파일이 초기화되었습니다.")
+        
+        # 크롤링 로그 디렉토리 처리
         crawling_log_dir = os.path.join('logs', 'crawling')
         if os.path.exists(crawling_log_dir):
             crawling_logs = glob.glob(os.path.join(crawling_log_dir, '*.txt'))
@@ -50,7 +72,7 @@ def clear_log_files():
             logger.info("크롤링 로그 디렉토리를 생성했습니다.")
             
     except Exception as e:
-        logger.error(f"로그 파일 초기화 중 오류 발생: {e}")
+        logger.error(f"로그 파일 정리 중 오류 발생: {e}")
 
 
 def main():
