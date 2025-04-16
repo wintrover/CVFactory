@@ -348,7 +348,7 @@ LOG_SQL_QUERIES = True  # SQL 쿼리 로깅 활성화
 # 로그 설정 - 통합 방식으로 변경
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,  # False에서 True로 변경하여 기본 로거 비활성화
     'formatters': {
         'verbose': {
             'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] - %(message)s',
@@ -411,11 +411,20 @@ LOGGING = {
             'backupCount': 10,
             'formatter': 'error_focused',
         },
+        'startup_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join('logs', 'startup.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 3,
+            'formatter': 'debug_detailed',
+        },
         'null': {
             'class': 'logging.NullHandler',
         },
     },
     'loggers': {
+        # Django 내장 로거들
         'django': {
             'handlers': ['console', 'app_file', 'error_file'],
             'level': 'DEBUG',
@@ -446,6 +455,17 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'django.utils.autoreload': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'django.contrib.staticfiles': {
+            'handlers': ['console', 'app_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        
+        # 애플리케이션 로거들
         'api': {
             'handlers': ['console', 'api_file', 'error_file'],
             'level': 'DEBUG',
@@ -471,17 +491,8 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        '': {  # 루트 로거
-            'handlers': ['console', 'app_file', 'error_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'django.utils.autoreload': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
         'cvfactory': {
-            'handlers': ['console', 'app_file', 'error_file'],
+            'handlers': ['console', 'app_file', 'error_file', 'startup_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
@@ -490,8 +501,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'django.contrib.staticfiles': {
-            'handlers': ['console', 'app_file'],
+        
+        # 루트 로거 설정
+        '': {  # 루트 로거
+            'handlers': ['console', 'app_file', 'error_file'],
             'level': 'DEBUG',
             'propagate': False,
         },

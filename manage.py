@@ -30,57 +30,46 @@ def clear_log_files():
         # 로그 디렉토리가 없으면 생성
         os.makedirs('logs', exist_ok=True)
         
-        # 모든 로그 파일 목록
-        all_log_files = [
-            # 새 통합 로그 파일 (핵심 로그)
+        # 1. 유지할 코어 로그 파일 목록
+        core_logs = [
             os.path.join('logs', 'app.log'),
             os.path.join('logs', 'api.log'),
             os.path.join('logs', 'error.log'),
-            
-            # 시스템 로그
-            os.path.join('logs', 'startup.log'),
-            
-            # 이전 로그 파일들 (필요 없지만 있을 수 있음)
-            os.path.join('logs', 'django.log'),
-            os.path.join('logs', 'debug.log'),
-            os.path.join('logs', 'resume.log'),
-            os.path.join('logs', 'security.log'),
-            os.path.join('logs', 'advanced_debug.log'),
-            os.path.join('logs', 'sql.log'),
-            os.path.join('logs', 'request.log'),
-            os.path.join('logs', 'django_db.log'),
-            os.path.join('logs', 'django_request.log'), 
-            os.path.join('logs', 'django_response.log'),
-            os.path.join('logs', 'performance.log'),
-            os.path.join('logs', 'wsgi.log'),
-            os.path.join('logs', 'groq.log'),
-            os.path.join('logs', 'groq_service_debug.log'),
+            os.path.join('logs', 'startup.log')
         ]
         
-        # 기존 로그 파일 초기화
-        for log_file in all_log_files:
+        # 2. 현재 로그 파일 목록 확인
+        current_logs = glob.glob(os.path.join('logs', '*.log'))
+        logger.info(f"현재 로그 파일 {len(current_logs)}개 발견")
+        
+        # 3. 불필요한 로그 파일 삭제
+        core_filenames = [os.path.basename(f) for f in core_logs]
+        removed_count = 0
+        
+        for log_file in current_logs:
+            base_name = os.path.basename(log_file)
+            if base_name not in core_filenames:
+                try:
+                    # 백업 없이 바로 삭제
+                    os.remove(log_file)
+                    removed_count += 1
+                    logger.info(f"불필요한 로그 파일 삭제: {base_name}")
+                except Exception as e:
+                    logger.error(f"로그 파일 삭제 중 오류: {base_name} - {e}")
+        
+        # 4. 코어 로그 파일 초기화
+        for log_file in core_logs:
             try:
-                with open(log_file, 'w') as f:
-                    # 파일 내용을 비우고 닫기
+                # 파일 내용을 비움
+                with open(log_file, 'w', encoding='utf-8') as f:
                     pass
-                logger.info(f"로그 파일 초기화: {log_file}")
+                logger.info(f"로그 파일 초기화: {os.path.basename(log_file)}")
             except Exception as e:
                 logger.error(f"로그 파일 초기화 중 오류: {log_file} - {e}")
         
-        # 추가적으로 패턴으로 검색된 모든 로그 파일도 초기화 (혹시 놓친 것이 있을 경우)
-        extra_log_files = glob.glob(os.path.join('logs', '*.log'))
-        for log_file in extra_log_files:
-            if os.path.basename(log_file) not in [os.path.basename(f) for f in all_log_files]:
-                try:
-                    with open(log_file, 'w') as f:
-                        pass
-                    logger.info(f"추가 로그 파일 초기화: {log_file}")
-                except Exception as e:
-                    logger.error(f"추가 로그 파일 초기화 중 오류: {log_file} - {e}")
+        logger.info(f"{len(core_logs)}개의 로그 파일을 초기화했습니다.")
         
-        logger.info(f"총 {len(all_log_files) + len(extra_log_files)}개의 로그 파일을 초기화했습니다.")
-        
-        # 크롤링 로그 디렉토리 초기화
+        # 5. 크롤링 로그 디렉토리 초기화
         crawling_log_dir = os.path.join('logs', 'crawling')
         if os.path.exists(crawling_log_dir):
             crawling_logs = glob.glob(os.path.join(crawling_log_dir, '*.txt'))
