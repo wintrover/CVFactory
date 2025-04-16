@@ -10,30 +10,18 @@ import inspect
 import sys
 from django.conf import settings
 
-# 로거 설정
-logger = logging.getLogger("api")
+# 로깅 설정 (간소화)
+logger = logging.getLogger(__name__)
+groq_logger = logging.getLogger('groq_service')
 
-# groq_service 전용 로거 설정
-groq_logger = logging.getLogger("groq_service")
-
-# 개발 환경에서만 디버그 메시지 출력 - 핸들러 중복 등록 방지
-if settings.DEBUG and not groq_logger.handlers:
-    # 파일 핸들러 설정
-    log_dir = os.path.join("logs")
-    os.makedirs(log_dir, exist_ok=True)  # 로그 디렉토리 확인
-    
-    groq_handler = logging.FileHandler(os.path.join(log_dir, "groq_service_debug.log"), encoding='utf-8')
-    groq_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s] - %(message)s'))
-    groq_logger.addHandler(groq_handler)
-    
-    groq_logger.debug("=== Groq 서비스 디버그 모드로 시작 ===")
-    groq_logger.debug(f"로그 레벨: {logging.getLevelName(groq_logger.level)}")
-
-# .env 파일 로드
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'env_configs', '.env'))
+# .env 파일 로드 - 경로 수정
+# 기존: load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'env_configs', '.env'))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+groq_logger.debug(f".env 파일 로드 시도 경로: {os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')}")
 
 # Groq API 키 설정
 api_key = os.getenv("GROQ_API_KEY")
+groq_logger.debug(f"로드된 API 키: {api_key[:5]}..." if api_key else "API 키가 로드되지 않음")
 
 if not api_key:
     error_msg = "Groq API Key가 설정되지 않았습니다."
@@ -211,428 +199,100 @@ except Exception as e:
         client = None
 
 def log_function_call(func_name, inputs, outputs=None, additional_info=None):
-    """함수 호출 정보를 로깅하는 유틸리티 함수"""
-    # 개발 환경에서만 상세 로깅
-    if not settings.DEBUG:
-        return
+    """
+    함수 호출 정보를 로깅하는 유틸리티 함수
+    """
+    try:
+        # 로깅 시간 설정
+        timestamp = datetime.now().isoformat()
         
-    log_entry = {
-        "function": func_name,
-        "timestamp": datetime.now().isoformat(),
-        "inputs": inputs,
-    }
-    
-    if outputs:
-        log_entry["outputs"] = outputs
-        
-    if additional_info:
-        log_entry["additional_info"] = additional_info
-    
-    # 안전한 직렬화를 위해 기본 처리
-    try:    
-        groq_logger.debug(json.dumps(log_entry, ensure_ascii=False, default=str))
-    except TypeError as e:
-        # 직렬화 불가능한 객체가 있는 경우 str()로 변환
-        groq_logger.error(f"로깅 중 직렬화 오류: {e}")
-        # 입력을 안전하게 문자열로 변환
-        safe_log_entry = {
-            "function": str(func_name),
-            "timestamp": str(datetime.now().isoformat()),
-            "inputs": str(inputs),
+        # 로그 데이터 구성
+        log_data = {
+            "function": func_name,
+            "timestamp": timestamp,
+            "inputs": inputs
         }
+        
+        # 출력 데이터가 있는 경우 추가
         if outputs:
-            safe_log_entry["outputs"] = str(outputs)
+            log_data["outputs"] = outputs
+            
+        # 추가 정보가 있는 경우 추가
         if additional_info:
-            safe_log_entry["additional_info"] = str(additional_info)
-        groq_logger.debug(json.dumps(safe_log_entry, ensure_ascii=False))
-
-def analyze_job_description(job_description):
-    """
-    1단계-1: 채용공고 분석
-    """
-    func_name = "analyze_job_description"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    groq_logger.debug(f"입력 파라미터: job_description 길이 = {len(job_description)}")
-    
-    # 입력 로깅
-    inputs = {"job_description_length": len(job_description), "job_description_preview": job_description[:100] + "..."}
-    log_function_call(func_name, inputs)
-    
-    prompt = f"""
-    다음 채용공고를 분석해주세요:
-    
-    채용공고:
-    {job_description}
-    
-    다음 사항을 분석해주세요:
-    1. 주요 업무 내용
-    2. 필수 자격 요건
-    3. 우대 사항
-    4. 직무 특성
-    """
-    
-    groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
-    
-    try:
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
-        response = client.chat.completions.create(
-            model="qwen-qwq-32b",
-            messages=[
-                {"role": "system", "content": "당신은 채용공고 분석 전문가입니다. 주어진 채용공고의 주요 내용을 분석해주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5,
-            max_tokens=1500
-        )
+            for key, value in additional_info.items():
+                log_data[key] = value
         
-        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-        
-        if response and hasattr(response, 'choices') and len(response.choices) > 0:
-            job_analysis = response.choices[0].message.content
-            
-            # 출력 및 처리 과정 로깅
-            additional_info = {
-                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
-            }
-            outputs = {"job_analysis_length": len(job_analysis), "job_analysis_preview": job_analysis[:100] + "..."}
-            log_function_call(func_name, inputs, outputs, additional_info)
-            
-            logger.info(f"채용공고 분석 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-            groq_logger.info(f"===== {func_name} 함수 종료 =====")
-            return job_analysis
-        else:
-            error_msg = f"채용공고 분석 API 응답 형식 오류: {response}"
-            logger.error(error_msg)
-            groq_logger.error(error_msg)
-            
-            # 오류 로깅
-            outputs = {"error": error_msg}
-            log_function_call(func_name, inputs, outputs)
-            
-            groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
-            return "채용공고 분석 중 오류가 발생했습니다."
-            
+        # JSON 형식으로 로깅
+        groq_logger.debug(json.dumps(log_data, ensure_ascii=False))
+        return True
     except Exception as e:
-        error_msg = f"채용공고 분석 API 호출 오류: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        
-        # 스택 트레이스 포함하여 오류 로깅
-        outputs = {"error": str(e), "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(error_msg)
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "채용공고 분석 중 오류가 발생했습니다."
+        groq_logger.error(f"함수 호출 로깅 실패: {str(e)}")
+        return False
 
-def analyze_company_info(company_info):
+def extract_job_keypoints(job_description):
     """
-    1단계-2: 회사 정보 분석
+    채용 공고에서 주요 정보 추출 (직무명, 회사명, 근무지 등)
     """
-    func_name = "analyze_company_info"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    groq_logger.debug(f"입력 파라미터: company_info 길이 = {len(company_info)}")
-    
-    # 입력 로깅
-    inputs = {"company_info_length": len(company_info), "company_info_preview": company_info[:100] + "..."}
-    log_function_call(func_name, inputs)
-    
-    logger.info(f"[DEBUG] analyze_company_info 시작 - 입력 길이: {len(company_info)}")
-    prompt = f"""
-    다음 회사 정보를 분석해주세요:
-    
-    회사 정보:
-    {company_info}
-    
-    다음 사항을 분석해주세요:
-    1. 회사의 주요 사업 영역
-    2. 회사 문화와 가치관
-    3. 회사의 성장성과 미래 전망
-    """
-    
-    groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
-    
-    try:
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
-        response = client.chat.completions.create(
-            model="qwen-qwq-32b",
-            messages=[
-                {"role": "system", "content": "당신은 회사 분석 전문가입니다. 주어진 회사 정보의 주요 내용을 분석해주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5,
-            max_tokens=1500
-        )
-        
-        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-        
-        if response and hasattr(response, 'choices') and len(response.choices) > 0:
-            company_analysis = response.choices[0].message.content
-            
-            # 출력 및 처리 과정 로깅
-            additional_info = {
-                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
-            }
-            outputs = {"company_analysis_length": len(company_analysis), "company_analysis_preview": company_analysis[:100] + "..."}
-            log_function_call(func_name, inputs, outputs, additional_info)
-            
-            logger.info(f"회사 정보 분석 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-            groq_logger.info(f"===== {func_name} 함수 종료 =====")
-            return company_analysis
-        else:
-            error_msg = f"회사 정보 분석 API 응답 형식 오류: {response}"
-            logger.error(error_msg)
-            groq_logger.error(error_msg)
-            
-            # 오류 로깅
-            outputs = {"error": error_msg}
-            log_function_call(func_name, inputs, outputs)
-            
-            groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
-            return "회사 정보 분석 중 오류가 발생했습니다."
-            
-    except Exception as e:
-        error_msg = f"회사 정보 분석 API 호출 오류: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        
-        # 스택 트레이스 포함하여 오류 로깅
-        outputs = {"error": str(e), "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(error_msg)
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "회사 정보 분석 중 오류가 발생했습니다."
-
-def analyze_job_and_company(job_description, company_info):
-    """
-    1단계: 채용공고와 회사 정보 분석
-    """
-    func_name = "analyze_job_and_company"
+    func_name = "extract_job_keypoints"
     groq_logger.info(f"===== {func_name} 함수 시작 =====")
     
     # 입력 로깅
     inputs = {
         "job_description_length": len(job_description),
-        "company_info_length": len(company_info),
-        "job_description_preview": job_description[:100] + "...",
-        "company_info_preview": company_info[:100] + "..."
+        "job_description_preview": job_description[:150] + "..." if len(job_description) > 150 else job_description
     }
     log_function_call(func_name, inputs)
     
-    try:
-        # 1단계-1: 채용공고 분석
-        groq_logger.debug("1단계-1: 채용공고 분석 시작")
-        logger.debug("1단계-1: 채용공고 분석 시작")
-        job_analysis = analyze_job_description(job_description)
-        logger.debug(f"채용공고 분석: {job_analysis[:100]}...")
-        groq_logger.debug(f"채용공고 분석 결과 길이: {len(job_analysis)}")
-        
-        # 1단계-2: 회사 정보 분석
-        groq_logger.debug("1단계-2: 회사 정보 분석 시작")
-        logger.debug("1단계-2: 회사 정보 분석 시작")
-        company_analysis = analyze_company_info(company_info)
-        logger.debug(f"회사 정보 분석: {company_analysis[:100]}...")
-        groq_logger.debug(f"회사 정보 분석 결과 길이: {len(company_analysis)}")
-        
-        # 분석 결과 통합
-        analysis = f"""
-        [채용공고 분석]
-        {job_analysis}
-        
-        [회사 정보 분석]
-        {company_analysis}
-        """
-        
-        # 출력 및 처리 과정 로깅
-        outputs = {
-            "analysis_length": len(analysis),
-            "analysis_preview": analysis[:100] + "..."
-        }
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.info(f"===== {func_name} 함수 종료 =====")
-        return analysis
-        
-    except Exception as e:
-        error_msg = str(e)
-        logger.error(f"채용공고/회사 분석 중 오류 발생: {error_msg}", exc_info=True)
-        
-        # 오류 로깅
-        outputs = {"error": error_msg, "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(f"채용공고/회사 분석 중 오류 발생: {error_msg}")
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "채용공고/회사 분석 중 오류가 발생했습니다."
-
-def extract_job_keypoints(job_description):
-    """
-    채용공고에서 핵심 내용만 추출
-    """
-    func_name = "extract_job_keypoints"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    
-    # 안전한 입력 준비
-    if job_description is None:
-        job_description = ""
-        
-    # 문자열 확인 및 변환
-    if not isinstance(job_description, str):
-        logger.warning(f"job_description이 문자열이 아닙니다: {type(job_description)}")
-        job_description = str(job_description)
-    
-    # 입력 로깅 - 안전한 슬라이싱
-    job_desc_preview = job_description[:100] + "..." if len(job_description) > 100 else job_description
-    inputs = {"job_description_length": len(job_description), "job_description_preview": job_desc_preview}
-    log_function_call(func_name, inputs)
-    
-    try:
-        logger.debug(f"=== extract_job_keypoints 시작 ===")
-        logger.debug(f"입력 job_description 길이: {len(job_description)}")
-        groq_logger.debug(f"입력 job_description 길이: {len(job_description)}")
-        
-        prompt = f"""다음은 채용사이트에서 크롤링한 텍스트입니다. 이 텍스트에서 웹사이트 메뉴, 네비게이션, 버튼, 광고, 저작권, 사이트 안내, 푸터 정보 등의 불필요한 내용은 모두 무시하고, 실제 채용 정보 중에서 지원자격, 주요업무, 우대사항 위주로 정보를 추출해 JSON 형식으로 제공해주세요:
-
-출력 형식:
-{{
-  "company_name": "회사명",
-  "position": "채용 직무/포지션명",
-  "qualifications": ["자격요건1", "자격요건2", ...],
-  "responsibilities": ["주요업무1", "주요업무2", ...],
-  "preferred": ["우대사항1", "우대사항2", ...],
-  "keywords": ["관련 직무/기술 키워드1", "키워드2", ...]
-}}
-
-채용 내용에 명확하게 주요업무가 적혀있지 않다면, 채용 직무와 관련된 일반적인 업무를 유추하지 말고 "responsibilities" 필드를 빈 배열로 남겨두세요.
-
-크롤링 텍스트:
-{job_description}"""
-
-        logger.debug(f"프롬프트 길이: {len(prompt)}")
-        groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
-        
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
-        response = client.chat.completions.create(
-            model="qwen-qwq-32b",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
-        )
-        
-        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-        
-        logger.debug(f"응답 토큰 수: {response.usage.completion_tokens}")
-        logger.debug(f"=== extract_job_keypoints 완료 ===")
-        
-        result = response.choices[0].message.content
-        
-        # JSON 결과 로깅 - 한 번만 명확하게 로깅
-        logger.warning(f"채용공고 분석 JSON 결과:\n{result}")
-        
-        # 출력 및 처리 과정 로깅
-        additional_info = {
-            "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-            "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-            "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
-        }
-        outputs = {"result_length": len(result), "result_preview": result[:100] + "..."}
-        log_function_call(func_name, inputs, outputs, additional_info)
-        
-        groq_logger.info(f"===== {func_name} 함수 종료 =====")
-        return result
-    except Exception as e:
-        error_msg = f"extract_job_keypoints 오류: {str(e)}"
-        logger.error(error_msg)
-        
-        # 오류 로깅
-        outputs = {"error": str(e), "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(error_msg)
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        raise
-
-def create_resume_draft(job_keypoints, company_info, user_story):
-    """
-    2단계: 자기소개서 초안 작성
-    """
-    func_name = "create_resume_draft"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    
-    # 입력 타입 검증 및 변환
-    if not isinstance(job_keypoints, str):
-        job_keypoints = str(job_keypoints)
-    
-    if not isinstance(company_info, str):
-        company_info = str(company_info)
-        
-    # user_story 처리 개선
-    user_story_dict = {}
-    if isinstance(user_story, dict):
-        user_story_dict = user_story
-    elif isinstance(user_story, str):
-        logger.warning(f"user_story가 문자열입니다: {type(user_story)}")
-        # 문자열을 분석하여 기본 정보 추출 시도
-        user_story_dict = {
-            '성격의 장단점': user_story,
-            '지원 동기': user_story,
-            '입사 후 포부': user_story
-        }
-    else:
-        logger.warning(f"user_story가 예상치 못한 타입입니다: {type(user_story)}")
-        user_story_dict = {
-            '성격의 장단점': str(user_story),
-            '지원 동기': str(user_story),
-            '입사 후 포부': str(user_story)
-        }
-    
-    # 안전한 슬라이싱을 위한 프리뷰 생성
-    job_preview = job_keypoints[:100] + "..." if len(job_keypoints) > 100 else job_keypoints
-    company_preview = company_info[:100] + "..." if len(company_info) > 100 else company_info
-    
-    # 입력 로깅
-    inputs = {
-        "job_keypoints_length": len(job_keypoints),
-        "company_info_length": len(company_info),
-        "user_story_keys": list(user_story_dict.keys()),
-        "job_keypoints_preview": job_preview,
-        "company_info_preview": company_preview
-    }
-    log_function_call(func_name, inputs)
-    
-    # 성장과정과 학교생활 제거
-    filtered_story = {
-        '성격의 장단점': user_story_dict.get('성격의 장단점', ''),
-        '지원 동기': user_story_dict.get('지원 동기', ''),
-        '입사 후 포부': user_story_dict.get('입사 후 포부', '')
-    }
-    
-    groq_logger.debug(f"필터링된 user_story 키: {list(filtered_story.keys())}")
-    
+    # 주요 정보 추출을 위한 프롬프트 구성
     prompt = f"""
-    다음 정보를 바탕으로 자기소개서를 작성해주세요:
+    다음 채용 공고에서 주요 정보를 추출해주세요:
     
-    [채용공고 핵심 내용]
-    {job_keypoints}
+    [채용 공고]
+    {job_description}
     
-    [회사 정보]
-    {company_info}
+    다음 JSON 형식으로 출력해주세요:
     
-    [지원자 정보]
-    성격의 장단점: {filtered_story['성격의 장단점']}
-    지원 동기: {filtered_story['지원 동기']}
-    입사 후 포부: {filtered_story['입사 후 포부']}
+    ```json
+    {{
+        "job_title": "직무명",
+        "company_name": "회사명",
+        "location": "근무지",
+        "employment_type": "고용 형태(정규직, 계약직, 인턴 등)",
+        "requirements": [
+            "필수 요구사항1",
+            "필수 요구사항2",
+            "..."
+        ],
+        "preferred": [
+            "우대 사항1",
+            "우대 사항2",
+            "..."
+        ],
+        "responsibilities": [
+            "주요 업무1",
+            "주요 업무2",
+            "..."
+        ],
+        "benefits": [
+            "복리후생1", 
+            "복리후생2",
+            "..."
+        ],
+        "qualifications": [
+            "자격 요건1",
+            "자격 요건2",
+            "..."
+        ],
+        "keywords": [
+            "키워드1",
+            "키워드2",
+            "..."
+        ]
+    }}
+    ```
     
-    다음 사항을 포함하여 작성해주세요:
-    1. 지원자의 핵심 경쟁력과 지원 동기
-    2. 회사와 직무에 대한 이해도
-    3. 입사 후 기여 방안
+    반드시 위 형식의 JSON만 출력하고, 다른 텍스트는 포함하지 마세요.
+    공고에 해당 정보가 없는 경우 해당 필드를 빈 배열 또는 빈 문자열로 설정하세요.
     """
     
     groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
@@ -642,341 +302,102 @@ def create_resume_draft(job_keypoints, company_info, user_story):
         response = client.chat.completions.create(
             model="qwen-qwq-32b",
             messages=[
-                {"role": "system", "content": "당신은 자기소개서 작성 전문가입니다. 주어진 정보를 바탕으로 설득력 있는 자기소개서를 작성해주세요."},
+                {"role": "system", "content": "당신은 채용 공고에서 주요 정보를 추출하는 전문가입니다."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7
+            temperature=0.1
         )
         
         groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
         
-        if response and hasattr(response, 'choices') and len(response.choices) > 0:
-            draft = response.choices[0].message.content
-            
-            # 출력 및 처리 과정 로깅
-            additional_info = {
-                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
+        # 응답 전체를 JSON으로 로깅
+        try:
+            response_json = {
+                "id": response.id,
+                "model": response.model,
+                "choices": [
+                    {
+                        "index": choice.index,
+                        "message": {
+                            "role": choice.message.role,
+                            "content": choice.message.content
+                        },
+                        "finish_reason": choice.finish_reason
+                    } for choice in response.choices
+                ],
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                } if hasattr(response, 'usage') else {}
             }
-            outputs = {"draft_length": len(draft), "draft_preview": draft[:100] + "..."}
-            log_function_call(func_name, inputs, outputs, additional_info)
+            groq_logger.info(f"채용공고 키포인트 추출 API 응답 JSON: {json.dumps(response_json, ensure_ascii=False)}")
+        except Exception as e:
+            groq_logger.error(f"채용공고 응답 JSON 변환 오류: {str(e)}")
             
-            logger.info(f"자기소개서 초안 작성 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-            groq_logger.info(f"===== {func_name} 함수 종료 =====")
-            return draft
+        if response and hasattr(response, 'choices') and len(response.choices) > 0:
+            raw_output = response.choices[0].message.content
+            
+            # JSON 문자열에서 코드 블록 표시 제거
+            if "```json" in raw_output or "```" in raw_output:
+                raw_output = re.sub(r'```(?:json)?\n?', '', raw_output)
+                raw_output = re.sub(r'```', '', raw_output)
+            
+            # 출력이 실제 JSON인지 확인
+            try:
+                json_data = json.loads(raw_output.strip())
+                
+                # 출력 로깅
+                outputs = {
+                    "extracted_json": json.dumps(json_data, ensure_ascii=False)[:200] + "...",
+                    "keys": list(json_data.keys())
+                }
+                
+                # 추가 정보 로깅
+                additional_info = {
+                    "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
+                    "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
+                    "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
+                }
+                
+                log_function_call(func_name, inputs, outputs, additional_info)
+                
+                logger.info(f"채용공고 키포인트 추출 성공")
+                groq_logger.info(f"===== {func_name} 함수 종료 =====")
+                
+                return json.dumps(json_data, ensure_ascii=False)
+            except json.JSONDecodeError as e:
+                error_msg = f"JSON 파싱 오류: {str(e)}"
+                logger.error(error_msg)
+                groq_logger.error(error_msg)
+                
+                outputs = {"error": "JSON 파싱 실패", "raw_output": raw_output[:200] + "..."}
+                log_function_call(func_name, inputs, outputs)
+                
+                # 기본 JSON 구조 반환
+                groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
+                return '{}'
         else:
-            error_msg = f"자기소개서 초안 작성 API 응답 형식 오류: {response}"
+            error_msg = f"API 응답 형식 오류: {response}"
             logger.error(error_msg)
             
-            # 오류 로깅
-            outputs = {"error": error_msg}
+            outputs = {"error": "API 응답 형식 오류"}
             log_function_call(func_name, inputs, outputs)
             
             groq_logger.error(error_msg)
             groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
-            return "자기소개서 초안 작성 중 오류가 발생했습니다."
-            
+            return '{}'
     except Exception as e:
-        error_msg = f"자기소개서 초안 작성 API 호출 오류: {str(e)}"
+        error_msg = f"API 호출 오류: {str(e)}"
         logger.error(error_msg, exc_info=True)
         
-        # 오류 로깅
         outputs = {"error": str(e), "traceback": traceback.format_exc()}
         log_function_call(func_name, inputs, outputs)
         
         groq_logger.error(error_msg)
         groq_logger.debug(traceback.format_exc())
         groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "자기소개서 초안 작성 중 오류가 발생했습니다."
-
-def finalize_resume_metrics(resume_draft):
-    """
-    3단계-1: 성과와 역량을 구체적 수치로 표현
-    """
-    func_name = "finalize_resume_metrics"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    
-    # 입력 로깅
-    inputs = {"resume_draft_length": len(resume_draft), "resume_draft_preview": resume_draft[:100] + "..."}
-    log_function_call(func_name, inputs)
-    
-    prompt = f"""
-    다음 자기소개서 초안의 성과와 역량을 구체적 수치로 표현해주세요:
-    
-    초안: {resume_draft}
-    
-    다음 사항을 개선해주세요:
-    1. 모든 성과와 역량은 구체적 수치로 표현 (예: "생산성 30% 향상", "만족도 4.8/5 달성")
-    2. 입사 시 예상 기여도를 수치로 제시 (예: "비용 40% 절감", "매출 15% 성장 기여")
-    """
-    
-    groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
-    
-    try:
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
-        response = client.chat.completions.create(
-            model="qwen-qwq-32b",
-            messages=[
-                {"role": "system", "content": "당신은 자기소개서 편집 전문가입니다. 주어진 초안의 성과와 역량을 구체적 수치로 표현해주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5
-        )
-        
-        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-        
-        if response and hasattr(response, 'choices') and len(response.choices) > 0:
-            metrics = response.choices[0].message.content
-            
-            # 출력 및 처리 과정 로깅
-            additional_info = {
-                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
-            }
-            outputs = {"metrics_length": len(metrics), "metrics_preview": metrics[:100] + "..."}
-            log_function_call(func_name, inputs, outputs, additional_info)
-            
-            logger.info(f"자기소개서 수치화 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-            groq_logger.info(f"===== {func_name} 함수 종료 =====")
-            return metrics
-        else:
-            error_msg = f"수치화 API 응답 형식 오류: {response}"
-            logger.error(error_msg)
-            
-            # 오류 로깅
-            outputs = {"error": error_msg}
-            log_function_call(func_name, inputs, outputs)
-            
-            groq_logger.error(error_msg)
-            groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
-            return "자기소개서 수치화 중 오류가 발생했습니다."
-            
-    except Exception as e:
-        error_msg = f"수치화 API 호출 오류: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        
-        # 오류 로깅
-        outputs = {"error": str(e), "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(error_msg)
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "자기소개서 수치화 중 오류가 발생했습니다."
-
-def finalize_resume_style(resume_draft):
-    """
-    3단계-2: 전문성과 열정을 강조하는 문체로 수정
-    """
-    func_name = "finalize_resume_style"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    
-    # 입력 로깅
-    inputs = {"resume_draft_length": len(resume_draft), "resume_draft_preview": resume_draft[:100] + "..."}
-    log_function_call(func_name, inputs)
-    
-    prompt = f"""
-    다음 자기소개서 초안을 전문성과 열정을 강조하는 문체로 수정해주세요:
-    
-    초안: {resume_draft}
-    
-    다음 사항을 개선해주세요:
-    1. 전문 용어와 업계 용어를 자연스럽게 사용
-    2. 열정과 자신감을 표현하는 어조 사용
-    3. 간결하고 명확한 문장으로 수정
-    """
-    
-    groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
-    
-    try:
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
-        response = client.chat.completions.create(
-            model="qwen-qwq-32b",
-            messages=[
-                {"role": "system", "content": "당신은 자기소개서 편집 전문가입니다. 주어진 초안을 전문성과 열정을 강조하는 문체로 수정해주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5
-        )
-        
-        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-        
-        if response and hasattr(response, 'choices') and len(response.choices) > 0:
-            styled = response.choices[0].message.content
-            
-            # 출력 및 처리 과정 로깅
-            additional_info = {
-                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
-            }
-            outputs = {"styled_length": len(styled), "styled_preview": styled[:100] + "..."}
-            log_function_call(func_name, inputs, outputs, additional_info)
-            
-            logger.info(f"자기소개서 문체 수정 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-            groq_logger.info(f"===== {func_name} 함수 종료 =====")
-            return styled
-        else:
-            error_msg = f"문체 수정 API 응답 형식 오류: {response}"
-            logger.error(error_msg)
-            
-            # 오류 로깅
-            outputs = {"error": error_msg}
-            log_function_call(func_name, inputs, outputs)
-            
-            groq_logger.error(error_msg)
-            groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
-            return "자기소개서 문체 수정 중 오류가 발생했습니다."
-            
-    except Exception as e:
-        error_msg = f"문체 수정 API 호출 오류: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        
-        # 오류 로깅
-        outputs = {"error": str(e), "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(error_msg)
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "자기소개서 문체 수정 중 오류가 발생했습니다."
-
-def finalize_resume_emphasis(resume_draft):
-    """
-    3단계-3: 직무 관련 핵심 키워드 강조 및 맞춤화
-    """
-    func_name = "finalize_resume_emphasis"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    
-    # 입력 로깅
-    inputs = {"resume_draft_length": len(resume_draft), "resume_draft_preview": resume_draft[:100] + "..."}
-    log_function_call(func_name, inputs)
-    
-    prompt = f"""
-    다음 자기소개서 초안에서 직무 관련 핵심 키워드를 강조하고 맞춤화해주세요:
-    
-    초안: {resume_draft}
-    
-    다음 사항을 개선해주세요:
-    1. 직무 관련 핵심 키워드 3-5개 강조 (굵은 글씨로 표시하지 말고, 문맥 속에 자연스럽게 강조)
-    2. 회사 문화와 가치관과 일치하는 내용으로 맞춤화
-    3. 지원 포지션에 꼭 필요한 역량 중심으로 재구성
-    """
-    
-    groq_logger.debug(f"생성된 프롬프트 길이: {len(prompt)}")
-    
-    try:
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
-        response = client.chat.completions.create(
-            model="qwen-qwq-32b",
-            messages=[
-                {"role": "system", "content": "당신은 자기소개서 편집 전문가입니다. 주어진 초안에서 직무 관련 핵심 키워드를 강조하고 맞춤화해주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5
-        )
-        
-        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-        
-        if response and hasattr(response, 'choices') and len(response.choices) > 0:
-            emphasized = response.choices[0].message.content
-            
-            # 출력 및 처리 과정 로깅
-            additional_info = {
-                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
-                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
-            }
-            outputs = {"emphasized_length": len(emphasized), "emphasized_preview": emphasized[:100] + "..."}
-            log_function_call(func_name, inputs, outputs, additional_info)
-            
-            logger.info(f"자기소개서 키워드 강조 API 호출 성공 - 사용 토큰: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
-            groq_logger.info(f"===== {func_name} 함수 종료 =====")
-            return emphasized
-        else:
-            error_msg = f"키워드 강조 API 응답 형식 오류: {response}"
-            logger.error(error_msg)
-            
-            # 오류 로깅
-            outputs = {"error": error_msg}
-            log_function_call(func_name, inputs, outputs)
-            
-            groq_logger.error(error_msg)
-            groq_logger.info(f"===== {func_name} 함수 종료 (오류) =====")
-            return "자기소개서 키워드 강조 중 오류가 발생했습니다."
-            
-    except Exception as e:
-        error_msg = f"키워드 강조 API 호출 오류: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        
-        # 오류 로깅
-        outputs = {"error": str(e), "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(error_msg)
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "자기소개서 키워드 강조 중 오류가 발생했습니다."
-
-def finalize_resume(resume_draft):
-    """
-    3단계: 자기소개서 최종 완성
-    """
-    func_name = "finalize_resume"
-    groq_logger.info(f"===== {func_name} 함수 시작 =====")
-    
-    # 입력 타입 검증
-    if not isinstance(resume_draft, str):
-        logger.warning(f"resume_draft가 문자열이 아닙니다: {type(resume_draft)}")
-        resume_draft = str(resume_draft)
-    
-    # 안전한 프리뷰 생성
-    draft_preview = resume_draft[:100] + "..." if len(resume_draft) > 100 else resume_draft
-    
-    # 입력 로깅
-    inputs = {"resume_draft_length": len(resume_draft), "resume_draft_preview": draft_preview}
-    log_function_call(func_name, inputs)
-    
-    try:
-        groq_logger.debug("3단계-1: 성과와 역량을 구체적 수치로 표현 시작")
-        # 3단계-1: 성과와 역량을 구체적 수치로 표현
-        metrics = finalize_resume_metrics(resume_draft)
-        groq_logger.debug(f"수치화 결과 길이: {len(metrics)}")
-        
-        groq_logger.debug("3단계-2: 전문성과 열정을 강조하는 문체로 수정 시작")
-        # 3단계-2: 전문성과 열정을 강조하는 문체로 수정
-        styled = finalize_resume_style(metrics)
-        groq_logger.debug(f"문체 수정 결과 길이: {len(styled)}")
-        
-        groq_logger.debug("3단계-3: 직무 관련 핵심 키워드 강조 및 맞춤화 시작")
-        # 3단계-3: 직무 관련 핵심 키워드 강조 및 맞춤화
-        finalized = finalize_resume_emphasis(styled)
-        groq_logger.debug(f"키워드 강조 결과 길이: {len(finalized)}")
-        
-        # 출력 및 처리 과정 로깅
-        outputs = {
-            "finalized_length": len(finalized),
-            "finalized_preview": finalized[:100] + "..."
-        }
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.info(f"===== {func_name} 함수 종료 =====")
-        return finalized
-        
-    except Exception as e:
-        error_msg = str(e)
-        logger.error(f"자기소개서 최종 완성 중 오류 발생: {error_msg}", exc_info=True)
-        
-        # 오류 로깅
-        outputs = {"error": error_msg, "traceback": traceback.format_exc()}
-        log_function_call(func_name, inputs, outputs)
-        
-        groq_logger.error(f"자기소개서 최종 완성 중 오류 발생: {error_msg}")
-        groq_logger.debug(traceback.format_exc())
-        groq_logger.info(f"===== {func_name} 함수 종료 (예외) =====")
-        return "자기소개서 최종 완성 중 오류가 발생했습니다."
+        return '{}'
 
 def generate_resume(job_description, user_story, company_info):
     """
@@ -994,46 +415,148 @@ def generate_resume(job_description, user_story, company_info):
         logger.warning(f"company_info가 문자열이 아닙니다: {type(company_info)}")
         company_info = str(company_info)
     
-    # user_story 처리 개선
-    user_story_dict = {}
+    # user_story 처리 (문자열 또는 딕셔너리 지원)
+    user_story_content = ""
     if isinstance(user_story, dict):
-        user_story_dict = user_story
+        # 딕셔너리인 경우 값들을 합쳐서 문자열로 변환
+        for key, value in user_story.items():
+            user_story_content += f"{key}: {value}\n"
     elif isinstance(user_story, str):
-        logger.warning(f"user_story가 문자열입니다: {type(user_story)}")
-        # 문자열을 분석하여 기본 정보 추출 시도
-        user_story_dict = {
-            '성격의 장단점': user_story,
-            '지원 동기': user_story,
-            '입사 후 포부': user_story
-        }
+        logger.info(f"user_story가 문자열입니다: {type(user_story)}")
+        user_story_content = user_story
     else:
         logger.warning(f"user_story가 예상치 못한 타입입니다: {type(user_story)}")
-        user_story_dict = {
-            '성격의 장단점': str(user_story),
-            '지원 동기': str(user_story),
-            '입사 후 포부': str(user_story)
-        }
-    
-    # 안전한 프리뷰 생성
-    job_preview = job_description[:100] + "..." if len(job_description) > 100 else job_description
-    company_preview = company_info[:100] + "..." if len(company_info) > 100 else company_info
-    
+        user_story_content = str(user_story)
+
     # 입력 로깅
     inputs = {
         "job_description_length": len(job_description),
         "company_info_length": len(company_info),
-        "user_story_keys": list(user_story_dict.keys()),
-        "job_description_preview": job_preview,
-        "company_info_preview": company_preview
+        "user_story_length": len(user_story_content),
+        "job_description": job_description,
+        "company_info": company_info,
+        "user_story": user_story_content
     }
     log_function_call(func_name, inputs)
     
-    # 통합 프롬프트 구성 - 모든 단계를 하나의 프롬프트로 통합
-    filtered_story = {
-        '성격의 장단점': user_story_dict.get('성격의 장단점', ''),
-        '지원 동기': user_story_dict.get('지원 동기', ''),
-        '입사 후 포부': user_story_dict.get('입사 후 포부', '')
-    }
+    # 1단계: 사용자 스토리에서 키포인트 추출
+    groq_logger.info("사용자 스토리에서 키포인트 추출 시작")
+    try:
+        keypoints_prompt = f"""
+        다음 사용자 스토리를 분석하여 자기소개서 작성에 활용할 수 있는 주요 키포인트를 추출해주세요.
+        키포인트는 미리 정해진 카테고리에 한정되지 않고, 사용자 스토리에서 자기소개서 작성에 도움이 될 만한 모든 중요 정보를 포함해야 합니다.
+        
+        [사용자 스토리]
+        {user_story_content}
+        
+        주체적으로 판단하여 자기소개서에 반영할만한 정보를 찾고, 이를 JSON 형식으로 구조화해주세요.
+        키와 값을 자유롭게 결정하되, 각 키포인트의 종류와 내용이 명확히 구분되도록 해주세요.
+        
+        예를 들어, 다음과 같은 형식이 될 수 있습니다 (이에 한정되지 않음):
+        ```
+        {{
+          "핵심_강점": "...",
+          "관련_경험": ["...", "..."],
+          "전문_기술": ["...", "..."],
+          "지원_이유": "...",
+          ...기타 발견한 키포인트...
+        }}
+        ```
+        
+        반드시 JSON 형식으로만 출력하고, JSON 외의 메시지는 포함하지 마세요.
+        사용자 스토리에서 발견할 수 있는 모든 관련 정보를 자유롭게 구조화하세요.
+        """
+        
+        groq_logger.debug(f"키포인트 추출 프롬프트 길이: {len(keypoints_prompt)}")
+        
+        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b")
+        keypoints_response = client.chat.completions.create(
+            model="qwen-qwq-32b",
+            messages=[
+                {"role": "system", "content": "당신은 텍스트에서 핵심 정보를 주체적으로 파악하고 구조화하는 전문가입니다. 미리 정해진 형식에 얽매이지 않고 텍스트의 본질을 파악하세요."},
+                {"role": "user", "content": keypoints_prompt}
+            ],
+            temperature=0.2  # 약간의 창의성을 허용하면서도 일관성 유지
+        )
+        
+        groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {keypoints_response.usage.total_tokens if hasattr(keypoints_response, 'usage') else 'N/A'}")
+        
+        # 응답 전체를 JSON으로 로깅
+        try:
+            response_json = {
+                "id": keypoints_response.id,
+                "model": keypoints_response.model,
+                "choices": [
+                    {
+                        "index": choice.index,
+                        "message": {
+                            "role": choice.message.role,
+                            "content": choice.message.content
+                        },
+                        "finish_reason": choice.finish_reason
+                    } for choice in keypoints_response.choices
+                ],
+                "usage": {
+                    "prompt_tokens": keypoints_response.usage.prompt_tokens,
+                    "completion_tokens": keypoints_response.usage.completion_tokens,
+                    "total_tokens": keypoints_response.usage.total_tokens
+                } if hasattr(keypoints_response, 'usage') else {}
+            }
+            groq_logger.info(f"키포인트 추출 API 응답 JSON: {json.dumps(response_json, ensure_ascii=False)}")
+        except Exception as e:
+            groq_logger.error(f"키포인트 응답 JSON 변환 오류: {str(e)}")
+        
+        if keypoints_response and hasattr(keypoints_response, 'choices') and len(keypoints_response.choices) > 0:
+            json_output = keypoints_response.choices[0].message.content
+            
+            # JSON 문자열에서 코드 블록 표시 제거
+            if "```json" in json_output or "```" in json_output:
+                json_output = re.sub(r'```(?:json)?\n?', '', json_output)
+                json_output = re.sub(r'```', '', json_output)
+            
+            # 출력이 실제 JSON인지 확인
+            try:
+                user_keypoints = json.loads(json_output.strip())
+                groq_logger.info(f"사용자 스토리 키포인트 추출 성공: {list(user_keypoints.keys())}")
+            except json.JSONDecodeError as e:
+                error_msg = f"사용자 스토리 키포인트 JSON 파싱 오류: {str(e)}"
+                logger.error(error_msg)
+                groq_logger.error(error_msg)
+                # 기본 구조로 대체
+                user_keypoints = {
+                    "핵심_강점": "",
+                    "관련_경험": [],
+                    "전문_기술": [],
+                    "지원_이유": "",
+                    "기타_특이사항": ""
+                }
+        else:
+            error_msg = "사용자 스토리 키포인트 API 응답 오류"
+            logger.error(error_msg)
+            groq_logger.error(error_msg)
+            user_keypoints = {
+                "핵심_강점": "",
+                "관련_경험": [],
+                "전문_기술": [],
+                "지원_이유": "",
+                "기타_특이사항": ""
+            }
+    except Exception as e:
+        error_msg = f"사용자 스토리 키포인트 추출 오류: {str(e)}"
+        logger.error(error_msg, exc_info=True)
+        groq_logger.error(error_msg)
+        groq_logger.debug(traceback.format_exc())
+        user_keypoints = {
+            "핵심_강점": "",
+            "관련_경험": [],
+            "전문_기술": [],
+            "지원_이유": "",
+            "기타_특이사항": ""
+        }
+    
+    # 2단계: 추출된 키포인트를 이용해 자기소개서 생성
+    # 사용자 정보 섹션 구성
+    user_info_section = json.dumps(user_keypoints, ensure_ascii=False, indent=2)
     
     prompt = f"""
     다음 정보를 바탕으로 완성된 자기소개서를 작성해주세요:
@@ -1044,10 +567,8 @@ def generate_resume(job_description, user_story, company_info):
     [회사 정보]
     {company_info}
     
-    [지원자 정보]
-    성격의 장단점: {filtered_story['성격의 장단점']}
-    지원 동기: {filtered_story['지원 동기']}
-    입사 후 포부: {filtered_story['입사 후 포부']}
+    [지원자 정보 (JSON)]
+    {user_info_section}
     
     다음 사항을 포함하는 완성도 높은 자기소개서를 작성해주세요:
     1. 지원자의 핵심 경쟁력과 지원 동기
@@ -1057,12 +578,13 @@ def generate_resume(job_description, user_story, company_info):
     5. 전문 용어와 업계 용어를 자연스럽게 사용하고 열정과 자신감을 표현하는 어조 사용
     6. 직무 관련 핵심 키워드를 3-5개 자연스럽게 강조
     7. 회사 문화와 가치관과 일치하는 내용 강조
+    8. 지원자 정보에서 추출된 키포인트를 적절히 활용하여 개인 맞춤형 내용 구성
     """
     
     groq_logger.debug(f"생성된 통합 프롬프트 길이: {len(prompt)}")
     
     try:
-        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b (단일 API 호출 방식)")
+        groq_logger.info(f"Groq API 호출 시작 - 모델: qwen-qwq-32b (자기소개서 생성)")
         response = client.chat.completions.create(
             model="qwen-qwq-32b",
             messages=[
@@ -1074,6 +596,31 @@ def generate_resume(job_description, user_story, company_info):
         
         groq_logger.debug(f"Groq API 응답 수신 - 토큰 수: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
         
+        # 응답 전체를 JSON으로 로깅
+        try:
+            response_json = {
+                "id": response.id,
+                "model": response.model,
+                "choices": [
+                    {
+                        "index": choice.index,
+                        "message": {
+                            "role": choice.message.role,
+                            "content": choice.message.content[:500] + "..." if len(choice.message.content) > 500 else choice.message.content
+                        },
+                        "finish_reason": choice.finish_reason
+                    } for choice in response.choices
+                ],
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                } if hasattr(response, 'usage') else {}
+            }
+            groq_logger.info(f"자기소개서 생성 API 응답 JSON: {json.dumps(response_json, ensure_ascii=False)}")
+        except Exception as e:
+            groq_logger.error(f"자기소개서 응답 JSON 변환 오류: {str(e)}")
+        
         if response and hasattr(response, 'choices') and len(response.choices) > 0:
             finalized_resume = response.choices[0].message.content
             
@@ -1081,11 +628,12 @@ def generate_resume(job_description, user_story, company_info):
             additional_info = {
                 "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None,
                 "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
-                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None
+                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None,
+                "extracted_keypoints": list(user_keypoints.keys())
             }
             outputs = {
                 "finalized_resume_length": len(finalized_resume),
-                "finalized_resume_preview": finalized_resume[:100] + "..."
+                "finalized_resume": finalized_resume
             }
             log_function_call(func_name, inputs, outputs, additional_info)
             
