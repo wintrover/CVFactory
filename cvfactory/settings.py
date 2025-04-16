@@ -348,7 +348,7 @@ LOG_SQL_QUERIES = True  # SQL 쿼리 로깅 활성화
 # 로그 설정 - 통합 방식으로 변경
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,  # False에서 True로 변경하여 기본 로거 비활성화
+    'disable_existing_loggers': True,  # Django 기본 로거 비활성화
     'formatters': {
         'verbose': {
             'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] - %(message)s',
@@ -378,6 +378,7 @@ LOGGING = {
             'callback': lambda record: 'Render' not in record.getMessage(),
         },
     },
+    # 로그 파일 4개만 사용
     'handlers': {
         'console': {
             'level': 'DEBUG',
@@ -423,6 +424,10 @@ LOGGING = {
             'class': 'logging.NullHandler',
         },
     },
+    'root': {
+        'handlers': ['console', 'app_file', 'error_file'],
+        'level': 'DEBUG',
+    },
     'loggers': {
         # Django 내장 로거들
         'django': {
@@ -446,7 +451,7 @@ LOGGING = {
             'propagate': False,
         },
         'django.db.backends': {
-            'handlers': ['app_file', 'error_file'],
+            'handlers': ['app_file', 'error_file'] if LOG_SQL_QUERIES else ['null'],
             'level': 'DEBUG',
             'propagate': False,
         },
@@ -502,8 +507,8 @@ LOGGING = {
             'propagate': False,
         },
         
-        # 루트 로거 설정
-        '': {  # 루트 로거
+        # 그 외 모든 로거는 기본 설정 사용
+        '': {
             'handlers': ['console', 'app_file', 'error_file'],
             'level': 'DEBUG',
             'propagate': False,
