@@ -150,15 +150,6 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 - **Error Rate**: System stability evaluation
 - **User Activity**: Usage pattern analysis by feature
 
-## 📄 License
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-## 👨‍💻 Contributing
-All forms of contribution are welcome, including issue submission, pull requests, and documentation improvements. Please check the contribution guidelines before contributing.
-
-## 📬 Contact
-For any inquiries, please contact wintrover@gmail.com.
-
 ## SEO Configuration Guide
 
 CVFactory has the following SEO optimizations applied:
@@ -216,3 +207,12 @@ results = asyncio.run(crawl_site_recursive("https://example.com", max_depth=2))
 - Returns HTML, network log, and all internal links
 
 > **Note:** All legacy Selenium/requests-based crawling code has been removed. Use only Playwright utilities for crawling and network capture.
+
+## 📄 License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## 👨‍💻 Contributing
+All forms of contribution are welcome, including issue submission, pull requests, and documentation improvements. Please check the contribution guidelines before contributing.
+
+## 📬 Contact
+For any inquiries, please contact wintrover@gmail.com.

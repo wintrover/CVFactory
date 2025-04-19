@@ -163,15 +163,6 @@ docker-compose -f docker/docker-compose.dev.yml up --build
 - **에러율**: 시스템 안정성 평가
 - **사용자 활동**: 기능별 사용 패턴 분석
 
-## 📄 라이센스
-이 프로젝트는 MIT 라이센스를 따릅니다. 자세한 내용은 LICENSE 파일을 참조하세요.
-
-## 👨‍💻 기여하기
-이슈 제출, 풀 리퀘스트, 문서 개선 등 모든 형태의 기여를 환영합니다. 기여하기 전에 기여 가이드라인을 확인해주세요.
-
-## 📬 연락처
-문의사항이 있으시면 wintrover@gmail.com으로 연락해주세요. 
-
 ## SEO 설정 가이드
 
 CVFactory는 다음과 같은 SEO 최적화가 적용되어 있습니다:
@@ -229,3 +220,12 @@ results = asyncio.run(crawl_site_recursive("https://example.com", max_depth=2))
 - HTML, 네트워크 로그, 내부 링크 반환
 
 > **참고:** 기존 Selenium/requests 기반 크롤링 코드는 모두 제거되었습니다. 크롤링 및 네트워크 캡처는 반드시 Playwright 유틸만 사용하세요. 
+
+## 📄 라이센스
+이 프로젝트는 MIT 라이센스를 따릅니다. 자세한 내용은 LICENSE 파일을 참조하세요.
+
+## 👨‍💻 기여하기
+이슈 제출, 풀 리퀘스트, 문서 개선 등 모든 형태의 기여를 환영합니다. 기여하기 전에 기여 가이드라인을 확인해주세요.
+
+## 📬 연락처
+문의사항이 있으시면 wintrover@gmail.com으로 연락해주세요. 
