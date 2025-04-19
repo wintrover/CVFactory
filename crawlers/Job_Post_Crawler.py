@@ -12,6 +12,12 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from django.conf import settings
 from PIL import Image
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.chrome.service import Service
 
 logger = logging.getLogger('crawlers')
 logger.debug(f"DEBUG: AZURE_VISION_KEY loaded as: {getattr(settings, 'AZURE_VISION_KEY', 'Not Set')}")
@@ -99,6 +105,13 @@ def fetch_job_description(url: str) -> Optional[str]:
         response.encoding = response.apparent_encoding or 'utf-8'
         html_content = response.text
         
+        # 원본 HTML 저장 (근본 원인 진단용)
+        try:
+            with open('logs/crawling/job_post_raw.html', 'w', encoding='utf-8') as f:
+                f.write(html_content)
+        except Exception as e:
+            logger.error(f"원본 HTML 저장 실패: {e}")
+        
         if settings.DEBUG:
             logger.debug(f" HTML 응답 데이터 수신 완료 - 길이: {len(html_content)} 바이트")
         else:
@@ -118,7 +131,7 @@ def fetch_job_description(url: str) -> Optional[str]:
         
         # 이미지에서 추출한 텍스트가 있으면 결합
         if image_text:
-            cleaned_text = f"{cleaned_text}\n\n[이미지에서 추출한 텍스트]\n{image_text}"
+            cleaned_text = f"{cleaned_text}{image_text}"
             logger.info(" 이미지 OCR 텍스트 결합 완료")
         
         # 개발 환경에서만 결과 로깅
@@ -200,19 +213,38 @@ def save_to_file(text: str, filename: str = "output.txt"):
 def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> str:
     """HTML에서 이미지를 추출하고 Azure Computer Vision OCR로 처리하여 텍스트 반환 (URL 방식)"""
     try:
-        job_post_images = []
+        job_post_images = set()
         images = soup.find_all('img')
         for img in images:
-            img_src = img.get('src', '')
-            if img_src and not img_src.startswith(('http://', 'https://', 'data:')):
+            img_url = None
+            # 1. srcset이 있으면 첫 번째 후보
+            img_srcset = img.get('srcset', '')
+            if img_srcset:
+                src_candidates = [s.strip().split(' ')[0] for s in img_srcset.split(',') if s.strip()]
+                if src_candidates:
+                    img_url = src_candidates[0]
+            # 2. src
+            if not img_url:
+                img_src = img.get('src', '')
+                if img_src:
+                    img_url = img_src
+            # 3. data-src
+            if not img_url:
+                img_data_src = img.get('data-src', '')
+                if img_data_src:
+                    img_url = img_data_src
+            # 4. data-original
+            if not img_url:
+                img_data_original = img.get('data-original', '')
+                if img_data_original:
+                    img_url = img_data_original
+            # 절대경로 변환
+            if img_url and not img_url.startswith(('http://', 'https://', 'data:')):
                 from urllib.parse import urljoin
-                img_src = urljoin(base_url, img_src)
-            # 조건 없이 모든 이미지를 OCR 대상으로 추가
-            if img_src:
-                logger.info(f"[IMG-DEBUG] OCR 대상 이미지 추가: {img_src}")
-                print(f"[IMG-DEBUG] OCR 대상 이미지 추가: {img_src}")
-                ocr_logger.info(f"[IMG-DEBUG] OCR 대상 이미지 추가: {img_src}")
-                job_post_images.append(img_src)
+                img_url = urljoin(base_url, img_url)
+            if img_url:
+                job_post_images.add(img_url)
+        job_post_images = list(job_post_images)
         logger.info(f"[IMG-DEBUG] 최종 OCR 대상 이미지 리스트: {job_post_images}")
         print(f"[IMG-DEBUG] 최종 OCR 대상 이미지 리스트: {job_post_images}")
         ocr_logger.info(f"[IMG-DEBUG] 최종 OCR 대상 이미지 리스트: {job_post_images}")
@@ -327,3 +359,63 @@ def urljoin(base, url):
     """URL 결합 유틸리티 함수"""
     from urllib.parse import urljoin as urllib_urljoin
     return urllib_urljoin(base, url)
+
+def save_html_with_selenium(url, out_path):
+    """Selenium으로 렌더링된 HTML을 저장한다."""
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--window-size=1920,1080')
+    driver = webdriver.Chrome(options=chrome_options)
+    try:
+        driver.get(url)
+        time.sleep(5)  # JS 렌더링 대기
+        html = driver.page_source
+        with open(out_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+    finally:
+        driver.quit()
+
+def save_images_from_network_with_selenium(url, out_path):
+    """Selenium + DevTools로 네트워크 패널 기반 이미지 URL을 추출한다."""
+    user_agent = (
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/123.0.0.0 Safari/537.36'
+    )
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument(f'user-agent={user_agent}')
+    # 자동화 탐지 우회
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+    driver = webdriver.Chrome(options=chrome_options)
+    try:
+        driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+            'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
+        })
+        driver.get(url)
+        time.sleep(5)  # JS/이미지 로딩 대기
+        # 네트워크 로그에서 이미지 요청만 추출
+        logs = driver.get_log('performance')
+        img_urls = set()
+        for entry in logs:
+            msg = json.loads(entry['message'])
+            params = msg.get('message', {}).get('params', {})
+            request = params.get('request', {})
+            url_ = request.get('url', '')
+            if re.search(r'\.(jpg|jpeg|png|gif|bmp|webp)(\?|$)', url_, re.IGNORECASE):
+                img_urls.add(url_)
+        # 중복 제거 후 저장
+        with open(out_path, 'w', encoding='utf-8') as f:
+            for u in sorted(img_urls):
+                f.write(u + '\n')
+    finally:
+        driver.quit()
