@@ -23,7 +23,7 @@ Experience the application at [cvfactory.dev](https://cvfactory.dev).
 ### Backend
 - **Framework**: Django, Django REST Framework
 - **AI**: Groq API (LLM-based text generation)
-- **Web Crawling**: Selenium, BeautifulSoup
+- **Web Crawling**: Playwright (async, headless, network-aware)
 - **Database**: SQLite(development), PostgreSQL(production)
 - **Server**: Gunicorn WSGI Server
 
@@ -54,7 +54,7 @@ CVFactory/
 ```
 
 ### Core Modules
-- **Crawling Engine**: `Job_Post_Crawler.py`, `Target_Company_Crawler.py`
+- **Crawling Engine**: `utils/playwright_crawler.py` (공통 크롤링 유틸)
 - **AI Service**: `groq_service.py` (Groq API integration)
 - **Web Frontend**: Files in the `frontend/` directory
 
@@ -188,3 +188,31 @@ When adding new pages, check the following items:
 3. Add the page to the sitemap
 4. Use proper heading structure (h1, h2, etc.) within the page
 5. Add alt tags to images
+
+## 🚀 Crawling Engine (Playwright 기반)
+
+All crawling, network, and image extraction is unified with Playwright-based async utilities.
+
+### Main Functions
+
+- `crawl_page(url, ...)`: Crawl a single page with browser fingerprinting, network log, and internal link extraction.
+- `crawl_site_recursive(start_url, max_depth=2, ...)`: Recursively crawl all internal links up to a specified depth.
+
+### Example Usage
+
+```python
+import asyncio
+from utils.playwright_crawler import crawl_page, crawl_site_recursive
+
+# Single page crawl
+result = asyncio.run(crawl_page("https://example.com"))
+
+# Recursive site crawl (internal links)
+results = asyncio.run(crawl_site_recursive("https://example.com", max_depth=2))
+```
+
+- All network requests/responses are logged (images, JS, CSS, XHR, etc.)
+- User-Agent, navigator.webdriver, language, timezone, etc. are spoofed for anti-bot evasion
+- Returns HTML, network log, and all internal links
+
+> **Note:** All legacy Selenium/requests-based crawling code has been removed. Use only Playwright utilities for crawling and network capture.
