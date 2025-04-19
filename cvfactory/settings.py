@@ -15,6 +15,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # .env 파일 로드 (프로젝트 루트에 있는 .env 파일을 로드)
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
+# DEBUG: .env 파일 로드 후 환경 변수 확인
+import logging
+logger = logging.getLogger(__name__)
+logger.debug(f"DEBUG after load_dotenv: AZURE_VISION_KEY = {os.getenv('AZURE_VISION_KEY')}")
+logger.debug(f"DEBUG after load_dotenv: AZURE_VISION_ENDPOINT = {os.getenv('AZURE_VISION_ENDPOINT')}")
+
 # 환경변수에서 설정 가져오기
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'  # 기본값은 보안을 위해 False로 설정
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
@@ -22,6 +28,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # API 키 설정
 API_KEY = os.getenv('API_KEY')
+AZURE_VISION_KEY = os.getenv('AZURE_VISION_KEY') # Azure Vision API 키 환경 변수에서 읽어오기
 if not API_KEY and DEBUG:
     # 개발 환경에서만 경고 로그와 임시 키 생성
     import logging
@@ -482,8 +489,8 @@ LOGGING = {
         },
         # 크롤러 로그
         'crawlers': {
-            'handlers': ['application', 'errors', 'console'],
-            'level': 'INFO',
+            'handlers': ['application', 'errors', 'console', 'api'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         # Django 자동 재로드 로그 (무시)
@@ -494,7 +501,7 @@ LOGGING = {
         # 프로젝트 앱 로그
         'cvfactory': {
             'handlers': ['application', 'errors', 'console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False,
         },
         # 미들웨어 로그
@@ -554,5 +561,4 @@ SEO_JS_EXCLUDES = [
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
 
 # Azure Computer Vision API 설정
-AZURE_VISION_KEY = os.getenv('AZURE_VISION_KEY', '')
 AZURE_VISION_ENDPOINT = os.getenv('AZURE_VISION_ENDPOINT', '')

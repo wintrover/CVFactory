@@ -87,7 +87,7 @@ def main():
     # 환경 변수 디버깅
     try:
         from dotenv import load_dotenv
-        load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), 'env_configs', '.env'))
+        load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
         env_vars = {key: value for key, value in os.environ.items() 
                    if not key.startswith('PATH') and not key.startswith('PYTHONPATH')}
         logger.debug(f"환경 변수: {env_vars}")
@@ -137,9 +137,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        # 서버 실행 시 항상 로그 파일 초기화
         clear_log_files()
-            
         main()
     except KeyboardInterrupt:
         logger.info("사용자에 의해 프로그램 종료")

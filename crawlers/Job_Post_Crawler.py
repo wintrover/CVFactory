@@ -13,8 +13,22 @@ from requests.packages.urllib3.util.retry import Retry
 from django.conf import settings
 from PIL import Image
 
-# Django 로깅 설정 사용
 logger = logging.getLogger('crawlers')
+logger.debug(f"DEBUG: AZURE_VISION_KEY loaded as: {getattr(settings, 'AZURE_VISION_KEY', 'Not Set')}")
+logger.debug(f"DEBUG: AZURE_VISION_ENDPOINT loaded as: {getattr(settings, 'AZURE_VISION_ENDPOINT', 'Not Set')}")
+
+# OCR 전용 파일 핸들러 및 logger 추가
+ocr_log_path = os.path.join('logs', 'crawling', 'ocr_debug.log')
+ocr_file_handler = logging.FileHandler(ocr_log_path, encoding='utf-8')
+ocr_file_handler.setLevel(logging.INFO)
+ocr_file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s %(message)s'))
+ocr_logger = logging.getLogger('ocr_debug')
+ocr_logger.setLevel(logging.INFO)
+if not any(isinstance(h, logging.FileHandler) and h.baseFilename == ocr_file_handler.baseFilename for h in ocr_logger.handlers):
+    ocr_logger.addHandler(ocr_file_handler)
+
+# Django 로깅 설정 사용
+# logger = logging.getLogger('crawlers') # Removed duplicate logger initialization
 
 class WebScrapingError(Exception):
     """웹 스크래핑 관련 사용자 정의 예외"""
@@ -184,137 +198,128 @@ def save_to_file(text: str, filename: str = "output.txt"):
         logger.error(f" [파일 저장 오류] {filename} 저장 실패 - {str(e)}", exc_info=True)
 
 def extract_and_process_images(soup: BeautifulSoup, base_url: str, session) -> str:
-    """HTML에서 이미지를 추출하고 Azure Computer Vision OCR로 처리하여 텍스트 반환"""
+    """HTML에서 이미지를 추출하고 Azure Computer Vision OCR로 처리하여 텍스트 반환 (URL 방식)"""
     try:
-        # 채용공고와 관련된 이미지들 찾기 (특정 클래스나 ID를 가진 영역의 이미지)
-        # 사이트마다 다른 구조를 가질 수 있으므로 일반적인 패턴으로 처리
-        
-        # 이미지 태그 중 채용정보를 담고 있을 가능성이 높은 이미지 필터링
         job_post_images = []
-        
-        # 일반적인 이미지 태그 찾기
         images = soup.find_all('img')
         for img in images:
-            # 이미지 소스 URL 가져오기
             img_src = img.get('src', '')
-            img_alt = img.get('alt', '').lower()
-            img_class = img.get('class', [])
-            
-            # 채용공고 관련 이미지일 가능성이 높은 이미지 필터링
-            # 클래스명이나, alt 텍스트에 '채용', '공고', '모집', 'job', 'recruit' 등의 키워드가 있는지 확인
-            is_job_related = False
-            job_keywords = ['채용', '공고', '모집', '자격', '우대', '경력', 'job', 'recruit', 'career']
-            
-            if any(keyword in img_alt for keyword in job_keywords):
-                is_job_related = True
-            
-            if isinstance(img_class, list) and any(any(keyword in cls.lower() for keyword in job_keywords) for cls in img_class):
-                is_job_related = True
-                
-            # 이미지 크기 속성이 있는 경우 확인 (작은 아이콘 제외)
-            width = img.get('width', '')
-            height = img.get('height', '')
-            if width and height:
-                try:
-                    if int(width) > 200 and int(height) > 200:
-                        is_job_related = True
-                except ValueError:
-                    pass
-            
-            # 상대 경로인 경우 절대 경로로 변환
             if img_src and not img_src.startswith(('http://', 'https://', 'data:')):
+                from urllib.parse import urljoin
                 img_src = urljoin(base_url, img_src)
-                
-            if img_src and is_job_related:
+            # 조건 없이 모든 이미지를 OCR 대상으로 추가
+            if img_src:
+                logger.info(f"[IMG-DEBUG] OCR 대상 이미지 추가: {img_src}")
+                print(f"[IMG-DEBUG] OCR 대상 이미지 추가: {img_src}")
+                ocr_logger.info(f"[IMG-DEBUG] OCR 대상 이미지 추가: {img_src}")
                 job_post_images.append(img_src)
-                
-        # 이미지가 없으면 빈 문자열 반환
+        logger.info(f"[IMG-DEBUG] 최종 OCR 대상 이미지 리스트: {job_post_images}")
+        print(f"[IMG-DEBUG] 최종 OCR 대상 이미지 리스트: {job_post_images}")
+        ocr_logger.info(f"[IMG-DEBUG] 최종 OCR 대상 이미지 리스트: {job_post_images}")
         if not job_post_images:
             logger.info(" 채용공고 관련 이미지를 찾을 수 없습니다.")
+            print("[IMG-DEBUG] 채용공고 관련 이미지를 찾을 수 없습니다.")
             return ""
-            
         logger.info(f" 총 {len(job_post_images)}개의 채용공고 관련 이미지를 찾았습니다.")
-        
-        # 추출된 이미지들에서 OCR 처리
+        print(f"[IMG-DEBUG] 총 {len(job_post_images)}개의 채용공고 관련 이미지를 찾았습니다.")
         ocr_results = []
         for img_url in job_post_images:
             try:
-                # 이미지 다운로드
-                img_response = session.get(img_url, timeout=10)
-                img_response.raise_for_status()
-                
-                # Azure Computer Vision OCR API 호출
-                ocr_text = call_azure_ocr(img_response.content)
-                
-                # 결과에 추가
+                logger.debug(f"[IMG-DEBUG] Azure OCR URL 방식 처리 시작: {img_url}")
+                print(f"[IMG-DEBUG] Azure OCR URL 방식 처리 시작: {img_url}")
+                ocr_logger.info(f"[IMG-DEBUG] Azure OCR URL 방식 처리 시작: {img_url}")
+                ocr_text = call_azure_ocr_url(img_url)
                 if ocr_text:
+                    logger.debug(f"[IMG-DEBUG] OCR 결과 (일부): {ocr_text[:100]}...")
+                    print(f"[IMG-DEBUG] OCR 결과 (일부): {ocr_text[:100]}...")
+                    ocr_logger.info(f"[IMG-DEBUG] OCR 결과 (일부): {ocr_text[:100]}...")
                     ocr_results.append(ocr_text)
-                    logger.debug(f" 이미지에서 텍스트 추출 성공: {img_url[:50]}...")
+                else:
+                    logger.debug(f"[IMG-DEBUG] OCR 결과 없음 또는 추출 실패: {img_url}")
+                    print(f"[IMG-DEBUG] OCR 결과 없음 또는 추출 실패: {img_url}")
+                    ocr_logger.info(f"[IMG-DEBUG] OCR 결과 없음 또는 추출 실패: {img_url}")
             except Exception as e:
-                logger.error(f" 이미지 OCR 처리 실패: {img_url[:50]}... - {str(e)}", exc_info=settings.DEBUG)
+                logger.error(f"[IMG-DEBUG] 이미지 URL OCR 처리 중 오류 발생 ({img_url}): {str(e)}", exc_info=settings.DEBUG)
+                print(f"[IMG-DEBUG] 이미지 URL OCR 처리 중 오류 발생 ({img_url}): {str(e)}")
+                ocr_logger.error(f"[IMG-DEBUG] 이미지 URL OCR 처리 중 오류 발생 ({img_url}): {str(e)}")
                 continue
-                
-        # 결과 병합
-        if ocr_results:
-            return "\n\n".join(ocr_results)
-        else:
-            return ""
-            
+        all_ocr_text = "\n".join(ocr_results)
+        if all_ocr_text:
+            logger.debug("[IMG-DEBUG] 모든 이미지 OCR(URL) 처리 완료")
+            print("[IMG-DEBUG] 모든 이미지 OCR(URL) 처리 완료")
+            ocr_logger.info("[IMG-DEBUG] 모든 이미지 OCR(URL) 처리 완료")
+        return all_ocr_text
     except Exception as e:
-        logger.error(f" 이미지 추출 및 OCR 처리 실패: {str(e)}", exc_info=settings.DEBUG)
+        logger.error(f"[IMG-DEBUG] [이미지 URL OCR 전체 오류]: {str(e)}", exc_info=settings.DEBUG)
+        print(f"[IMG-DEBUG] [이미지 URL OCR 전체 오류]: {str(e)}")
+        ocr_logger.error(f"[IMG-DEBUG] [이미지 URL OCR 전체 오류]: {str(e)}")
         return ""
 
-def call_azure_ocr(image_bytes):
-    """Azure Computer Vision API를 호출하여 이미지에서 텍스트 추출"""
+def call_azure_ocr_url(image_url: str):
+    """Azure Computer Vision API를 호출하여 이미지 URL에서 텍스트 추출"""
     try:
-        # Azure Computer Vision API 설정
-        subscription_key = settings.AZURE_VISION_KEY
-        endpoint = settings.AZURE_VISION_ENDPOINT
-        ocr_url = f"{endpoint}/vision/v3.2/read/analyze"
-        
-        # 요청 헤더 설정
+        AZURE_VISION_KEY = os.getenv('AZURE_VISION_KEY')
+        AZURE_VISION_ENDPOINT = os.getenv('AZURE_VISION_ENDPOINT')
+        ocr_url = f"{AZURE_VISION_ENDPOINT}/vision/v3.2/read/analyze"
+
+        logger.info(f"[OCR-DEBUG] Vision API 요청 URL: {ocr_url}")
+        logger.info(f"[OCR-DEBUG] Vision API KEY: {AZURE_VISION_KEY[:6]}... (생략)")
+        print(f"[OCR-DEBUG] Vision API 요청 URL: {ocr_url}")
+        print(f"[OCR-DEBUG] Vision API KEY: {AZURE_VISION_KEY[:6]}... (생략)")
+        ocr_logger.info(f"[OCR-DEBUG] Vision API 요청 URL: {ocr_url}")
+        ocr_logger.info(f"[OCR-DEBUG] Vision API KEY: {AZURE_VISION_KEY[:6]}... (생략)")
+
         headers = {
-            'Content-Type': 'application/octet-stream',
-            'Ocp-Apim-Subscription-Key': subscription_key
+            'Content-Type': 'application/json',
+            'Ocp-Apim-Subscription-Key': AZURE_VISION_KEY
         }
-        
-        # API 호출
-        response = requests.post(ocr_url, headers=headers, data=image_bytes)
+        data = {"url": image_url}
+
+        response = requests.post(ocr_url, headers=headers, json=data)
+        logger.info(f"[OCR-DEBUG] Vision API 응답 status: {response.status_code}")
+        print(f"[OCR-DEBUG] Vision API 응답 status: {response.status_code}")
+        logger.info(f"[OCR-DEBUG] Vision API 응답 body: {response.text[:200]}")
+        print(f"[OCR-DEBUG] Vision API 응답 body: {response.text[:200]}")
+        ocr_logger.info(f"[OCR-DEBUG] Vision API 응답 status: {response.status_code}")
+        ocr_logger.info(f"[OCR-DEBUG] Vision API 응답 body: {response.text[:200]}")
         response.raise_for_status()
-        
-        # 비동기 API이므로 작업 상태 확인을 위한 URL 가져오기
+
         operation_url = response.headers["Operation-Location"]
-        
-        # 결과 가져오기
-        result_headers = {'Ocp-Apim-Subscription-Key': subscription_key}
-        
-        # 작업 완료 대기 (최대 10초)
+        logger.info(f"[OCR-DEBUG] Operation-Location: {operation_url}")
+        print(f"[OCR-DEBUG] Operation-Location: {operation_url}")
+        ocr_logger.info(f"[OCR-DEBUG] Operation-Location: {operation_url}")
+
+        result_headers = {'Ocp-Apim-Subscription-Key': AZURE_VISION_KEY}
         import time
         poll_count = 0
         max_polls = 10
-        poll_delay = 1  # 초 단위
-        
+        poll_delay = 1
         while poll_count < max_polls:
             result_response = requests.get(operation_url, headers=result_headers)
+            logger.info(f"[OCR-DEBUG] Poll {poll_count} status: {result_response.status_code}")
+            print(f"[OCR-DEBUG] Poll {poll_count} status: {result_response.status_code}")
+            logger.info(f"[OCR-DEBUG] Poll {poll_count} body: {result_response.text[:200]}")
+            print(f"[OCR-DEBUG] Poll {poll_count} body: {result_response.text[:200]}")
+            ocr_logger.info(f"[OCR-DEBUG] Poll {poll_count} status: {result_response.status_code}")
+            ocr_logger.info(f"[OCR-DEBUG] Poll {poll_count} body: {result_response.text[:200]}")
             result = result_response.json()
-            
             if "status" in result and result["status"] == "succeeded":
                 break
-            
             time.sleep(poll_delay)
             poll_count += 1
-        
-        # 결과 처리
         extracted_text = ""
         if "analyzeResult" in result and "readResults" in result["analyzeResult"]:
             for read_result in result["analyzeResult"]["readResults"]:
                 for line in read_result["lines"]:
                     extracted_text += line["text"] + " "
-        
+        logger.info(f"[OCR-DEBUG] 최종 OCR 추출 텍스트: {extracted_text[:200]}")
+        print(f"[OCR-DEBUG] 최종 OCR 추출 텍스트: {extracted_text[:200]}")
+        ocr_logger.info(f"[OCR-DEBUG] 최종 OCR 추출 텍스트: {extracted_text[:200]}")
         return extracted_text.strip()
-        
     except Exception as e:
-        logger.error(f" Azure Computer Vision OCR API 호출 실패: {str(e)}", exc_info=settings.DEBUG)
+        logger.error(f"[OCR-DEBUG] Azure Computer Vision OCR API(URL) 호출 실패: {str(e)}", exc_info=True)
+        print(f"[OCR-DEBUG] Azure Computer Vision OCR API(URL) 호출 실패: {str(e)}")
+        ocr_logger.error(f"[OCR-DEBUG] Azure Computer Vision OCR API(URL) 호출 실패: {str(e)}")
         return ""
 
 # urlparse를 위한 함수 추가

@@ -187,13 +187,15 @@ def fetch_company_info(request):
     return JsonResponse({"error": "허용되지 않은 요청 방식입니다."}, status=405)
 
 
+@csrf_exempt
 @api_view(["OPTIONS", "POST", "GET"])  #  OPTIONS 요청 허용 (CORS 문제 해결)
 @permission_classes([AllowAny])  # 인증된 사용자만 API 호출 가능하도록 설정
-@ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
-@csrf_protect  # CSRF 보호 활성화
+# @ensure_csrf_cookie  # CSRF 쿠키를 설정하는 데코레이터 (먼저 적용)
+# @csrf_protect  # CSRF 보호 활성화
 def create_resume(request):
     logger.debug("===== create_resume 요청 시작 =====")
     logger.debug(f"요청 메서드: {request.method}")
+    logger.debug(f"요청 META: {request.META}")
     
     if request.method == "GET":
         logger.debug("GET 요청 처리: CSRF 쿠키 설정")
