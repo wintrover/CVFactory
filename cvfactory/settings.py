@@ -12,11 +12,8 @@ import dj_database_url  # 데이터베이스 URL 지원을 위한 패키지 추�
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# .env 파일 로드
-load_dotenv(dotenv_path=BASE_DIR / "env_configs" / ".env.development")
-
-# 환경변수 로드
-load_dotenv()
+# .env 파일 로드 (프로젝트 루트에 있는 .env 파일을 로드)
+load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 # 환경변수에서 설정 가져오기
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'  # 기본값은 보안을 위해 False로 설정
