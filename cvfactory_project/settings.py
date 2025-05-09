@@ -140,12 +140,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [
-    BASE_DIR / "main/static",
+    # BASE_DIR / "main/static", # 이 줄을 주석 처리하거나 삭제합니다.
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise 설정 (미들웨어 최상단에 추가 필요)
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
