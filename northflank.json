@@ -83,7 +83,7 @@
                       "DJANGO_DEBUG": "False",
                       "DJANGO_ALLOWED_HOSTS": "your_northflank_app_domain.northflank.app,your_custom_domain.com",
                       "API_KEY": "your_production_api_key",
-                      "DEPLOYMENT_SHA": "${env.NORTHFLANK_GIT_COMMIT_SHA}"
+                      "DEPLOYMENT_SHA": "${NORTHFLANK_GIT_COMMIT_SHA}"
                     },
                     "buildArguments": {}
                   }
