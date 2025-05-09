@@ -156,3 +156,17 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CSRF_TRUSTED_ORIGINS = [os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:8000')] # 예: https://*.cvfactory.kr
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # Northflank가 리버스 프록시 뒤에 있다면
 # SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False') == 'True' # 프로덕션에서 True 권장
+
+# Django가 프록시(예: Northflank) 뒤에서 실행될 때, 
+# X-Forwarded-Proto 헤더를 신뢰하여 요청이 HTTPS인지 HTTP인지 결정합니다.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF 보호를 위해 신뢰할 수 있는 출처를 설정합니다.
+# DJANGO_CSRF_TRUSTED_ORIGINS 환경 변수에서 쉼표로 구분된 문자열을 읽어 리스트로 만듭니다.
+# 예: DJANGO_CSRF_TRUSTED_ORIGINS="https://cvfactory.dev,https://www.cvfactory.dev"
+csrf_trusted_origins_str = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://localhost') # 기본값은 실제 서비스에 맞게 조정 필요
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_origins_str.split(',') if origin.strip()]
+
+# HTTPS로 자동 리디렉션 (프로덕션 환경에서 권장)
+# True 또는 False 문자열을 bool 값으로 변환합니다.
+SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False') == 'True'
