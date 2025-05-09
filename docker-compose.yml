@@ -3,20 +3,18 @@ version: '3.8'
 services:
   web:
     build: .
-    command: >
-      sh -c "python manage.py makemigrations ; 
-             python manage.py migrate ; 
-             python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py collectstatic --noinput ; python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$${PORT:-8000}"
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     environment:
       - SECRET_KEY=your_secret_key_for_development # 실제 값으로 변경하세요.
-      - DEBUG=True
+      - DEBUG=True # 프로덕션 테스트이므로 False
       - API_KEY=your_dev_api_key # 실제 값으로 변경하세요.
-      - DEPLOYMENT_SHA=localdev
+      - DEPLOYMENT_SHA=local_prod_compose_test
       - DATABASE_URL=postgres://cvfactory_user:cvfactory_password@db:5432/cvfactory_db
+      - PORT=8000 # Gunicorn이 사용할 포트
     depends_on:
       - db
 
@@ -30,7 +28,7 @@ services:
       - POSTGRES_PASSWORD=cvfactory_password # 실제 프로덕션에서는 더 강력한 암호를 사용하세요.
       - POSTGRES_DB=cvfactory_db
     ports:
-      - "5432:5432" # 로컬에서 직접 DB 접근이 필요한 경우 (선택적)
+      - "5432:5432" # 호스트에서 직접 접근이 필요하면 주석 해제
 
 volumes:
   postgres_data: 
