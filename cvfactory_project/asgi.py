@@ -11,6 +11,5 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cvfactory_project.settings")
-
+os.environ['DJANGO_SETTINGS_MODULE'] = 'cvfactory_project.settings'
 application = get_asgi_application()
