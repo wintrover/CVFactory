@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse # HttpResponse 추가
 from django.views.decorators.csrf import csrf_exempt # CSRF 테스트용 (실제로는 CSRF 처리 필요)
 from django.conf import settings
 import json
@@ -10,16 +10,18 @@ import os # os 모듈 임포트 추가
 logger = logging.getLogger(__name__)
 
 def index(request):
-    # 환경 변수에서 API_KEY와 DEPLOYMENT_SHA를 가져옵니다.
-    # 값이 없으면 기본값을 사용합니다 (개발 환경에서는 유용할 수 있음).
-    api_key = os.environ.get('API_KEY', 'YOUR_DEFAULT_API_KEY') 
-    deployment_sha = os.environ.get('DEPLOYMENT_SHA', 'localdev') # 캐시 버스팅에 사용될 수 있음
-    
-    context = {
-        'api_key': api_key,
-        'DEPLOYMENT_SHA': deployment_sha
-    }
-    return render(request, 'main/index.html', context)
+    try:
+        context = {
+            'api_key': settings.API_KEY,
+            'deployment_sha': settings.DEPLOYMENT_SHA
+        }
+        return render(request, 'main/index.html', context)
+    except Exception as e:
+        logger.error(f"Error rendering index page: {e}", exc_info=True)
+        # 사용자에게 보여줄 적절한 오류 페이지나 메시지를 반환할 수 있습니다.
+        # 여기서는 간단히 500 오류를 발생시키거나, 기본 오류 템플릿을 렌더링할 수 있습니다.
+        # raise # 또는 HttpResponseServerError("An error occurred.")
+        return render(request, 'main/500.html', {"error_message": str(e)}, status=500)
 
 @csrf_exempt # 실제 배포시에는 CSRF 보호를 올바르게 설정해야 합니다.
 def frontend_debug_log(request):
@@ -27,12 +29,27 @@ def frontend_debug_log(request):
         try:
             data = json.loads(request.body)
             message = data.get('message', '')
-            logger.info(f'[Frontend Log]: {message}') # print 대신 logger 사용
+            level = data.get('level', 'INFO').upper()
+
+            log_message = f"[FRONTEND-{level}] {message}"
+
+            if level == 'ERROR':
+                logger.error(log_message)
+            elif level == 'WARNING':
+                logger.warning(log_message)
+            elif level == 'DEBUG':
+                logger.debug(log_message)
+            else:
+                logger.info(log_message)
+            
             return JsonResponse({'status': 'success', 'message': 'Log received'})
         except json.JSONDecodeError as e:
-            logger.error(f'[Frontend Log Error] Invalid JSON: {e}')
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+            logger.error(f"Failed to decode JSON from frontend log: {e}", exc_info=True)
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
         except Exception as e:
-            logger.error(f'[Frontend Log Error] Exception: {e}')
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=405)
+            logger.error(f"Error processing frontend log: {e}", exc_info=True)
+            return JsonResponse({'status': 'error', 'message': 'Internal server error'}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+def health_check(request):
+    return HttpResponse("OK", status=200)
