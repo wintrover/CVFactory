@@ -27,11 +27,15 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback_secret_key_for_develo
 # SECURITY WARNING: don't run with debug turned on in production!
 # 환경 변수가 'True' 문자열일 경우 True로, 그 외에는 False로 설정합니다.
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+print(f"DEBUG_SETTINGS: DJANGO_DEBUG from env: '{os.environ.get('DJANGO_DEBUG')}'")
+print(f"DEBUG_SETTINGS: Actual DEBUG value: {DEBUG}")
 
 # ALLOWED_HOSTS는 쉼표로 구분된 문자열로 환경 변수에서 가져와 리스트로 변환합니다.
 # 예: DJANGO_ALLOWED_HOSTS="cvfactory.kr,www.cvfactory.kr,localhost"
 allowed_hosts_str = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+print(f"DEBUG_SETTINGS: DJANGO_ALLOWED_HOSTS from env: '{os.environ.get('DJANGO_ALLOWED_HOSTS')}'")
+print(f"DEBUG_SETTINGS: Parsed ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 
 # Application definition
@@ -169,6 +173,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # 예: DJANGO_CSRF_TRUSTED_ORIGINS="https://cvfactory.dev,https://www.cvfactory.dev"
 csrf_trusted_origins_str = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://localhost') # 기본값은 실제 서비스에 맞게 조정 필요
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_origins_str.split(',') if origin.strip()]
+print(f"DEBUG_SETTINGS: DJANGO_CSRF_TRUSTED_ORIGINS from env: '{os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS')}'")
+print(f"DEBUG_SETTINGS: Parsed CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 
 # HTTPS로 자동 리디렉션 (프로덕션 환경에서 권장)
 # True 또는 False 문자열을 bool 값으로 변환합니다.
