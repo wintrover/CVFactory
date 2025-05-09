@@ -435,21 +435,21 @@ function showLoadingOverlay() {
   sendFrontendLog('Lottie mount 시도: ' + animationPath);
   if (lottieInstance) {
     try {
-      lottieInstance.destroy();
-      sendFrontendLog('기존 Lottie 인스턴스 destroy');
+    lottieInstance.destroy();
+    sendFrontendLog('기존 Lottie 인스턴스 destroy');
     } catch (e) {
       sendFrontendLog('기존 Lottie 인스턴스 destroy 실패: ' + e);
     }
   }
   try {
-    lottieInstance = lottie.loadAnimation({
+  lottieInstance = lottie.loadAnimation({
       container: lottieContainer,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
       path: animationPath
-    });
-    sendFrontendLog('Lottie mount 완료');
+  });
+  sendFrontendLog('Lottie mount 완료');
   } catch (e) {
     sendFrontendLog('Lottie mount 실패: ' + e);
     console.error('Error loading Lottie animation:', e);
@@ -466,9 +466,9 @@ function hideLoadingOverlay() {
   overlay.style.display = 'none';
   if (lottieInstance) {
     try {
-      lottieInstance.destroy();
-      lottieInstance = null;
-      sendFrontendLog('Lottie 인스턴스 destroy 및 null 처리');
+    lottieInstance.destroy();
+    lottieInstance = null;
+    sendFrontendLog('Lottie 인스턴스 destroy 및 null 처리');
     } catch (e) {
       sendFrontendLog('Lottie 인스턴스 destroy 실패 (hideLoadingOverlay): ' + e);
     }
