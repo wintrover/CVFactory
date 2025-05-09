@@ -51,7 +51,7 @@
                     },
                     "buildSettings": {
                       "dockerfile": {
-                        "dockerFilePath": "/Dockerfile",
+                        "dockerFilePath": "Dockerfile",
                         "dockerWorkDir": "/"
                       }
                     },
