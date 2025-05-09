@@ -152,6 +152,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Django가 프록시 뒤에서 실행될 때 X-Forwarded-Host 헤더를 신뢰할지 여부
+USE_X_FORWARDED_HOST = True
+
 # Northflank 배포시 필요한 추가 설정 (선택적)
 # CSRF_TRUSTED_ORIGINS = [os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:8000')] # 예: https://*.cvfactory.kr
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # Northflank가 리버스 프록시 뒤에 있다면
