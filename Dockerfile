@@ -36,4 +36,4 @@ COPY . .
 # EXPOSE 8000
 
 # 애플리케이션 실행 (ASGI 사용)
-CMD ["sh", "-c", "cd /app ; python manage.py collectstatic --noinput ; export DJANGO_SETTINGS_MODULE=cvfactory_project.settings ; export DATABASE_URL=${DATABASE_URL} ; python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}"] 
+CMD ["sh", "-c", "cd /app ; python manage.py collectstatic --noinput ; export DJANGO_SETTINGS_MODULE=cvfactory_project.settings ; python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}"] 

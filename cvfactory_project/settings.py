@@ -84,11 +84,24 @@ WSGI_APPLICATION = "cvfactory_project.wsgi.application"
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+        # 환경 변수 'DATABASE_URL'을 직접 사용하도록 명시합니다.
+        # default 인자는 DATABASE_URL 환경 변수가 없을 때만 사용됩니다.
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
+        # Northflank에서 PostgreSQL을 사용할 때 SSL 연결이 필요할 수 있습니다.
+        # ssl_require=os.environ.get('DJANGO_DB_SSL_REQUIRE', 'False') == 'True' # 필요시 이 라인 활성화
     )
 }
+
+# DATABASE_URL 환경 변수가 비어 있는지 확인하는 로깅 추가 (디버깅용)
+if not os.environ.get('DATABASE_URL'):
+    print("WARNING: DATABASE_URL environment variable is not set. Using default SQLite.")
+else:
+    # 실제 운영 환경에서는 전체 URL을 로그에 남기지 않는 것이 보안상 좋습니다.
+    # 여기서는 Northflank 환경 변수 주입 확인을 위해 임시로 출력합니다.
+    # 실제 배포 시에는 이 print 문을 제거하거나, URL의 일부만 로깅하도록 수정하세요.
+    print(f"INFO: Attempting to use DATABASE_URL from environment.")
 
 
 # Password validation
