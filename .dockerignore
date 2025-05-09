@@ -1,0 +1,13 @@
+.git
+.gitignore
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.env
+staticfiles/
+db.sqlite3 # SQLite를 사용하고 있다면, 이미지에 포함하지 않는 것이 일반적입니다.
+*.log 

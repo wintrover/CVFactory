@@ -13,14 +13,14 @@
 <meta name="author" content="CVFactory">
 <meta property="og:title" content="{% trans 'CVFactory - Personalized AI Cover Letter Auto-Generation Service' %}">
 <meta property="og:description" content="{% trans 'AI generates a tailored cover letter optimized for your job posting in just a few minutes. The smart choice to boost your employment success!' %}">
-<meta property="og:image" content="{% static 'favicon-32x32.png' %}">
+<meta property="og:image" content="{% static 'main/images/favicon/favicon-32x32.png' %}">
 <meta property="og:url" content="https://cvfactory.kr">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CVFactory">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{% trans 'CVFactory - Personalized AI Cover Letter Auto-Generation Service' %}">
 <meta name="twitter:description" content="{% trans 'AI generates a tailored cover letter optimized for your job posting in just a few minutes.' %}">
-<meta name="twitter:image" content="{% static 'twitter-card.png' %}">
+<meta name="twitter:image" content="{% static 'main/images/twitter-card.png' %}">
 <meta name="naver-site-verification" content="5c33cb08474ec4a3a63245f8cf9e38ffd476b472" />
 
 <!-- 모바일 최적화 메타 태그 -->
@@ -47,8 +47,8 @@
 
 <!-- 웹폰트 렌더링 최적화 -->
 <!-- 임시로 주석 처리 (폰트 문제 해결 중)
-<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/NotoSansKR-Regular.woff2' %}" crossorigin>
-<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/NotoSansKR-Bold.woff2' %}" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="{% static 'main/fonts/NotoSansKR-Regular.woff2' %}" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="{% static 'main/fonts/NotoSansKR-Bold.woff2' %}" crossorigin>
 -->
 
 <!-- 폰트 표시 최적화 -->
@@ -68,13 +68,13 @@
 <meta property="al:web:url" content="https://cvfactory.kr/">
 
 <!-- 파비콘 설정 -->
-<link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
-<link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
-<link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
-<link rel="manifest" href="{% static 'site.webmanifest' %}">
-<link rel="preload" as="image" href="{% static 'apple-touch-icon.png' %}" type="image/png">
-<link rel="icon" type="image/png" sizes="192x192"  href="{% static 'android-chrome-192x192.png' %}">
-<link rel="preload" as="image" href="{% static 'android-chrome-192x192.png' %}" type="image/png">
+<link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/images/favicon/apple-touch-icon.png' %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{% static 'main/images/favicon/favicon-32x32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{% static 'main/images/favicon/favicon-16x16.png' %}">
+<link rel="manifest" href="{% static 'main/images/favicon/site.webmanifest' %}">
+<link rel="preload" as="image" href="{% static 'main/images/favicon/apple-touch-icon.png' %}" type="image/png">
+<link rel="icon" type="image/png" sizes="192x192"  href="{% static 'main/images/favicon/android-chrome-192x192.png' %}">
+<link rel="preload" as="image" href="{% static 'main/images/favicon/android-chrome-192x192.png' %}" type="image/png">
 
 <!-- Critical CSS를 인라인으로 포함 -->
 <style>
@@ -170,8 +170,8 @@ main .page-title {
 </style>
 
 <!-- 메인 스타일시트 지연 로딩 -->
-<link rel="preload" href="{% static 'style.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="{% static 'style.css' %}"></noscript>
+<link rel="preload" href="{% static 'main/css/style.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{% static 'main/css/style.css' %}"></noscript>
 
 <script>
     window.API_KEY = '{{ api_key }}';  // Django 템플릿 변수로 API 키 전달
@@ -179,8 +179,8 @@ main .page-title {
 <!-- Lottie 스크립트 최적화 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js" defer></script>
 <!-- 스크립트 프리로드 최적화 -->
-<link rel="preload" href="{% static 'script.js' %}?v={{ DEPLOYMENT_SHA }}" as="script">
-<script src="{% static 'script.js' %}?v={{ DEPLOYMENT_SHA }}" defer></script>
+<link rel="preload" href="{% static 'main/js/script.js' %}?v={{ DEPLOYMENT_SHA }}" as="script">
+<script src="{% static 'main/js/script.js' %}?v={{ DEPLOYMENT_SHA }}" defer></script>
 
 <!-- 구조화된 데이터(JSON-LD) -->
 <script type="application/ld+json">
@@ -201,7 +201,7 @@ main .page-title {
     "@type": "Organization",
     "name": "CVFactory",
     "url": "https://cvfactory.kr",
-    "logo": "https://cvfactory.kr{% static 'favicon-32x32.png' %}"
+    "logo": "https://cvfactory.kr{% static 'main/images/favicon/favicon-32x32.png' %}"
   },
   "inLanguage": "ko-KR",
   "audience": {
@@ -223,7 +223,7 @@ main .page-title {
   "@type": "Organization",
   "name": "CVFactory",
   "url": "https://cvfactory.kr",
-  "logo": "https://cvfactory.kr{% static 'favicon-32x32.png' %}",
+  "logo": "https://cvfactory.kr{% static 'main/images/favicon/favicon-32x32.png' %}",
   "address": {
     "@type": "PostalAddress",
     "addressCountry": "KR",
@@ -357,7 +357,7 @@ main .page-title {
   <!-- 전체 화면 블러 & 로딩 애니메이션 -->
   <div id="loading-overlay" style="display: none;">
     <div id="lottie-container" 
-        data-animation="{% static 'lottie/factory-loading.json' %}"
+        data-animation="{% static 'main/lottie/factory-loading.json' %}"
         style="width: 200px; height: 200px;"
         aria-label="자기소개서 생성 중 로딩 애니메이션">
     </div>
@@ -405,9 +405,9 @@ main .page-title {
 function sendFrontendLog(message) {
   fetch('/frontend_debug_log/', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
     body: JSON.stringify({message})
-  });
+  }).catch(error => console.error('Error sending frontend log:', error));
 }
 
 let lottieInstance = null;
@@ -415,31 +415,63 @@ let lottieInstance = null;
 function showLoadingOverlay() {
   sendFrontendLog('showLoadingOverlay 호출됨');
   const overlay = document.getElementById('loading-overlay');
-  overlay.style.display = 'flex';
-  // Lottie mount
-  sendFrontendLog('Lottie mount 시도');
-  if (lottieInstance) {
-    lottieInstance.destroy();
-    sendFrontendLog('기존 Lottie 인스턴스 destroy');
+  if (!overlay) {
+    console.error('loading-overlay element not found');
+    return;
   }
-  lottieInstance = lottie.loadAnimation({
-    container: document.getElementById('lottie-container'),
-    renderer: 'svg',
-    loop: true,
-    autoplay: true,
-    path: document.getElementById('lottie-container').dataset.animation
-  });
-  sendFrontendLog('Lottie mount 완료');
+  overlay.style.display = 'flex';
+  
+  const lottieContainer = document.getElementById('lottie-container');
+  if (!lottieContainer) {
+    console.error('lottie-container element not found');
+    return;
+  }
+  const animationPath = lottieContainer.dataset.animation;
+  if (!animationPath) {
+    console.error('Lottie animation path not found in dataset');
+    return;
+  }
+
+  sendFrontendLog('Lottie mount 시도: ' + animationPath);
+  if (lottieInstance) {
+    try {
+      lottieInstance.destroy();
+      sendFrontendLog('기존 Lottie 인스턴스 destroy');
+    } catch (e) {
+      sendFrontendLog('기존 Lottie 인스턴스 destroy 실패: ' + e);
+    }
+  }
+  try {
+    lottieInstance = lottie.loadAnimation({
+      container: lottieContainer,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: animationPath
+    });
+    sendFrontendLog('Lottie mount 완료');
+  } catch (e) {
+    sendFrontendLog('Lottie mount 실패: ' + e);
+    console.error('Error loading Lottie animation:', e);
+  }
 }
 
 function hideLoadingOverlay() {
   sendFrontendLog('hideLoadingOverlay 호출됨');
   const overlay = document.getElementById('loading-overlay');
+  if (!overlay) {
+    console.error('loading-overlay element not found during hide');
+    return;
+  }
   overlay.style.display = 'none';
   if (lottieInstance) {
-    lottieInstance.destroy();
-    lottieInstance = null;
-    sendFrontendLog('Lottie 인스턴스 destroy 및 null 처리');
+    try {
+      lottieInstance.destroy();
+      lottieInstance = null;
+      sendFrontendLog('Lottie 인스턴스 destroy 및 null 처리');
+    } catch (e) {
+      sendFrontendLog('Lottie 인스턴스 destroy 실패 (hideLoadingOverlay): ' + e);
+    }
   }
 }
 
@@ -453,6 +485,22 @@ function generateResume() {
     sendFrontendLog('자기소개서 생성 완료, hideLoadingOverlay 호출');
     hideLoadingOverlay();
   }, 2000);
+}
+
+// CSRF 토큰을 쿠키에서 가져오는 함수 (Django 기본 방식)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 </script>
 
