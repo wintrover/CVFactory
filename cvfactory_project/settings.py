@@ -21,20 +21,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# API Key and Deployment SHA for views.py
+API_KEY = os.environ.get('API_KEY', 'your_default_api_key_if_not_set') # Northflank의 'API_KEY' 환경 변수 사용
+DEPLOYMENT_SHA = os.environ.get('NF_DEPLOYMENT_SHA', 'local_dev_sha') # Northflank의 'NF_DEPLOYMENT_SHA' 사용 (NF_는 Northflank 관리 변수)
+print(f"DEBUG_SETTINGS: API_KEY from env: '{os.environ.get('API_KEY')}'")
+print(f"DEBUG_SETTINGS: Actual API_KEY: {API_KEY}")
+print(f"DEBUG_SETTINGS: NF_DEPLOYMENT_SHA from env: '{os.environ.get('NF_DEPLOYMENT_SHA')}'")
+print(f"DEBUG_SETTINGS: Actual DEPLOYMENT_SHA: {DEPLOYMENT_SHA}")
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback_secret_key_for_development_if_not_set')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback_secret_key_for_development_if_not_set') # SECRET_KEY 환경 변수 사용
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # 환경 변수가 'True' 문자열일 경우 True로, 그 외에는 False로 설정합니다.
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-print(f"DEBUG_SETTINGS: DEBUG from env: '{os.environ.get('DEBUG')}'")
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+print(f"DEBUG_SETTINGS: DJANGO_DEBUG from env: '{os.environ.get('DJANGO_DEBUG')}'")
 print(f"DEBUG_SETTINGS: Actual DEBUG value: {DEBUG}")
 
 # ALLOWED_HOSTS는 쉼표로 구분된 문자열로 환경 변수에서 가져와 리스트로 변환합니다.
 # 예: DJANGO_ALLOWED_HOSTS="cvfactory.kr,www.cvfactory.kr,localhost"
-allowed_hosts_str = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+allowed_hosts_str = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
-print(f"DEBUG_SETTINGS: ALLOWED_HOSTS from env: '{os.environ.get('ALLOWED_HOSTS')}'")
+print(f"DEBUG_SETTINGS: DJANGO_ALLOWED_HOSTS from env: '{os.environ.get('DJANGO_ALLOWED_HOSTS')}'")
 print(f"DEBUG_SETTINGS: Parsed ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 
@@ -171,9 +179,9 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # CSRF 보호를 위해 신뢰할 수 있는 출처를 설정합니다.
 # DJANGO_CSRF_TRUSTED_ORIGINS 환경 변수에서 쉼표로 구분된 문자열을 읽어 리스트로 만듭니다.
 # 예: DJANGO_CSRF_TRUSTED_ORIGINS="https://cvfactory.dev,https://www.cvfactory.dev"
-csrf_trusted_origins_str = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://localhost')
+csrf_trusted_origins_str = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://localhost') # 기본값은 실제 서비스에 맞게 조정 필요
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_origins_str.split(',') if origin.strip()]
-print(f"DEBUG_SETTINGS: CSRF_TRUSTED_ORIGINS from env: '{os.environ.get('CSRF_TRUSTED_ORIGINS')}'")
+print(f"DEBUG_SETTINGS: DJANGO_CSRF_TRUSTED_ORIGINS from env: '{os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS')}'")
 print(f"DEBUG_SETTINGS: Parsed CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 
 # HTTPS로 자동 리디렉션 (프로덕션 환경에서 권장)
