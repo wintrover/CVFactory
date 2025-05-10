@@ -18,7 +18,8 @@ services:
       # PORT는 Gunicorn 실행 시 사용되므로 .env 또는 여기서 설정
       # DEPLOYMENT_SHA도 .env 또는 여기서 설정
     depends_on:
-      - db
+      db:
+        condition: service_healthy # db 서비스가 healthy 상태가 될 때까지 대기
 
   db:
     image: postgres:13-alpine # PostgreSQL 버전은 필요에 따라 조정
@@ -27,6 +28,11 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - .env # db 서비스도 .env 파일의 POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB 등을 사용
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432" # 호스트에서 직접 접근이 필요하면 주석 해제
 
