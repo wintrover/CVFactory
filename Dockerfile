@@ -9,6 +9,7 @@ WORKDIR /app
 
 # PYTHONPATH 환경 변수 설정
 ENV PYTHONPATH /app
+ENV DJANGO_SETTINGS_MODULE=cvfactory_project.settings
 
 # 환경 변수 설정 (Gunicorn 및 Uvicorn 설정)
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -29,11 +30,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 프로젝트 파일 전체 복사
 COPY . .
 
-# 정적 파일 수집 (개발 중에는 필요 없을 수 있지만, 프로덕션 빌드에는 포함)
-# RUN python manage.py collectstatic --noinput
+# 정적 파일 수집
+RUN python manage.py collectstatic --noinput
 
 # 포트 노출 (Northflank가 자동으로 처리할 수 있음)
 # EXPOSE 8000
 
 # 애플리케이션 실행 (ASGI 사용)
-CMD ["sh", "-c", "cd /app ; python manage.py collectstatic --noinput ; export DJANGO_SETTINGS_MODULE=cvfactory_project.settings ; python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}"] 
+CMD ["sh", "-c", "cd /app ; python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}"] 

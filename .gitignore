@@ -1,0 +1,25 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff
+staticfiles/
+media/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS specific
+.DS_Store
+Thumbs.db 

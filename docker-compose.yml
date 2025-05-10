@@ -3,18 +3,20 @@ version: '3.8'
 services:
   web:
     build: .
-    command: sh -c "python manage.py collectstatic --noinput ; python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$${PORT:-8000}"
+    command: sh -c "python manage.py makemigrations ; python manage.py migrate ; gunicorn cvfactory_project.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$${PORT:-8000}"
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    env_file:
+      - .env # .env 파일 사용 명시
     environment:
-      - SECRET_KEY=your_secret_key_for_development # 실제 값으로 변경하세요.
-      - DEBUG=True # 프로덕션 테스트이므로 False
-      - API_KEY=your_dev_api_key # 실제 값으로 변경하세요.
-      - DEPLOYMENT_SHA=local_prod_compose_test
-      - DATABASE_URL=postgres://cvfactory_user:cvfactory_password@db:5432/cvfactory_db
-      - PORT=8000 # Gunicorn이 사용할 포트
+      # .env 파일과 중복될 수 있는 변수들은 여기서 제거하거나, docker-compose에서 오버라이드할 변수만 남깁니다.
+      # 예를 들어, DEBUG, SECRET_KEY, API_KEY 등은 .env에서 관리
+      # DATABASE_URL은 서비스 간 연결을 위해 여기서 정의하거나 .env에 정의하고 여기서 참조할 수 있습니다.
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # PORT는 Gunicorn 실행 시 사용되므로 .env 또는 여기서 설정
+      # DEPLOYMENT_SHA도 .env 또는 여기서 설정
     depends_on:
       - db
 
@@ -23,10 +25,8 @@ services:
     container_name: cvfactory_postgres_db
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=cvfactory_user
-      - POSTGRES_PASSWORD=cvfactory_password # 실제 프로덕션에서는 더 강력한 암호를 사용하세요.
-      - POSTGRES_DB=cvfactory_db
+    env_file:
+      - .env # db 서비스도 .env 파일의 POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB 등을 사용
     ports:
       - "5432:5432" # 호스트에서 직접 접근이 필요하면 주석 해제
 
