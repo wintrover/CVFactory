@@ -187,3 +187,6 @@ print(f"DEBUG_SETTINGS: Parsed CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 # HTTPS로 자동 리디렉션 (프로덕션 환경에서 권장)
 # True 또는 False 문자열을 bool 값으로 변환합니다.
 SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False') == 'True'
+
+# URL 끝에 자동으로 슬래시를 추가할지 여부 (헬스 체크 문제 해결 시도)
+APPEND_SLASH = False
