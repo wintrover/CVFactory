@@ -191,4 +191,4 @@ print(f"DEBUG_SETTINGS: DJANGO_SECURE_SSL_REDIRECT from env: '{os.environ.get('D
 print(f"DEBUG_SETTINGS: Actual SECURE_SSL_REDIRECT value: {SECURE_SSL_REDIRECT}")
 
 # URL 끝에 자동으로 슬래시를 추가할지 여부 (헬스 체크 문제 해결 시도)
-APPEND_SLASH = False
+APPEND_SLASH = True
