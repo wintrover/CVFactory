@@ -11,8 +11,7 @@ COPY . /app
 
 # Install uv globally in the container
 RUN apt-get update && apt-get install -y curl && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    which uv
+    curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Add uv to the PATH
 ENV PATH="/root/.local/bin:$PATH"
