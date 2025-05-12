@@ -11,6 +11,9 @@ COPY . /app
 # Make sure requirements.txt exists in your project root
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set environment variables
+ENV DJANGO_SETTINGS_MODULE=config.settings
+
 # Expose the port the app runs on
 EXPOSE 8000
 
