@@ -35,7 +35,7 @@ CVFactory는 사용자가 채용 공고와 자신의 스토리를 입력하여 �
 
 ### 필수 요구사항
 - Python 3.8+
-- pip (Python 패키지 설치 도구)
+- uv (Python 패키지 설치 및 관리 도구)
 - Git
 - Docker (선택 사항, Northflank 배포 시 필요)
 - Conda (가상 환경 관리를 위해 권장)
@@ -54,18 +54,26 @@ CVFactory는 사용자가 채용 공고와 자신의 스토리를 입력하여 �
    conda activate cvfactory
    ```
 
-3. **종속성 설치:**
+3. **uv 설치 (설치되어 있지 않다면):**
    ```bash
-   pip install -r requirements.txt  # requirements.txt 파일이 있다면 실행
-   # 또는 필요한 라이브러리를 개별 설치 (예: pip install django)
+   # uv 설치 방법은 공식 문서를 참고하십시오:
+   # https://github.com/astral-sh/uv#installation
+   # pipx를 사용한 예시:
+   # pipx install uv
    ```
 
-4. **데이터베이스 마이그레이션 (Django 사용 시):**
+4. **uv를 사용하여 종속성 설치:**
+   ```bash
+   uv pip install -r requirements.txt  # requirements.txt 파일이 있다면 실행
+   # 또는 필요한 라이브러리를 개별 설치 (예: uv pip install django)
+   ```
+
+5. **데이터베이스 마이그레이션 (Django 사용 시):**
    ```bash
    python manage.py migrate
    ```
 
-5. **개발 서버 실행:**
+6. **개발 서버 실행:**
    ```bash
    python manage.py runserver
    ```

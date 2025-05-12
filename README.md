@@ -35,7 +35,7 @@ This v1.1 release includes several changes to improve application stability and 
 
 ### Prerequisites
 - Python 3.8+
-- pip (Python package installer)
+- uv (Python package installer and manager)
 - Git
 - Docker (Optional, required for Northflank deployment)
 - Conda (Recommended for virtual environment management)
@@ -54,18 +54,26 @@ This v1.1 release includes several changes to improve application stability and 
    conda activate cvfactory
    ```
 
-3. **Install dependencies:**
+3. **Install uv (if not already installed):**
    ```bash
-   pip install -r requirements.txt  # Run if requirements.txt exists
-   # Or install necessary libraries individually (e.g., pip install django)
+   # Refer to the official uv documentation for installation methods:
+   # https://github.com/astral-sh/uv#installation
+   # Example using pipx:
+   # pipx install uv
    ```
 
-4. **Migrate database (if using Django):**
+4. **Install dependencies using uv:**
+   ```bash
+   uv pip install -r requirements.txt  # Run if requirements.txt exists
+   # Or install necessary libraries individually (e.g., uv pip install django)
+   ```
+
+5. **Migrate database (if using Django):**
    ```bash
    python manage.py migrate
    ```
 
-5. **Run the development server:**
+6. **Run the development server:**
    ```bash
    python manage.py runserver
    ```
