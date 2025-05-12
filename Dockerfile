@@ -9,9 +9,16 @@ ENV DJANGO_SETTINGS_MODULE=config.settings
 # Add the current directory contents into the container at /app
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
+# Install uv globally in the container
+RUN apt-get update && apt-get install -y curl && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Add uv to the PATH
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Install any needed packages specified in requirements.txt using uv
 # Make sure requirements.txt exists in your project root
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache-dir -r requirements.txt
 RUN mkdir -p /app/staticfiles
 
 # Remove diagnostic print statements (no longer needed)
