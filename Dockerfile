@@ -18,7 +18,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 # Install any needed packages specified in requirements.txt using uv
 # Make sure requirements.txt exists in your project root
-RUN uv pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache-dir --system -r requirements.txt
 RUN mkdir -p /app/staticfiles
 
 # Remove diagnostic print statements (no longer needed)
