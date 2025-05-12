@@ -22,6 +22,7 @@ from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('health/', views.health_check, name='health_check'), # Add health check URL pattern
     path('' , views.index, name='index'), # 루트 URL('')에 core.views.index 뷰를 연결합니다.
 ]
 
