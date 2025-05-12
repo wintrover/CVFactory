@@ -24,6 +24,13 @@ CVFactory is an AI-powered web application that helps users easily generate cust
 | AI/ML | Groq API |
 | Deployment | Northflank, Docker |
 
+## 🎉 v1.1 Release Notes
+
+This v1.1 release includes several changes to improve application stability and the deployment process. Key updates are as follows:
+
+- **PostgreSQL Database Issue Resolution:** Analyzed logs related to shared memory conflicts and Patroni shutdowns to diagnose and address database startup issues.
+- **Cloudflare Caching Consistency Improvement:** To resolve issues where static file changes (like CSS) were not immediately reflected after deployment, we implemented a cache purging script using the Cloudflare API and integrated it into the deployment process. Enhanced logging was also added to the script to track the success/failure of cache purging operations.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
