@@ -95,7 +95,8 @@ CVFactory/
 (실제 프로젝트 구조에 맞게 업데이트 필요)
 
 ## 📄 라이선스
-MIT License
+CC BY-NC 4.0 License
+(자세한 내용은 [LICENSE](LICENSE) 파일을 참고하십시오.)
 
 ## 📬 문의
 wintrover@gmail.com 
