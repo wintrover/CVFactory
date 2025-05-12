@@ -95,7 +95,8 @@ CVFactory/
 (Update according to your actual project structure)
 
 ## 📄 License
-MIT License
+CC BY-NC 4.0 License
+(See the [LICENSE](LICENSE) file for the full text.)
 
 ## 📬 Contact
 wintrover@gmail.com 
