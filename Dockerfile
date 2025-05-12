@@ -10,8 +10,7 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 # Make sure requirements.txt exists in your project root
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Collect static files automatically during build
+RUN mkdir -p /app/staticfiles
 RUN python manage.py collectstatic --noinput
 
 # Expose the port the app runs on
