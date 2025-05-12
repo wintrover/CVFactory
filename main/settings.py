@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'cvfactory.dev']
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
@@ -16,7 +16,7 @@ STATICFILES_DIRS = [
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-placeholder-for-local-development'
 
-DEBUG = True # Add this line for development debugging
+DEBUG = False # Set DEBUG to False for production
 
 # ... existing code ... 
 
