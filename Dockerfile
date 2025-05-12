@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y curl && \
     which uv
 
 # Add uv to the PATH
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 # Install any needed packages specified in requirements.txt using uv
 # Make sure requirements.txt exists in your project root
