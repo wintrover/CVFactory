@@ -7,3 +7,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_ROOT = '/app/staticfiles/'
 
 # ... existing code ... 
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles', # Static files app
+    # Add your other apps here
+]
+
+# Quick-start development settings - unsuitable for production
+# ... existing code ... 
