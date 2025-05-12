@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'cvfactory.dev']
+# Read ALLOWED_HOSTS from environment variable, default to local hosts
+# Environment variable should be a comma-separated string, e.g., "cvfactory.dev,another.host"
+allowed_hosts_str = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
@@ -14,9 +17,13 @@ STATICFILES_DIRS = [
 ] # Add BASE_DIR to find static files in the project root
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = 'django-insecure-placeholder-for-local-development'
+# Read SECRET_KEY from environment variable, use placeholder only if not set (unsafe for production)
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-placeholder-for-local-development')
 
-DEBUG = False # Set DEBUG to False for production
+# Read DEBUG from environment variable, default to True for local development
+# Set DJANGO_DEBUG=False in production environment
+DEBUG_STR = os.getenv('DJANGO_DEBUG', 'True')
+DEBUG = DEBUG_STR.lower() in ('true', '1', 't')
 
 # ... existing code ... 
 
