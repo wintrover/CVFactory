@@ -11,6 +11,9 @@ COPY . /app
 # Make sure requirements.txt exists in your project root
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Collect static files automatically during build
+RUN python manage.py collectstatic --noinput
+
 # Expose the port the app runs on
 EXPOSE 8000
 
