@@ -136,7 +136,7 @@ textarea {
   resize: none;
   overflow-y: auto;
   box-sizing: border-box;
-  background-color: white;
+  background-color: darkblue;
 }
 
 /* 액션 버튼 영역 */
