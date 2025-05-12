@@ -1,1 +1,0 @@
-# Django management 커스텀 명령어 
