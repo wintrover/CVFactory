@@ -8,13 +8,12 @@
 </div>
 
 ## 📖 개요
-CVFactory는 사용자가 채용 공고와 자신의 스토리를 입력하여 맞춤형 자기소개서를 쉽게 생성할 수 있도록 돕는 AI 기반 웹 애플리케이션입니다.
+CVFactory는 채용 공고 URL, 회사 URL 및 사용자가 제공하는 스토리를 기반으로 개인 맞춤형 자기소개서를 생성하는 Django 웹 애플리케이션입니다.
 
 ## ✨ 주요 기능
-- 채용 공고 URL 및 회사 공식 URL 기반 정보 추출
-- 사용자 스토리 입력 및 분석
-- 입력 정보를 활용한 AI 기반 자기소개서 초안 생성
-- 생성된 자기소개서 확인 및 수정 기능
+- 채용 공고 URL 및 회사 URL 입력
+- 개인 스토리 및 상세 정보 제공
+- AI를 활용한 맞춤형 자기소개서 생성
 
 ## 🛠 기술 스택
 | Category | Technologies |
@@ -95,7 +94,8 @@ CVFactory/
 (실제 프로젝트 구조에 맞게 업데이트 필요)
 
 ## 📄 라이선스
-MIT License
+
+본 프로젝트는 Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) 라이선스 하에 제공됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하십시오.
 
 ## 📬 문의
 wintrover@gmail.com 

@@ -8,13 +8,12 @@
 </div>
 
 ## 📖 Overview
-CVFactory is an AI-powered web application that helps users easily generate customized cover letters based on job postings and their personal stories.
+CVFactory is a Django web application that generates personalized cover letters based on job posting URLs, company URLs, and user-provided stories.
 
 ## ✨ Key Features
-- Extract information based on job posting URL and official company URL
-- User story input and analysis
-- AI-based draft cover letter generation using input information
-- Function to view and edit generated cover letters
+- Input job posting URL and company URL
+- Provide personal stories and details
+- Generate personalized cover letters using AI
 
 ## 🛠 Tech Stack
 | Category | Technologies |
@@ -27,38 +26,45 @@ CVFactory is an AI-powered web application that helps users easily generate cust
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.8+
-- pip (Python package installer)
-- Git
-- Docker (Optional, required for Northflank deployment)
-- Conda (Recommended for virtual environment management)
+- Python 3.x (Conda recommended)
+- Docker
+- Docker Compose
 
-### Installation and Running
+### Setup Steps
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/wintrover/CVFactory.git
+   git clone <repository_url>
    cd CVFactory
    ```
+   (Replace `<repository_url>` with the actual repository URL.)
 
-2. **Set up and activate Conda environment:**
+2. **Conda environment setup:**
    ```bash
-   conda create -n cvfactory python=3.8
+   conda create -n cvfactory python=3.x
    conda activate cvfactory
    ```
+   (Replace Python 3.x with the specific version listed in `requirements.txt` or a suitable version like 3.9/3.10.)
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt  # Run if requirements.txt exists
-   # Or install necessary libraries individually (e.g., pip install django)
+   pip install -r requirements.txt
    ```
 
-4. **Migrate database (if using Django):**
+4. **Apply database migrations:**
    ```bash
    python manage.py migrate
    ```
 
 5. **Run the development server:**
+
+   * **Using Django's development server:**
+     ```bash
+     python manage.py runserver
+     ```
+   * **Using Docker Compose:**
+     Run the following command from the project root directory:
+     ```bash
    ```bash
    python manage.py runserver
    ```
@@ -95,7 +101,7 @@ CVFactory/
 (Update according to your actual project structure)
 
 ## 📄 License
-MIT License
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License. See the [LICENSE](LICENSE) file for details.
 
 ## 📬 Contact
 wintrover@gmail.com 
