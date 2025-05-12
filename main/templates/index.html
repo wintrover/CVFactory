@@ -58,7 +58,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
-<script src="{% static 'script.js' %}"></script>
+
 </head>
 <body>
 <header>
@@ -90,14 +90,11 @@
     </div>
     
     <!-- 오른쪽 열: 1개의 큰 프롬프트 -->
-    <div class="right-column">
-      <!-- 프롬프트 4 -->
-      <div class="chat-box large-prompt">
-        <div>
-          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
-          <div class="actions">
-            <button type="button" onclick="generateResume()" class="black-btn">생성하기</button>
-          </div>
+    <div class="chat-box large-prompt">
+      <div>
+        <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
+        <div class="actions">
+          <button type="button" onclick="generateResume()" class="black-btn">생성하기</button>
         </div>
       </div>
     </div>
