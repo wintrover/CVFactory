@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <title>CVFactory</title>
 <link rel="stylesheet" href="{% static 'style.css' %}">
@@ -13,14 +13,49 @@
 <meta property="og:title" content="CVFactory - AI 자기소개서 생성기">
 <meta property="og:description" content="CVFactory를 사용하여 채용 공고와 나만의 스토리를 바탕으로 맞춤형 자기소개서를 쉽게 생성하세요.">
 <meta property="og:type" content="website">
-<!-- <meta property="og:url" content="YOUR_WEBSITE_URL"> -->
-<!-- <meta property="og:image" content="YOUR_IMAGE_URL"> -->
+<meta property="og:url" content="https://cvfactory.dev">
+<meta property="og:image" content="{% static 'logo.png' %}">
 
 <!-- Twitter Card Tags -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="CVFactory - AI 자기소개서 생성기">
 <meta name="twitter:description" content="CVFactory를 사용하여 채용 공고와 나만의 스토리를 바탕으로 맞춤형 자기소개서를 쉽게 생성하세요.">
-<!-- <meta name="twitter:image" content="YOUR_IMAGE_URL"> -->
+<meta name="twitter:image" content="{% static 'logo.png' %}">
+
+<!-- Favicons -->
+<link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon_io/apple-touch-icon.png' %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon_io/favicon-32x32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon_io/favicon-16x16.png' %}">
+<link rel="manifest" href="{% static 'favicon_io/site.webmanifest' %}">
+<link rel="icon" href="{% static 'favicon_io/favicon.ico' %}">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "CVFactory",
+      "url": "https://cvfactory.dev",
+      "description": "CVFactory를 사용하여 채용 공고와 나만의 스토리를 바탕으로 맞춤형 자기소개서를 쉽게 생성하세요."
+    },
+    {
+      "@type": "WebApplication",
+      "name": "CVFactory - AI 자기소개서 생성기",
+      "url": "https://cvfactory.dev",
+      "description": "CVFactory를 사용하여 채용 공고와 나만의 스토리를 바탕으로 맞춤형 자기소개서를 쉽게 생성하세요.",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "KRW"
+      }
+    }
+  ]
+}
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
 <script src="{% static 'script.js' %}"></script>
