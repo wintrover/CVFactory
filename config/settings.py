@@ -21,12 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-_c7h7lydlndhcuz^hrt8ggk6x*fnlex35rxgxo%9g3gu+rk$&g"
+# Read SECRET_KEY from environment variable
+SECRET_KEY = os.environ.get("SECRET_KEY", "a-default-secret-key-for-development") # 개발용 기본값 설정, 실제 배포시에는 환경변수로 설정해야 함
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Read DEBUG from environment variable and convert to boolean
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = []
+# Read ALLOWED_HOSTS from environment variable and split by comma
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 
 
 # Application definition
