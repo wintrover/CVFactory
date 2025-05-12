@@ -1,5 +1,7 @@
-Django
+Django>=4.2,<5.0
 groq
 openai
 python-dotenv
-requests 
+requests
+dj-database-url
+django-cors-headers 

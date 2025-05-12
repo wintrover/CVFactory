@@ -1,10 +1,18 @@
 import os
 from pathlib import Path
+import dj_database_url # Add import
 
-# Read ALLOWED_HOSTS from environment variable, default to local hosts
-# Environment variable should be a comma-separated string, e.g., "cvfactory.dev,another.host"
-allowed_hosts_str = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+# Read ALLOWED_HOSTS from environment variable 'ALLOWED_HOSTS', default to local hosts
+allowed_hosts_str = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1') # Use ALLOWED_HOSTS
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+
+# Read CORS_ALLOWED_ORIGINS from environment variable, default to local dev server
+cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
+
+# Read CSRF_TRUSTED_ORIGINS from environment variable, default to local dev server
+csrf_origins_str = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_str.split(',') if origin.strip()]
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
@@ -17,13 +25,11 @@ STATICFILES_DIRS = [
 ] # Add BASE_DIR to find static files in the project root
 
 # Quick-start development settings - unsuitable for production
-# Read SECRET_KEY from environment variable, use placeholder only if not set (unsafe for production)
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-placeholder-for-local-development')
+# Read SECRET_KEY from environment variable 'SECRET_KEY', use placeholder only if not set (unsafe for production)
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-placeholder-for-local-development') # Use SECRET_KEY
 
-# Read DEBUG from environment variable, default to True for local development
-# Set DJANGO_DEBUG=False in production environment
-DEBUG_STR = os.getenv('DJANGO_DEBUG', 'True')
-DEBUG = DEBUG_STR.lower() in ('true', '1', 't')
+# Read DEBUG from environment variable 'DEBUG', default to 'True' for local development
+DEBUG = os.getenv('DEBUG', 'True') == 'True' # Use DEBUG
 
 # ... existing code ... 
 
@@ -34,13 +40,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles', # Static files app
+    'corsheaders', # Add corsheaders
     # Add your other apps here
+    'core',
 ]
 
 # Quick-start development settings - unsuitable for production
 # ... existing code ... 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', # Add CorsMiddleware near the top
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -72,4 +81,18 @@ WSGI_APPLICATION = 'config.wsgi.application' # Changed from main.wsgi.applicatio
 
 
 # Database
+# ... existing code ... 
+
+# Database configuration using dj-database-url
+# Default to SQLite in the project root if DATABASE_URL is not set
+DATABASES = {
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+    )
+}
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/4.2/topics/i18n/
+
 # ... existing code ... 
