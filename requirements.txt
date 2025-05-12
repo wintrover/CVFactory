@@ -1,2 +1,5 @@
 Django
-groq 
+groq
+openai
+python-dotenv
+requests 
