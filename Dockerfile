@@ -4,6 +4,8 @@ FROM python:3.8-slim
 # Set the working directory in the container
 WORKDIR /app
 
+ENV DJANGO_SETTINGS_MODULE=main.settings
+
 # Add the current directory contents into the container at /app
 COPY . /app
 
@@ -12,8 +14,8 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir -p /app/staticfiles
 
-# Add diagnostic print statements
-RUN python manage.py shell -c "from django.conf import settings; print(f'DEBUG: STATIC_ROOT from Django settings: {settings.STATIC_ROOT}'); import os; print(f'DEBUG: Path {settings.STATIC_ROOT} exists: {os.path.exists(settings.STATIC_ROOT)}'); print(f'DEBUG: Path {settings.STATIC_ROOT} is directory: {os.path.isdir(settings.STATIC_ROOT)}')"
+# Remove diagnostic print statements (no longer needed)
+# RUN python manage.py shell -c "from django.conf import settings; print(f'DEBUG: STATIC_ROOT from Django settings: {settings.STATIC_ROOT}'); import os; print(f'DEBUG: Path {settings.STATIC_ROOT} exists: {os.path.exists(settings.STATIC_ROOT)}'); print(f'DEBUG: Path {settings.STATIC_ROOT} is directory: {os.path.isdir(settings.STATIC_ROOT)}')"
 
 RUN python manage.py collectstatic --noinput -v 3
 
