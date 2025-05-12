@@ -5,6 +5,7 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesSto
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_ROOT = '/app/staticfiles/'
+STATIC_URL = '/static/' # URL to serve static files from
 
 # ... existing code ... 
 
