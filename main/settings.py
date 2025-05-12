@@ -9,8 +9,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_ROOT = '/app/staticfiles/'
 STATIC_URL = '/static/' # URL to serve static files from
 
+STATICFILES_DIRS = [
+    BASE_DIR,
+] # Add BASE_DIR to find static files in the project root
+
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-placeholder-for-local-development'
+
+DEBUG = True # Add this line for development debugging
 
 # ... existing code ... 
 
@@ -42,7 +48,7 @@ ROOT_URLCONF = 'config.urls' # Changed from main.urls
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR], # Add BASE_DIR to look for templates in the project root
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
