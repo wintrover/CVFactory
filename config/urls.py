@@ -17,7 +17,14 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+from core import views # core.views 모듈을 임포트합니다.
+from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('' , views.index, name='index'), # 루트 URL('')에 core.views.index 뷰를 연결합니다.
 ]
+
+# 개발 환경에서만 정적 파일을 제공합니다.
+# if settings.DEBUG:
+#     urlpatterns += staticfiles_urlpatterns() # 이 줄은 삭제됩니다.

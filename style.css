@@ -136,6 +136,7 @@ textarea {
   resize: none;
   overflow-y: auto;
   box-sizing: border-box;
+  color: black;
 }
 
 /* 액션 버튼 영역 */
