@@ -76,22 +76,28 @@
 
   <!-- 프롬프트 레이아웃 컨테이너 -->
   <div class="prompt-container">
-    <!-- 프롬프트 1 -->
-    <div class="chat-box small-prompt">
-      <textarea id="job_url" placeholder="공고 URL을 입력하세요."></textarea>
+    <!-- Left Column -->
+    <div class="left-column">
+      <!-- 프롬프트 1 -->
+      <div class="chat-box small-prompt">
+        <textarea id="job_url" placeholder="공고 URL을 입력하세요."></textarea>
+      </div>
+
+      <!-- 프롬프트 3 -->
+      <div class="chat-box">
+        <textarea id="user_story" placeholder="나의 성격과 역경을 적어주세요."></textarea>
+      </div>
     </div>
 
-    <!-- 프롬프트 3 -->
-    <div class="chat-box">
-      <textarea id="user_story" placeholder="나의 성격과 역경을 적어주세요."></textarea>
-    </div>
-
-    <!-- 프롬프트 4 -->
-    <div class="chat-box large-prompt">
-      <div>
-        <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
-        <div class="actions">
-          <button type="button" onclick="generateResume()" class="black-btn">생성하기</button>
+    <!-- Right Column -->
+    <div class="right-column">
+      <!-- 프롬프트 4 -->
+      <div class="chat-box large-prompt">
+        <div>
+          <textarea id="generated_resume" placeholder="완성된 자기소개서가 여기에 표시됩니다." class="large-textarea"></textarea>
+          <div class="actions">
+            <button type="button" onclick="generateResume()" class="black-btn">생성하기</button>
+          </div>
         </div>
       </div>
     </div>
