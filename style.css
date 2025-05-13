@@ -236,4 +236,19 @@ footer {
 
 .header-title {
   font-weight: bold;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 992px) {
+  .prompt-container {
+    flex-direction: column; /* Stack columns vertically */
+    gap: 15px; /* Adjust gap for stacked layout */
+  }
+
+  .left-column,
+  .right-column {
+    width: 100%; /* Make columns take full width */
+    min-width: 0; /* Remove minimum width constraint */
+    flex: none; /* Remove flex grow/shrink */
+  }
 } 
