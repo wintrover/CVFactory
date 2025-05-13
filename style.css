@@ -255,9 +255,4 @@ footer {
   h1 {
     margin-top: 0; /* Remove top margin on mobile */
   }
-
-  main {
-    padding-left: 5px; /* Reduce padding on mobile */
-    padding-right: 5px; /* Reduce padding on mobile */
-  }
 } 
