@@ -31,6 +31,22 @@ This v1.1 release includes several changes to improve application stability and 
 - **PostgreSQL Database Issue Resolution:** Analyzed logs related to shared memory conflicts and Patroni shutdowns to diagnose and address database startup issues.
 - **Cloudflare Caching Consistency Improvement:** To resolve issues where static file changes (like CSS) were not immediately reflected after deployment, we implemented a cache purging script using the Cloudflare API and integrated it into the deployment process. Enhanced logging was also added to the script to track the success/failure of cache purging operations.
 
+## 🎉 v1.1.1 Release Notes
+
+This release addresses the issue of broken CSS in the deployment environment and adds Whitenoise configuration for correct static file serving and cache busting. Additionally, static file related errors in the local development environment have been fixed.
+
+**Key Changes:**
+
+*   **Improved Static File Serving:** Introduced Whitenoise and added relevant configurations to resolve the issue where CSS files were not loading correctly in the deployment environment.
+*   **Enabled Cache Busting:** Configured Whitenoise's cache busting feature to ensure that changes to static files (HTML, CSS, JavaScript) are immediately reflected without browser cache issues.
+*   **Local Development Environment Error Fix:** Added an empty `script.js` file to resolve the 404 error that occurred because the file was missing.
+
+**Impact:**
+
+*   CSS is displayed correctly in the deployed application.
+*   Latest content is applied after static file changes without needing to force refresh the cache.
+*   The 404 error related to `script.js` no longer occurs in the local development environment.
+
 ## 🚀 Getting Started
 
 ### Prerequisites

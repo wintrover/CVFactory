@@ -7,7 +7,6 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow-y: auto;
-  background-color: green;
 }
 
 /* 헤더 스타일 */
