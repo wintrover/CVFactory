@@ -251,4 +251,8 @@ footer {
     min-width: 0; /* Remove minimum width constraint */
     flex: none; /* Remove flex grow/shrink */
   }
+
+  h1 {
+    margin-top: 0; /* Remove top margin on mobile */
+  }
 } 
