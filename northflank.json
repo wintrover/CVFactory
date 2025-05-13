@@ -87,6 +87,46 @@
                     },
                     "buildArguments": {}
                   }
+                },
+                {
+                  "kind": "Job",
+                  "ref": "purgeCacheJob",
+                  "spec": {
+                    "name": "purge-cloudflare-cache-job",
+                    "schedule": "0 0 29 2 *",
+                    "concurrencyPolicy": "Forbid",
+                    "runOnImageChange": true,
+                    "retryLimit": 0,
+                    "timeoutSeconds": 600,
+                    "billing": {
+                      "deploymentPlan": "nf-compute-20",
+                      "buildPlan": "nf-compute-400-16"
+                    },
+                    "vcsData": {
+                      "projectType": "github",
+                      "projectUrl": "https://github.com/wintrover/CVFactory",
+                      "projectBranch": "develop"
+                    },
+                    "buildSettings": {
+                      "dockerfile": {
+                        "dockerFilePath": "/Dockerfile",
+                        "dockerWorkDir": "/app"
+                      }
+                    },
+                    "deployment": {
+                      "runtimeCommand": [
+                        "python",
+                        "purge_cloudflare_cache.py"
+                      ]
+                    },
+                    "runtimeEnvironment": {
+                      "DJANGO_SECRET_KEY": "your_production_secret_key_from_northflank_secrets",
+                      "DJANGO_DEBUG": "False",
+                      "DJANGO_ALLOWED_HOSTS": "your_northflank_app_domain.northflank.app,your_custom_domain.com",
+                      "API_KEY": "your_production_api_key",
+                      "DEPLOYMENT_SHA": "${NORTHFLANK_GIT_COMMIT_SHA}"
+                    }
+                  }
                 }
               ]
             }
