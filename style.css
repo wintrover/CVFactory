@@ -255,4 +255,49 @@ footer {
   h1 {
     margin-top: 0; /* Remove top margin on mobile */
   }
+}
+
+/* Modal Styles */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1001; /* Sit on top (higher than loading overlay) */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  /* display: flex; /* Use flexbox for centering */ */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: auto; /* Auto margin for centering (deprecated by flexbox) */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+  max-width: 400px; /* Maximum width */
+  border-radius: 10px;
+  text-align: center;
+  position: relative; /* Needed for the close button positioning */
+}
+
+.close-button {
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
 } 
