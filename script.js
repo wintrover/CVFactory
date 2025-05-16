@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
       },
       body: JSON.stringify({
         target_url: jobUrl,
-        query: "" // Or null, depending on server's expectation for an empty query
       }),
     })
     .then(response => {
