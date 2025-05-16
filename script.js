@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Preparing to fetch with URL:", jobUrl);
 
     // Send the request to the local Docker server
-    fetch("http://localhost:8000/process", {
+    fetch("http://localhost:8001/process", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
