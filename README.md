@@ -21,31 +21,13 @@ CVFactory is an AI-powered web application that helps users easily generate cust
 |----------|--------------|
 | Framework | Django |
 | Frontend | HTML, CSS, JavaScript |
-| AI/ML | Groq API |
-| Deployment | Northflank, Docker |
-
-## 🎉 v1.1 Release Notes
-
-This v1.1 release includes several changes to improve application stability and the deployment process. Key updates are as follows:
-
-- **PostgreSQL Database Issue Resolution:** Analyzed logs related to shared memory conflicts and Patroni shutdowns to diagnose and address database startup issues.
-- **Cloudflare Caching Consistency Improvement:** To resolve issues where static file changes (like CSS) were not immediately reflected after deployment, we implemented a cache purging script using the Cloudflare API and integrated it into the deployment process. Enhanced logging was also added to the script to track the success/failure of cache purging operations.
-
-## 🎉 v1.1.1 Release Notes
-
-This release addresses the issue of broken CSS in the deployment environment and adds Whitenoise configuration for correct static file serving and cache busting. Additionally, static file related errors in the local development environment have been fixed.
-
-**Key Changes:**
-
-*   **Improved Static File Serving:** Introduced Whitenoise and added relevant configurations to resolve the issue where CSS files were not loading correctly in the deployment environment.
-*   **Enabled Cache Busting:** Configured Whitenoise's cache busting feature to ensure that changes to static files (HTML, CSS, JavaScript) are immediately reflected without browser cache issues.
-*   **Local Development Environment Error Fix:** Added an empty `script.js` file to resolve the 404 error that occurred because the file was missing.
-
-**Impact:**
-
-*   CSS is displayed correctly in the deployed application.
-*   Latest content is applied after static file changes without needing to force refresh the cache.
-*   The 404 error related to `script.js` no longer occurs in the local development environment.
+| AI/ML | Gemini 2.5 Flash API |
+| Database | SQLite (development), PostgreSQL (production via dj-database-url) |
+| Web Server | Gunicorn |
+| Static Files | Whitenoise |
+| HTTP Client | Requests |
+| Environment Variables | python-dotenv |
+| Deployment | Northflank, Docker, Docker Compose, Cloudflare (for caching) |
 
 ## 🚀 Getting Started
 
@@ -53,7 +35,7 @@ This release addresses the issue of broken CSS in the deployment environment and
 - Python 3.8+
 - uv (Python package installer and manager)
 - Git
-- Docker (Optional, required for Northflank deployment)
+- Docker (Optional, required for containerized deployment)
 - Conda (Recommended for virtual environment management)
 
 ### Installation and Running
@@ -114,16 +96,29 @@ You can deploy this project using Northflank. Refer to the Northflank documentat
 ## 📁 Project Structure
 ```
 CVFactory/
-├── index.html
-├── logo.png
-├── northflank.json
-├── style.css
-├── manage.py  # Add if Django project files exist
-├── (app_directory) # Django app directory
-├── requirements.txt # Python dependencies file
-└── README.md
+├── manage.py              # Django management script
+├── requirements.txt       # Python dependencies
+├── Dockerfile             # Docker image definition
+├── docker-compose.yml     # Local development/testing with Docker Compose
+├── northflank.json        # Northflank deployment configuration
+├── purge_cloudflare_cache.py # Script to purge Cloudflare cache
+├── LICENSE                # Project license (CC BY NC 4.0)
+├── README.md              # English README
+├── README.kr.md           # Korean README
+├── index.html             # Main HTML file
+├── style.css              # Main CSS file
+├── script.js              # Main JavaScript file
+├── db.sqlite3             # Default SQLite database file (development)
+├── config/                # Django project settings, URLs, WSGI/ASGI
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   ├── asgi.py
+│   └── __init__.py
+└── core/                  # Django core application (views)
+    ├── views.py
+    └── __init__.py
 ```
-(Update according to your actual project structure)
 
 ## 📄 License
 CC BY-NC 4.0 License
