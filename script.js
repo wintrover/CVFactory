@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Get the job_url textarea
   var jobUrlTextarea = document.getElementById("job_url");
   console.log("Job URL textarea element:", jobUrlTextarea);
+  // Get the user_story textarea
+  var userStoryTextarea = document.getElementById("user_story");
+  console.log("User Story textarea element:", userStoryTextarea);
 
   if (!btn) {
     console.error("Generate button not found!");
@@ -23,6 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (!jobUrlTextarea) {
     console.error("Job URL textarea not found!");
+    return;
+  }
+
+  if (!userStoryTextarea) {
+    console.error("User Story textarea not found!");
     return;
   }
 
@@ -40,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the URL from the textarea
     var jobUrl = jobUrlTextarea.value;
     console.log("Job URL value:", jobUrl);
+    // Get the user story from the textarea
+    var userStory = userStoryTextarea.value;
+    console.log("User Story value:", userStory);
 
     // Validate if the URL is empty
     if (!jobUrl || jobUrl.trim() === "") {
@@ -49,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
       return; // Stop further execution
     }
 
-    console.log("Preparing to fetch with URL:", jobUrl);
+    console.log("Preparing to fetch with URL:", jobUrl, "and User Story:", userStory);
 
     // Send the request to the local Docker server
     fetch("http://localhost:8001/", {
@@ -58,7 +69,8 @@ document.addEventListener('DOMContentLoaded', function() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        target_url: jobUrl,
+        job_url: jobUrl,
+        user_story: userStory,
       }),
     })
     .then(response => {
