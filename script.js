@@ -13,8 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
   var btn = document.querySelector(".actions button");
   console.log("Generate button element:", btn);
   // Get the job_url textarea
-  var jobUrlTextarea = document.getElementById("job_url");
-  console.log("Job URL textarea element:", jobUrlTextarea);
+  var job_url_textarea = document.getElementById("job_url");
+  console.log("Job URL textarea element:", job_url_textarea);
   // Get the user_story textarea
   var userStoryTextarea = document.getElementById("user_story");
   console.log("User Story textarea element:", userStoryTextarea);
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  if (!jobUrlTextarea) {
+  if (!job_url_textarea) {
     console.error("Job URL textarea not found!");
     return;
   }
@@ -46,21 +46,21 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Modal display set to flex");
 
     // Get the URL from the textarea
-    var jobUrl = jobUrlTextarea.value;
-    console.log("Job URL value:", jobUrl);
+    var job_url = job_url_textarea.value;
+    console.log("Job URL value:", job_url);
     // Get the user story from the textarea
     var userStory = userStoryTextarea.value;
     console.log("User Story value:", userStory);
 
     // Validate if the URL is empty
-    if (!jobUrl || jobUrl.trim() === "") {
+    if (!job_url || job_url.trim() === "") {
       console.error("Job URL is empty. Aborting fetch.");
       alert("공고 URL을 입력해주세요."); // Simple alert for now
       modal.style.display = "none"; // Hide modal if URL is empty
       return; // Stop further execution
     }
 
-    console.log("Preparing to fetch with URL:", jobUrl, "and User Story:", userStory);
+    console.log("Preparing to fetch with URL:", job_url, "and User Story:", userStory);
 
     // Send the request to the local Docker server
     fetch("http://localhost:8001/", {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        job_url: jobUrl,
+        job_url: job_url,
         user_story: userStory,
       }),
     })
