@@ -21,7 +21,6 @@ CVFactory는 사용자가 채용 공고와 자신의 스토리를 입력하여 �
 |----------|--------------|
 | 프레임워크 | Django |
 | 프론트엔드 | HTML, CSS, JavaScript |
-| AI/ML | Gemini 2.5 Flash API |
 | 데이터베이스 | SQLite (개발), PostgreSQL (dj-database-url을 통한 프로덕션) |
 | 웹 서버 | Gunicorn |
 | 정적 파일 | Whitenoise |
