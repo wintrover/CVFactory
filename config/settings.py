@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'corsheaders',  # Add corsheaders
     # Your apps here
     'core',
+    'compressor', # django-compressor 추가
 ]
 
 MIDDLEWARE = [
@@ -139,6 +140,19 @@ STATIC_ROOT = '/app/staticfiles/'
 STATICFILES_DIRS = [
     BASE_DIR,
 ]
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+) # CompressorFinder 추가
+
+# django-compressor 설정
+# DEBUG 값에 따라 COMPRESS_ENABLED 설정. 환경 변수로도 제어 가능.
+COMPRESS_ENABLED = os.getenv('DJANGO_COMPRESS_ENABLED', str(not DEBUG)).lower() == 'true'
+# COMPRESS_JS_FILTERS = ['compressor.filters.jsmin.JSMinFilter'] # 필요시 JSMin 필터 추가
+# COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter', 'compressor.filters.cssmin.CSSMinFilter'] # 필요시 CSS 필터 추가
+
 
 # Storage backend for static files (ManifestStaticFilesStorage adds unique hashes to filenames)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' # Use Whitenoise storage
