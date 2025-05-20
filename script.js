@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showModal(message) {
-    modalMessage.textContent = message;
+    modalMessage.innerHTML = message.replace(/\n/g, '<br>');
     modal.style.display = "flex";
   }
 
@@ -110,9 +110,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Polling for task ID:", taskId);
     taskCompletedSuccessfully = false; // 새 작업 시작 시 초기화
     // 초기 모달은 보여주되, 백그라운드 진행을 위해 사용자가 닫을 수 있도록 함
-    let initialModalMessage = "자기소개서를 생성 중입니다... 잠시만 기다려 주세요. ";
+    let initialModalMessage = "자기소개서를 생성 중입니다... 잠시만 기다려 주세요.\n";
     if (('Notification' in window) && Notification.permission !== 'granted') {
-      initialModalMessage += "브라우저 알림을 허용하시면 작업 완료 시 알려드립니다. ";
+      initialModalMessage += "브라우저 알림을 허용하시면 작업 완료 시 알려드립니다.\n";
     }
     initialModalMessage += "이 창을 닫으셔도 백그라운드에서 계속 진행됩니다.";
     showModal(initialModalMessage);
