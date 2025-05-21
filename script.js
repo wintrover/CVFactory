@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           return;
       }
-      fetch(`http://localhost:8001/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
+      fetch(`https://cvfactory-server-627721457878.asia-northeast3.run.app/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
         .then(response => {
           if (!response.ok) {
             return response.json().then(errData => {
@@ -248,21 +248,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validate if the URL is empty
     if (!job_url || job_url.trim() === "") {
       console.error("Job URL is empty. Aborting fetch.");
-      alert("공고 URL을 입력해주세요."); // Simple alert for now
-      modal.style.display = "none"; // Hide modal if URL is empty
-      return; // Stop further execution
+      modalMessage.textContent = "채용 공고 URL을 입력해 주세요.";
+      generatedResumeTextarea.value = ""; // Clear previous resume
+      // btn.textContent = "자기소개서 생성"; // Reset button text if needed
+      // btn.disabled = false; // Re-enable button if needed
+      return; // Stop execution if URL is empty
     }
+    // 사용자 프롬프트가 비어있거나 기본 프롬프트와 정확히 일치하는 경우, 빈 문자열로 처리 (선택적)
+    // if (!userStory || userStory.trim() === "" || userStory.trim() === defaultPromptText.trim()) {
+    //   userStory = ""; 
+    // }
 
-    console.log("Preparing to fetch with URL:", job_url, "and User Story:", userStory);
 
-    showModal("자기소개서 생성 요청 중...");
-    generatedResumeTextarea.value = ""; // 요청 시 이전 내용 초기화
+    // Show loading message
+    modalMessage.textContent = "자기소개서 생성을 요청하는 중...";
+    generatedResumeTextarea.value = ""; // Clear previous resume before new generation
+    // btn.textContent = "생성 중..."; // Change button text to indicate loading
+    // btn.disabled = true; // Disable button to prevent multiple clicks
 
-    // Send the request to the local Docker server
-    fetch("http://localhost:8001/", {
-      method: "POST",
+
+    // Make the API call
+    // fetch('http://localhost:8001/generate_resume/', { // CVFactory_Server의 자기소개서 생성 엔드포인트
+    fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/generate_resume/', { // CVFactory_Server의 자기소개서 생성 엔드포인트
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         job_url: job_url,
