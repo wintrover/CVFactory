@@ -93,6 +93,13 @@ h1 {
   height: 100%; /* 부모 컨테이너의 높이를 모두 차지 */
 }
 
+.chat-box textarea#prompt {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  resize: none;
+}
+
 .small-prompt {
   max-height: 150px;
   margin: 0;
