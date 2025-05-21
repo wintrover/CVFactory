@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Get the job_url textarea
   var job_url_textarea = document.getElementById("job_url");
   console.log("Job URL textarea element:", job_url_textarea);
-  // Get the user_story textarea
-  var userStoryTextarea = document.getElementById("user_story");
+  // Get the prompt textarea
+  var userStoryTextarea = document.getElementById("prompt");
   console.log("User Story textarea element:", userStoryTextarea);
 
   var modalMessage = document.getElementById("modalMessage"); // 모달 메시지 표시용
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
       },
       body: JSON.stringify({
         job_url: job_url,
-        user_story: userStory,
+        prompt: userStory,
       }),
     })
     .then(response => {
