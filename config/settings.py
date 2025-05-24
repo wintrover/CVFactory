@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',  # Add corsheaders
+    'csp',  # django-csp 앱 추가
     # Your apps here
     'core',
     'compressor', # django-compressor 추가
