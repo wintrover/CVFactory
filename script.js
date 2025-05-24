@@ -10,9 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
   var span = document.getElementsByClassName("close-button")[0];
   console.log("Close button element:", span);
 
-  // Get the button that triggers the modal
-  var btn = document.querySelector(".actions button");
-  console.log("Generate button element:", btn);
+  // "생성하기" 버튼 및 내부 요소 가져오기
+  var generateButtonElement = document.getElementById("generateButton");
+  console.log("Generate button element:", generateButtonElement);
+  var buttonText = generateButtonElement ? generateButtonElement.querySelector(".button-text") : null;
+  var spinner = generateButtonElement ? generateButtonElement.querySelector(".spinner") : null;
+  
   // Get the job_url textarea
   var job_url_textarea = document.getElementById("job_url");
   console.log("Job URL textarea element:", job_url_textarea);
@@ -49,34 +52,42 @@ document.addEventListener('DOMContentLoaded', function() {
   let pollingIntervalId = null; // 폴링 인터벌 ID
   let taskCompletedSuccessfully = false; // 작업 성공 여부 플래그
 
-  if (!btn) {
-    console.error("Generate button not found!");
+  // 요소 존재 여부 확인
+  if (!generateButtonElement || !buttonText || !spinner) {
+    console.error("Generate button or its inner elements not found!");
     return;
   }
-
   if (!job_url_textarea) {
     console.error("Job URL textarea not found!");
     return;
   }
-
   if (!userStoryTextarea) {
     console.error("User Story textarea not found!");
     return;
   }
-
   if (!modal) {
     console.error("Modal element not found!");
     return;
   }
-
   if (!modalMessage) {
     console.error("Modal message element not found!");
     return;
   }
-
   if (!generatedResumeTextarea) {
     console.error("Generated resume textarea not found!");
     return;
+  }
+
+  function showLoadingState(isLoading) {
+    if (isLoading) {
+      buttonText.style.display = 'none';
+      spinner.style.display = 'inline-block';
+      generateButtonElement.disabled = true;
+    } else {
+      buttonText.style.display = 'inline-block';
+      spinner.style.display = 'none';
+      generateButtonElement.disabled = false;
+    }
   }
 
   function showModal(message) {
@@ -86,11 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function hideModal() {
     modal.style.display = "none";
-    // 모달이 닫힐 때 폴링을 중단하지 않도록 아래 두 줄을 주석 처리 또는 삭제
-    // if (pollingIntervalId) {
-    //   clearInterval(pollingIntervalId);
-    //   pollingIntervalId = null;
-    // }
   }
 
   function requestNotificationPermission() {
@@ -221,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // When the user clicks the button, open the modal
-  btn.onclick = function() {
+  generateButtonElement.onclick = function() {
     console.log("Generate button clicked");
 
     // 브라우저 알림 권한 요청 (이미 허용되었거나 거부된 경우 아무것도 하지 않음)
@@ -260,13 +266,14 @@ document.addEventListener('DOMContentLoaded', function() {
     //   userStory = ""; 
     // }
 
-
     // Show loading message
     modalMessage.textContent = "자기소개서 생성을 요청하는 중...";
     generatedResumeTextarea.value = ""; // Clear previous resume before new generation
     // btn.textContent = "생성 중..."; // Change button text to indicate loading
     // btn.disabled = true; // Disable button to prevent multiple clicks
 
+    // Show loading state
+    showLoadingState(true);
 
     // Send the POST request to the server
     // 서버 URL 수정: /generate_resume 제거
