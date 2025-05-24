@@ -21,10 +21,13 @@ ENV PATH="/root/.local/bin:$PATH"
 RUN uv pip install --no-cache-dir --system -r requirements.txt
 RUN mkdir -p /app/staticfiles
 
-# Remove diagnostic print statements (no longer needed)
-# RUN python manage.py shell -c "from django.conf import settings; print(f'DEBUG: STATIC_ROOT from Django settings: {settings.STATIC_ROOT}'); import os; print(f'DEBUG: Path {settings.STATIC_ROOT} exists: {os.path.exists(settings.STATIC_ROOT)}'); print(f'DEBUG: Path {settings.STATIC_ROOT} is directory: {os.path.isdir(settings.STATIC_ROOT)}')"
+# django-compressor가 강제로 파일을 다시 압축하도록 함
+RUN python manage.py compress --force
 
 RUN python manage.py collectstatic --noinput -v 3
+
+# Remove diagnostic print statements (no longer needed)
+# RUN python manage.py shell -c "from django.conf import settings; print(f'DEBUG: STATIC_ROOT from Django settings: {settings.STATIC_ROOT}'); import os; print(f'DEBUG: Path {settings.STATIC_ROOT} exists: {os.path.exists(settings.STATIC_ROOT)}'); print(f'DEBUG: Path {settings.STATIC_ROOT} is directory: {os.path.isdir(settings.STATIC_ROOT)}')"
 
 # Expose the port the app runs on
 EXPOSE 8000
