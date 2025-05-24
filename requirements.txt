@@ -7,4 +7,4 @@ psycopg2-binary
 gunicorn
 whitenoise
 django-compressor
-django-csp 
+django-csp==3.7 
