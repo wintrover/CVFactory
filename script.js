@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showLoadingState(isLoading) {
+    console.log(`Setting loading state to: ${isLoading}`);
     if (isLoading) {
       buttonText.style.display = 'none';
       spinner.style.display = 'inline-block';
@@ -88,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
       spinner.style.display = 'none';
       generateButtonElement.disabled = false;
     }
+    console.log(`Generate button disabled: ${generateButtonElement.disabled}, Spinner display: ${spinner.style.display}`);
   }
 
   function showModal(message) {
@@ -100,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function requestNotificationPermission() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!('Notification' in window)) {
         console.log("This browser does not support desktop notification");
         return resolve(false);
@@ -110,10 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (Notification.permission !== "denied") {
         Notification.requestPermission().then(permission => {
-          if (permission === "granted") {
-            return resolve(true);
-          }
-          resolve(false);
+          resolve(permission === "granted");
         });
       } else {
         resolve(false);
@@ -160,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           return;
       }
+      console.log(`Fetching status for task ${taskId}...`);
       fetch(`https://cvfactory-server-627721457878.asia-northeast3.run.app/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
         .then(response => {
           if (!response.ok) {
@@ -170,12 +170,14 @@ document.addEventListener('DOMContentLoaded', function() {
           return response.json();
         })
         .then(data => {
-          console.log("Task status:", data);
+          console.log("Task status data received:", data);
           if (data.status === "SUCCESS") {
+            console.log("Task SUCCESS: Clearing interval and setting taskCompletedSuccessfully to true.");
             clearInterval(pollingIntervalId);
             pollingIntervalId = null;
             taskCompletedSuccessfully = true; // 성공 플래그 설정
             let successMessage = "자기소개서 생성이 완료되었습니다!";
+            console.log("Task SUCCESS: Updating textarea.");
             if (data.result && typeof data.result === 'string') {
                 generatedResumeTextarea.value = data.result;
             } else if (data.result && data.result.formatted_cover_letter) {
@@ -184,7 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
                  generatedResumeTextarea.value = "생성된 자기소개서 내용을 받아오지 못했습니다.";
                  successMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
             }
-            // 모달을 닫고 브라우저 알림 표시
+            console.log("Task SUCCESS: Textarea updated. Calling showLoadingState(false).");
+            showLoadingState(false);
+            console.log("Task SUCCESS: showLoadingState(false) called.");
+            
             hideModal(); // 일단 모달은 닫음
             showBrowserNotification("자기소개서 생성 완료!", successMessage, () => {
                 generatedResumeTextarea.focus();
@@ -192,8 +197,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 필요하다면 여기서 showModal(successMessage) 호출
             });
           } else if (data.status === "FAILURE") {
+            console.error("Task FAILURE: Clearing interval.", data.result ? data.result.error : 'No error details');
             clearInterval(pollingIntervalId);
             pollingIntervalId = null;
+            showLoadingState(false);
             let errorMessage = "자기소개서 생성에 실패했습니다.";
             if (data.result && data.result.error) {
                 errorMessage += `\n오류: ${data.result.error}`;
@@ -201,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             generatedResumeTextarea.value = errorMessage;
             // 실패 시에는 모달을 다시 명확히 보여주는 것이 좋을 수 있음
             showModal(errorMessage);
-            showBrowserNotification("자기소개서 생성 실패", errorMessage, () => {
+            showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' '), () => {
                 generatedResumeTextarea.focus();
             });
           } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY") {
@@ -212,6 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 알 수 없는 상태
             clearInterval(pollingIntervalId);
             pollingIntervalId = null;
+            showLoadingState(false);
             generatedResumeTextarea.value = `알 수 없는 작업 상태입니다: ${data.status}`;
             showModal(`알 수 없는 작업 상태: ${data.status}`);
           }
@@ -220,6 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
           console.error("Polling error:", error);
           clearInterval(pollingIntervalId);
           pollingIntervalId = null;
+          showLoadingState(false);
           generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
           showModal("작업 상태 확인 중 오류 발생: " + error.message);
         });
