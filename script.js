@@ -268,9 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // btn.disabled = true; // Disable button to prevent multiple clicks
 
 
-    // Make the API call
-    // fetch('http://localhost:8001/generate_resume/', { // CVFactory_Server의 자기소개서 생성 엔드포인트
-    fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/generate_resume/', { // CVFactory_Server의 자기소개서 생성 엔드포인트
+    // Send the POST request to the server
+    // 서버 URL 수정: /generate_resume 제거
+    fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/', { // 수정된 URL
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
