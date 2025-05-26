@@ -310,19 +310,25 @@ footer {
   cursor: pointer;
 }
 
-/* 로딩 스피너 스타일 */
+/* 스피너 스타일 */
 .spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  width: 20px;
-  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3); /* 스피너 테두리 색상 및 투명도 */
   border-radius: 50%;
-  border-left-color: #000;
-  animation: spin 1s ease infinite;
-  /* 중앙 정렬을 위한 스타일 추가 */
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  border-top: 3px solid #fff; /* 스피너 상단 색상 (회전하는 부분) */
+  width: 16px; /* 스피너 크기 */
+  height: 16px; /* 스피너 크기 */
+  -webkit-animation: spin 1s linear infinite; /* Safari */
+  animation: spin 1s linear infinite;
+  /* display: none; /* 초기에는 숨김, JS로 제어 */
+  /* 버튼 내에서 스피너를 중앙에 위치시키기 위한 스타일 */
+  /* position: absolute; */ /* 주석 처리 또는 삭제 - 버튼 내 텍스트와 함께 있도록 */
+  /* top: 50%; */
+  /* left: 50%; */
+  /* margin-top: -8px; /* height의 절반 (네거티브 마진) */
+  /* margin-left: -8px; /* width의 절반 (네거티브 마진) */
+  /* 버튼의 텍스트와 스피너가 같은 줄에 나타나도록 */
+  vertical-align: middle; /* 텍스트와의 수직 정렬 */
+  margin-left: 5px; /* 텍스트와의 간격 (필요시 조정) */
 }
 
 /* 스피너 애니메이션 */
@@ -336,9 +342,12 @@ footer {
   100% { transform: rotate(360deg); }
 }
 
-/* 버튼 내 텍스트와 스피너 정렬을 위한 추가 스타일 */
 #generateButton {
-  display: inline-flex; /* 내부 요소들을 flex로 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
-  justify-content: center; /* 수평 중앙 정렬 */
+  display: inline-flex; /* 버튼 내부 요소(텍스트, 스피너)를 flex로 정렬 */
+  align-items: center;   /* 수직 중앙 정렬 */
+  justify-content: center; /* 수평 중앙 정렬 (텍스트와 스피너가 함께 있을 때 중앙) */
+}
+
+#generateButton .button-text {
+  margin-right: 5px; /* 스피너가 오른쪽에 올 때의 간격 */
 } 

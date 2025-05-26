@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let pollingIntervalId = null; // 폴링 인터벌 ID
   let taskCompletedSuccessfully = false; // 작업 성공 여부 플래그
+  let isPolling = false; // 현재 폴링 중인지 여부를 나타내는 플래그
 
   // 요소 존재 여부 확인
   if (!generateButtonElement || !buttonText || !spinner) {
@@ -135,9 +136,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  function stopPolling() {
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId);
+      pollingIntervalId = null;
+    }
+    isPolling = false;
+    showLoadingState(false); // 폴링 중지 시 항상 로딩 상태 해제
+  }
+
   function pollTaskStatus(taskId) {
     console.log("Polling for task ID:", taskId);
-    taskCompletedSuccessfully = false; // 새 작업 시작 시 초기화
+    isPolling = true; // 폴링 시작
+    showLoadingState(true); // 폴링 시작 시 로딩 상태 표시
+
     // 초기 모달은 보여주되, 백그라운드 진행을 위해 사용자가 닫을 수 있도록 함
     let initialModalMessage = "자기소개서를 생성 중입니다... 잠시만 기다려 주세요.\n";
     if (('Notification' in window) && Notification.permission !== 'granted') {
@@ -152,12 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     pollingIntervalId = setInterval(function() {
-      if (taskCompletedSuccessfully) { // 이미 성공적으로 완료된 작업이면 폴링 중단
-          if (pollingIntervalId) {
-            clearInterval(pollingIntervalId);
-            pollingIntervalId = null;
-          }
-          return;
+      if (!isPolling) { // isPolling이 false이면 폴링 중단 (예: stopPolling 호출 시)
+        return;
       }
       console.log(`Fetching status for task ${taskId}...`);
       fetch(`https://cvfactory-server-627721457878.asia-northeast3.run.app/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
@@ -173,9 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
           console.log("Task status data received:", data);
           if (data.status === "SUCCESS") {
             console.log("Task SUCCESS: Clearing interval and setting taskCompletedSuccessfully to true.");
-            clearInterval(pollingIntervalId);
-            pollingIntervalId = null;
-            taskCompletedSuccessfully = true; // 성공 플래그 설정
+            stopPolling(); // 성공 시 폴링 중지 및 로딩 상태 해제
             let successMessage = "자기소개서 생성이 완료되었습니다!";
             console.log("Task SUCCESS: Updating textarea.");
             if (data.result && typeof data.result === 'string') {
@@ -198,9 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
           } else if (data.status === "FAILURE") {
             console.error("Task FAILURE: Clearing interval.", data.result ? data.result.error : 'No error details');
-            clearInterval(pollingIntervalId);
-            pollingIntervalId = null;
-            showLoadingState(false);
+            stopPolling(); // 실패 시 폴링 중지 및 로딩 상태 해제
             let errorMessage = "자기소개서 생성에 실패했습니다.";
             if (data.result && data.result.error) {
                 errorMessage += `\n오류: ${data.result.error}`;
@@ -217,18 +221,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Task ${taskId} is still ${data.status}`);
           } else {
             // 알 수 없는 상태
-            clearInterval(pollingIntervalId);
-            pollingIntervalId = null;
-            showLoadingState(false);
+            stopPolling(); // 알 수 없는 상태 시 폴링 중지 및 로딩 상태 해제
             generatedResumeTextarea.value = `알 수 없는 작업 상태입니다: ${data.status}`;
             showModal(`알 수 없는 작업 상태: ${data.status}`);
           }
         })
         .catch(error => {
           console.error("Polling error:", error);
-          clearInterval(pollingIntervalId);
-          pollingIntervalId = null;
-          showLoadingState(false);
+          stopPolling(); // 오류 시 폴링 중지 및 로딩 상태 해제
           generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
           showModal("작업 상태 확인 중 오류 발생: " + error.message);
         });
@@ -238,6 +238,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // When the user clicks the button, open the modal
   generateButtonElement.onclick = function() {
     console.log("Generate button clicked");
+
+    if (isPolling) {
+      console.log("Already polling, ignoring click.");
+      showModal("이미 자기소개서 생성 작업이 진행 중입니다.\\n완료될 때까지 기다려 주십시오.");
+      return;
+    }
 
     // 브라우저 알림 권한 요청 (이미 허용되었거나 거부된 경우 아무것도 하지 않음)
     requestNotificationPermission().then(granted => {
