@@ -170,6 +170,7 @@ textarea {
   border-radius: 20px;
   padding: 8px 16px;
   cursor: pointer;
+  position: relative; /* 스피너 위치 조정을 위해 추가 */
 }
 
 .white-btn {
@@ -311,16 +312,17 @@ footer {
 
 /* 로딩 스피너 스타일 */
 .spinner {
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border-top: 4px solid #ffffff; /* 스피너 색상 */
-  width: 16px;
-  height: 16px;
-  -webkit-animation: spin 1s linear infinite;
-  animation: spin 1s linear infinite;
-  display: inline-block; /* 버튼 내 다른 요소와 같은 줄에 표시 */
-  vertical-align: middle; /* 버튼 텍스트와 수직 정렬 */
-  margin-left: 8px; /* 텍스트와의 간격 */
+  border-left-color: #000;
+  animation: spin 1s ease infinite;
+  /* 중앙 정렬을 위한 스타일 추가 */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* 스피너 애니메이션 */
