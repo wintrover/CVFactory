@@ -79,6 +79,8 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
+  showLoadingState(false); // 페이지 로드 시 스피너 숨김 및 버튼 텍스트 표시
+
   function showLoadingState(isLoading) {
     console.log(`Setting loading state to: ${isLoading}`);
     if (isLoading) {

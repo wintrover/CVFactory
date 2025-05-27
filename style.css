@@ -319,7 +319,7 @@ footer {
   height: 16px; /* 스피너 크기 */
   -webkit-animation: spin 1s linear infinite; /* Safari */
   animation: spin 1s linear infinite;
-  /* display: none; /* 초기에는 숨김, JS로 제어 */
+  display: none; /* 초기에는 숨김, JS로 제어 */
   /* 버튼 내에서 스피너를 중앙에 위치시키기 위한 스타일 */
   /* position: absolute; */ /* 주석 처리 또는 삭제 - 버튼 내 텍스트와 함께 있도록 */
   /* top: 50%; */
