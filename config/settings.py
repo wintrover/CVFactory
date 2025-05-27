@@ -167,4 +167,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CSP 설정 추가
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_CONNECT_SRC = ("'self'", "https://cvfactory-server-627721457878.asia-northeast3.run.app", "https://csp-reporting.cloudflare.com", "https://static.cloudflareinsights.com")
+CSP_CONNECT_SRC = ("'self'", "http://localhost:8001", "https://cvfactory-server-627721457878.asia-northeast3.run.app", "https://csp-reporting.cloudflare.com", "https://static.cloudflareinsights.com")
