@@ -3,20 +3,20 @@ const IS_LOCAL = window.location.hostname === "localhost" || window.location.hos
 const API_BASE_URL = IS_LOCAL ? "http://localhost:8001" : "https://cvfactory-server-627721457878.asia-northeast3.run.app";
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOM fully loaded and parsed");
+  // console.log("DOM fully loaded and parsed");
 
   // "생성하기" 버튼 및 내부 요소 가져오기
   var generateButtonElement = document.getElementById("generateButton");
-  console.log("Generate button element:", generateButtonElement);
+  // console.log("Generate button element:", generateButtonElement);
   var buttonText = generateButtonElement ? generateButtonElement.querySelector(".button-text") : null;
   var spinner = generateButtonElement ? generateButtonElement.querySelector(".spinner") : null;
   
   // Get the job_url textarea
   var job_url_textarea = document.getElementById("job_url");
-  console.log("Job URL textarea element:", job_url_textarea);
+  // console.log("Job URL textarea element:", job_url_textarea);
   // Get the prompt textarea
   var userStoryTextarea = document.getElementById("prompt");
-  console.log("User Story textarea element:", userStoryTextarea);
+  // console.log("User Story textarea element:", userStoryTextarea);
 
   // 기본 프롬프트 내용 설정
   const defaultPromptText = `채용 공고 내용과 다음 사용자 프롬프트를 기반으로 자기소개서를 작성해 주세요.
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (userStoryTextarea) {
     userStoryTextarea.value = defaultPromptText;
-    console.log("Default prompt text set to textarea.");
+    // console.log("Default prompt text set to textarea.");
   } else {
     console.error("Prompt textarea not found, could not set default text.");
   }
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
   statusMessageElement.textContent = ""; // 초기 상태 메시지 없음
 
   function showLoadingState(isLoading) {
-    console.log(`Setting loading state to: ${isLoading}`);
+    // console.log(`Setting loading state to: ${isLoading}`);
     if (isLoading) {
       buttonText.style.display = 'none';
       spinner.style.display = 'inline-block';
@@ -83,13 +83,13 @@ document.addEventListener('DOMContentLoaded', function() {
       spinner.style.display = 'none';
       generateButtonElement.disabled = false;
     }
-    console.log(`Generate button disabled: ${generateButtonElement.disabled}, Spinner display: ${spinner.style.display}`);
+    // console.log(`Generate button disabled: ${generateButtonElement.disabled}, Spinner display: ${spinner.style.display}`);
   }
 
   function requestNotificationPermission() {
     return new Promise((resolve) => {
       if (!('Notification' in window)) {
-        console.log("This browser does not support desktop notification");
+        // console.log("This browser does not support desktop notification");
         return resolve(false);
       }
       if (Notification.permission === "granted") {
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function pollTaskStatus(taskId) {
-    console.log("Polling for task ID:", taskId);
+    // console.log("Polling for task ID:", taskId);
     isPolling = true; // 폴링 시작
     showLoadingState(true); // 폴링 시작 시 로딩 상태 표시
 
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     statusMessageElement.textContent = initialMessage;
     generatedResumeTextarea.value = ""; // 자기소개서 영역은 비워둠
-    console.log(initialMessage);
+    // console.log(initialMessage);
 
     if (pollingIntervalId) { // 이전 폴링이 있다면 중지
         clearInterval(pollingIntervalId);
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!isPolling) { // isPolling이 false이면 폴링 중단 (예: stopPolling 호출 시)
           return;
       }
-      console.log(`Fetching status for task ${taskId}...`);
+      // console.log(`Fetching status for task ${taskId}...`);
       fetch(`${API_BASE_URL}/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
         .then(response => {
           if (!response.ok) {
@@ -161,12 +161,12 @@ document.addEventListener('DOMContentLoaded', function() {
           return response.json();
         })
         .then(data => {
-          console.log("Task status data received:", data);
+          // console.log("Task status data received:", data);
           if (data.status === "SUCCESS") {
-            console.log("Task SUCCESS: Clearing interval and setting taskCompletedSuccessfully to true.");
+            // console.log("Task SUCCESS: Clearing interval and setting taskCompletedSuccessfully to true.");
             stopPolling(); // 성공 시 폴링 중지 및 로딩 상태 해제
             let successMessage = "자기소개서 생성이 완료되었습니다!";
-            console.log("Task SUCCESS: Updating textarea.");
+            // console.log("Task SUCCESS: Updating textarea.");
             if (data.result && typeof data.result === 'string') {
                 generatedResumeTextarea.value = data.result;
                 statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
@@ -178,9 +178,9 @@ document.addEventListener('DOMContentLoaded', function() {
                  statusMessageElement.textContent = "자기소개서 내용을 받아오는 데 실패했습니다.";
                  successMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
             }
-            console.log("Task SUCCESS: Textarea updated. Calling showLoadingState(false).");
+            // console.log("Task SUCCESS: Textarea updated. Calling showLoadingState(false).");
             showLoadingState(false);
-            console.log("Task SUCCESS: showLoadingState(false) called.");
+            // console.log("Task SUCCESS: showLoadingState(false) called.");
             
             showBrowserNotification("자기소개서 생성 완료!", successMessage, () => {
                 generatedResumeTextarea.focus();
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 generatedResumeTextarea.focus();
             });
           } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY") {
-            console.log(`Task ${taskId} is still ${data.status}`);
+            // console.log(`Task ${taskId} is still ${data.status}`);
             statusMessageElement.textContent = `자기소개서 생성 중... (${data.status})`;
           } else {
             // 알 수 없는 상태
@@ -218,24 +218,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // When the user clicks the button
   generateButtonElement.onclick = function() {
-    console.log("Generate button clicked");
+    // console.log("Generate button clicked");
 
     if (isPolling) {
-      console.log("Already polling, ignoring click.");
+      // console.log("Already polling, ignoring click.");
       alert("이미 자기소개서 생성 작업이 진행 중입니다.\n완료될 때까지 기다려 주십시오.");
       return;
     }
 
     requestNotificationPermission().then(granted => {
         if (!granted) {
-            console.log("Browser notifications are not granted. Proceeding without them.");
+            // console.log("Browser notifications are not granted. Proceeding without them.");
         }
     });
 
     var job_url = job_url_textarea.value;
-    console.log("Job URL value:", job_url);
+    // console.log("Job URL value:", job_url);
     var userStory = userStoryTextarea.value;
-    console.log("User Story value:", userStory);
+    // console.log("User Story value:", userStory);
 
     if (!job_url || job_url.trim() === "") {
       console.error("Job URL is empty. Aborting fetch.");
@@ -261,17 +261,17 @@ document.addEventListener('DOMContentLoaded', function() {
       }),
     })
     .then(response => {
-      console.log("Initial fetch response received:", response);
+      // console.log("Initial fetch response received:", response);
       if (!response.ok) {
         return response.json().then(errData => {
-          console.error("Initial fetch response not OK. Error data:", errData);
+          // console.error("Initial fetch response not OK. Error data:", errData);
           throw new Error(errData.detail || `Server responded with status: ${response.status}`);
         });
       }
       return response.json();
     })
     .then(data => {
-      console.log("Initial fetch success. Data:", data);
+      // console.log("Initial fetch success. Data:", data);
       if (data.task_id) {
         pollTaskStatus(data.task_id);
       } else {
@@ -285,6 +285,6 @@ document.addEventListener('DOMContentLoaded', function() {
       showLoadingState(false); // 오류 발생 시 로딩 상태 해제
       alert("요청 처리 중 오류 발생: " + error.message);
     });
-    console.log("Fetch request initiated");
+    // console.log("Fetch request initiated");
   }
 }); 
