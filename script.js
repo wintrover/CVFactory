@@ -163,43 +163,75 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
           // console.log("Task status data received:", data);
           if (data.status === "SUCCESS") {
-            // console.log("Task SUCCESS: Clearing interval and setting taskCompletedSuccessfully to true.");
-            stopPolling(); // 성공 시 폴링 중지 및 로딩 상태 해제
-            let successMessage = "자기소개서 생성이 완료되었습니다!";
-            // console.log("Task SUCCESS: Updating textarea.");
-            if (data.result && typeof data.result === 'string') {
-                generatedResumeTextarea.value = data.result;
-                statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
-            } else if (data.result && data.result.formatted_cover_letter) {
-                generatedResumeTextarea.value = data.result.formatted_cover_letter;
-                statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
-            } else {
-                 generatedResumeTextarea.value = "생성된 자기소개서 내용을 받아오지 못했습니다.";
-                 statusMessageElement.textContent = "자기소개서 내용을 받아오는 데 실패했습니다.";
-                 successMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
+            // console.log("Task SUCCESS: Clearing interval.");
+            stopPolling(); 
+            let displayedMessage = "자기소개서 생성이 완료되었습니다!";
+            let cvContent = "";
+
+            if (data.result && typeof data.result === 'object') {
+                // data.result는 백엔드의 final_pipeline_result 객체여야 합니다.
+                if (data.result.status === "SUCCESS" && data.result.cover_letter_preview) {
+                    cvContent = data.result.cover_letter_preview;
+                    // displayedMessage는 기본 메시지 유지
+                } else if (data.result.status === "NO_CONTENT_FOR_COVER_LETTER" && data.result.message) {
+                    cvContent = data.result.message; 
+                    displayedMessage = data.result.message;
+                } else if (data.result.message) { 
+                    cvContent = data.result.message; // 메시지만 있는 경우 (예: 파일 경로만 반환 시)
+                    displayedMessage = data.result.message;
+                     if (data.result.cover_letter_preview) { // 혹시 preview가 message와 같이 있다면 preview 우선
+                        cvContent = data.result.cover_letter_preview;
+                        displayedMessage = "자기소개서 생성이 완료되었습니다!";
+                    }
+                } else { // 예상치 못한 객체 구조
+                    cvContent = "생성된 자기소개서 내용을 분석하는 데 실패했습니다. (서버 응답 형식 오류)";
+                    displayedMessage = "자기소개서 내용 분석 실패.";
+                    console.warn("Task SUCCESS but result object structure is unexpected:", data.result);
+                }
+            } else if (data.result && typeof data.result === 'string') { 
+                // 이 경우는 process_job_posting_pipeline의 반환값(루트 태스크 ID)이 그대로 온 경우일 수 있음.
+                // main.py 수정으로 이 경우는 거의 없어야 하지만, 방어 코드.
+                cvContent = "자기소개서 결과 처리 중 오류가 발생했습니다. (잘못된 응답 형식)";
+                displayedMessage = "자기소개서 결과 처리 오류.";
+                console.warn("Task SUCCESS but result is a string:", data.result);
+            } else { // data.result가 null이거나 예상치 못한 타입
+                cvContent = "생성된 자기소개서 내용을 받아오지 못했습니다. (결과 없음)";
+                displayedMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
+                console.warn("Task SUCCESS but result is null or unexpected type:", data.result);
             }
-            // console.log("Task SUCCESS: Textarea updated. Calling showLoadingState(false).");
-            showLoadingState(false);
-            // console.log("Task SUCCESS: showLoadingState(false) called.");
             
-            showBrowserNotification("자기소개서 생성 완료!", successMessage, () => {
+            generatedResumeTextarea.value = cvContent;
+            statusMessageElement.textContent = displayedMessage;
+            showLoadingState(false);
+            
+            let notificationMessage = displayedMessage.split('\n')[0]; // 알림은 첫 줄만, 또는 간결한 메시지
+            if (cvContent && cvContent.length > 50 && displayedMessage.startsWith("자기소개서 생성")) { // 내용이 있고 성공 메시지면
+                 notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
+            }
+
+            showBrowserNotification("자기소개서 생성 완료!", notificationMessage, () => {
                 generatedResumeTextarea.focus();
             });
+
           } else if (data.status === "FAILURE") {
-            console.error("Task FAILURE: Clearing interval.", data.result ? data.result.error : 'No error details');
-            stopPolling(); // 실패 시 폴링 중지 및 로딩 상태 해제
+            console.error("Task FAILURE: Clearing interval.", data.result ? (data.result.error || data.result) : 'No error details');
+            stopPolling(); 
             let errorMessage = "자기소개서 생성에 실패했습니다.";
             if (data.result && data.result.error) {
                 errorMessage += ` 오류: ${data.result.error}`;
+            } else if (data.result && typeof data.result === 'string') {
+                errorMessage += ` 오류: ${data.result}`;
             }
-            // generatedResumeTextarea.value = errorMessage; // 오류 메시지는 상태 메시지 영역에만 표시
-            statusMessageElement.textContent = errorMessage;
-            showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' '), () => {
-                generatedResumeTextarea.focus();
+            
+            let currentStepInfo = data.current_step ? ` (단계: ${data.current_step})` : "";
+            statusMessageElement.textContent = errorMessage + currentStepInfo;
+            
+            showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' ') + currentStepInfo, () => {
+                // 실패 시에는 굳이 포커스하지 않아도 될 수 있음
             });
-          } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY") {
-            // console.log(`Task ${taskId} is still ${data.status}`);
-            statusMessageElement.textContent = `자기소개서 생성 중... (${data.status})`;
+          } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY" || data.status === "PROGRESS") { 
+            let currentStepMessage = data.current_step || data.status; 
+            statusMessageElement.textContent = `자기소개서 생성 중... (${currentStepMessage})`;
           } else {
             // 알 수 없는 상태
             stopPolling(); // 알 수 없는 상태 시 폴링 중지 및 로딩 상태 해제
