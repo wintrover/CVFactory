@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     pollingIntervalId = setInterval(function() {
       if (!isPolling) { // isPolling이 false이면 폴링 중단 (예: stopPolling 호출 시)
-        return;
+          return;
       }
       console.log(`Fetching status for task ${taskId}...`);
       fetch(`https://cvfactory-server-627721457878.asia-northeast3.run.app/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
