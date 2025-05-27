@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   var generatedResumeTextarea = document.getElementById("generated_resume");
+  var statusMessageElement = document.getElementById("statusMessage"); // 상태 메시지 요소 가져오기
 
   let pollingIntervalId = null; // 폴링 인터벌 ID
   let isPolling = false; // 현재 폴링 중인지 여부를 나타내는 플래그
@@ -60,8 +61,13 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error("Generated resume textarea not found!");
     return;
   }
+  if (!statusMessageElement) { // statusMessageElement 존재 여부 확인
+    console.error("Status message element not found!");
+    return;
+  }
 
   showLoadingState(false); // 페이지 로드 시 스피너 숨김 및 버튼 텍스트 표시
+  statusMessageElement.textContent = ""; // 초기 상태 메시지 없음
 
   function showLoadingState(isLoading) {
     console.log(`Setting loading state to: ${isLoading}`);
@@ -129,9 +135,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (('Notification' in window) && Notification.permission !== 'granted') {
       initialMessage += " 브라우저 알림을 허용하시면 작업 완료 시 알려드립니다.";
     }
-    // 모달 대신 generatedResumeTextarea에 상태 표시
-    generatedResumeTextarea.value = initialMessage; // 이전 내용 초기화 및 메시지 표시
-    console.log(initialMessage); 
+    statusMessageElement.textContent = initialMessage;
+    generatedResumeTextarea.value = ""; // 자기소개서 영역은 비워둠
+    console.log(initialMessage);
 
     if (pollingIntervalId) { // 이전 폴링이 있다면 중지
         clearInterval(pollingIntervalId);
@@ -160,10 +166,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Task SUCCESS: Updating textarea.");
             if (data.result && typeof data.result === 'string') {
                 generatedResumeTextarea.value = data.result;
+                statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
             } else if (data.result && data.result.formatted_cover_letter) {
                 generatedResumeTextarea.value = data.result.formatted_cover_letter;
+                statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
             } else {
                  generatedResumeTextarea.value = "생성된 자기소개서 내용을 받아오지 못했습니다.";
+                 statusMessageElement.textContent = "자기소개서 내용을 받아오는 데 실패했습니다.";
                  successMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
             }
             console.log("Task SUCCESS: Textarea updated. Calling showLoadingState(false).");
@@ -178,26 +187,28 @@ document.addEventListener('DOMContentLoaded', function() {
             stopPolling(); // 실패 시 폴링 중지 및 로딩 상태 해제
             let errorMessage = "자기소개서 생성에 실패했습니다.";
             if (data.result && data.result.error) {
-                errorMessage += `\n오류: ${data.result.error}`;
+                errorMessage += ` 오류: ${data.result.error}`;
             }
-            generatedResumeTextarea.value = errorMessage;
+            // generatedResumeTextarea.value = errorMessage; // 오류 메시지는 상태 메시지 영역에만 표시
+            statusMessageElement.textContent = errorMessage;
             showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' '), () => {
                 generatedResumeTextarea.focus();
             });
           } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY") {
             console.log(`Task ${taskId} is still ${data.status}`);
-            // 진행 중 메시지를 generatedResumeTextarea에 표시할 수 있음
-            // generatedResumeTextarea.value = `자기소개서 생성 중... (${data.status})`; 
+            statusMessageElement.textContent = `자기소개서 생성 중... (${data.status})`;
           } else {
             // 알 수 없는 상태
             stopPolling(); // 알 수 없는 상태 시 폴링 중지 및 로딩 상태 해제
-            generatedResumeTextarea.value = `알 수 없는 작업 상태입니다: ${data.status}`;
+            // generatedResumeTextarea.value = `알 수 없는 작업 상태입니다: ${data.status}`;
+            statusMessageElement.textContent = `알 수 없는 작업 상태입니다: ${data.status}`;
           }
         })
         .catch(error => {
           console.error("Polling error:", error);
           stopPolling(); // 오류 시 폴링 중지 및 로딩 상태 해제
-          generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
+          // generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
+          statusMessageElement.textContent = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
         });
     }, 5000); // 5초마다 폴링
   }
@@ -226,11 +237,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!job_url || job_url.trim() === "") {
       console.error("Job URL is empty. Aborting fetch.");
       alert("채용 공고 URL을 입력해 주세요.");
-      generatedResumeTextarea.value = ""; 
+      // generatedResumeTextarea.value = ""; 
+      statusMessageElement.textContent = "채용 공고 URL을 입력해 주세요.";
       return; 
     }
 
-    generatedResumeTextarea.value = "자기소개서 생성을 요청하는 중...";
+    // generatedResumeTextarea.value = "자기소개서 생성을 요청하는 중...";
+    statusMessageElement.textContent = "자기소개서 생성을 요청하는 중...";
+    generatedResumeTextarea.value = ""; // 자기소개서 영역 초기화
     showLoadingState(true);
 
     fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/', {
@@ -263,7 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch((error) => {
       console.error("Initial fetch error:", error);
-      generatedResumeTextarea.value = "요청 처리 중 오류가 발생했습니다: " + error.message;
+      // generatedResumeTextarea.value = "요청 처리 중 오류가 발생했습니다: " + error.message;
+      statusMessageElement.textContent = "요청 처리 중 오류가 발생했습니다: " + error.message;
       showLoadingState(false); // 오류 발생 시 로딩 상태 해제
       alert("요청 처리 중 오류 발생: " + error.message);
     });

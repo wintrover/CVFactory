@@ -149,10 +149,17 @@ textarea {
 /* 액션 버튼 영역 */
 .actions {
   display: flex;
-  justify-content: right;
+  justify-content: flex-end;
+  align-items: center;
   border-top: 1px solid #eee;
   padding-top: 10px;
   margin-top: auto;
+}
+
+.status-message {
+  margin-right: 10px;
+  font-size: 0.9em;
+  color: #666;
 }
 
 /* 작은 버튼 스타일 */
