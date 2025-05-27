@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
       }
       console.log(`Fetching status for task ${taskId}...`);
-      fetch(`https://cvfactory-server-627721457878.asia-northeast3.run.app/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
+      fetch(`http://localhost:8001/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
         .then(response => {
           if (!response.ok) {
             return response.json().then(errData => {
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     generatedResumeTextarea.value = ""; // 자기소개서 영역 초기화
     showLoadingState(true);
 
-    fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/', {
+    fetch('http://localhost:8001/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
