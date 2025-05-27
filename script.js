@@ -2,14 +2,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   console.log("DOM fully loaded and parsed");
 
-  // Get the modal and the button that opens it
-  var modal = document.getElementById("preparingModal");
-  console.log("Modal element:", modal);
-
-  // Get the <span> element that closes the modal
-  var span = document.getElementsByClassName("close-button")[0];
-  console.log("Close button element:", span);
-
   // "생성하기" 버튼 및 내부 요소 가져오기
   var generateButtonElement = document.getElementById("generateButton");
   console.log("Generate button element:", generateButtonElement);
@@ -46,11 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error("Prompt textarea not found, could not set default text.");
   }
 
-  var modalMessage = document.getElementById("modalMessage"); // 모달 메시지 표시용
   var generatedResumeTextarea = document.getElementById("generated_resume");
 
   let pollingIntervalId = null; // 폴링 인터벌 ID
-  let taskCompletedSuccessfully = false; // 작업 성공 여부 플래그
   let isPolling = false; // 현재 폴링 중인지 여부를 나타내는 플래그
 
   // 요소 존재 여부 확인
@@ -64,14 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (!userStoryTextarea) {
     console.error("User Story textarea not found!");
-    return;
-  }
-  if (!modal) {
-    console.error("Modal element not found!");
-    return;
-  }
-  if (!modalMessage) {
-    console.error("Modal message element not found!");
     return;
   }
   if (!generatedResumeTextarea) {
@@ -93,15 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
       generateButtonElement.disabled = false;
     }
     console.log(`Generate button disabled: ${generateButtonElement.disabled}, Spinner display: ${spinner.style.display}`);
-  }
-
-  function showModal(message) {
-    modalMessage.innerHTML = message.replace(/\n/g, '<br>');
-    modal.style.display = "flex";
-  }
-
-  function hideModal() {
-    modal.style.display = "none";
   }
 
   function requestNotificationPermission() {
@@ -152,14 +125,13 @@ document.addEventListener('DOMContentLoaded', function() {
     isPolling = true; // 폴링 시작
     showLoadingState(true); // 폴링 시작 시 로딩 상태 표시
 
-    // 초기 모달은 보여주되, 백그라운드 진행을 위해 사용자가 닫을 수 있도록 함
-    let initialModalMessage = "자기소개서를 생성 중입니다... 잠시만 기다려 주세요.\n";
+    let initialMessage = "자기소개서를 생성 중입니다... 잠시만 기다려 주세요.";
     if (('Notification' in window) && Notification.permission !== 'granted') {
-      initialModalMessage += "브라우저 알림을 허용하시면 작업 완료 시 알려드립니다.\n";
+      initialMessage += " 브라우저 알림을 허용하시면 작업 완료 시 알려드립니다.";
     }
-    initialModalMessage += "이 창을 닫으셔도 백그라운드에서 계속 진행됩니다.";
-    showModal(initialModalMessage);
-    generatedResumeTextarea.value = ""; // 이전 내용 초기화
+    // 모달 대신 generatedResumeTextarea에 상태 표시
+    generatedResumeTextarea.value = initialMessage; // 이전 내용 초기화 및 메시지 표시
+    console.log(initialMessage); 
 
     if (pollingIntervalId) { // 이전 폴링이 있다면 중지
         clearInterval(pollingIntervalId);
@@ -198,11 +170,8 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoadingState(false);
             console.log("Task SUCCESS: showLoadingState(false) called.");
             
-            hideModal(); // 일단 모달은 닫음
             showBrowserNotification("자기소개서 생성 완료!", successMessage, () => {
                 generatedResumeTextarea.focus();
-                // 이미 결과가 표시되어 있으므로, 추가적인 모달은 필요 없을 수 있음
-                // 필요하다면 여기서 showModal(successMessage) 호출
             });
           } else if (data.status === "FAILURE") {
             console.error("Task FAILURE: Clearing interval.", data.result ? data.result.error : 'No error details');
@@ -212,89 +181,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMessage += `\n오류: ${data.result.error}`;
             }
             generatedResumeTextarea.value = errorMessage;
-            // 실패 시에는 모달을 다시 명확히 보여주는 것이 좋을 수 있음
-            showModal(errorMessage);
             showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' '), () => {
                 generatedResumeTextarea.focus();
             });
           } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY") {
-            // 작업 진행 중, 모달 메시지 업데이트 (선택 사항)
-            // 사용자가 모달을 닫았을 수 있으므로, 여기서는 console.log만 남기거나 다른 UI 피드백 고려
             console.log(`Task ${taskId} is still ${data.status}`);
+            // 진행 중 메시지를 generatedResumeTextarea에 표시할 수 있음
+            // generatedResumeTextarea.value = `자기소개서 생성 중... (${data.status})`; 
           } else {
             // 알 수 없는 상태
             stopPolling(); // 알 수 없는 상태 시 폴링 중지 및 로딩 상태 해제
             generatedResumeTextarea.value = `알 수 없는 작업 상태입니다: ${data.status}`;
-            showModal(`알 수 없는 작업 상태: ${data.status}`);
           }
         })
         .catch(error => {
           console.error("Polling error:", error);
           stopPolling(); // 오류 시 폴링 중지 및 로딩 상태 해제
           generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
-          showModal("작업 상태 확인 중 오류 발생: " + error.message);
         });
     }, 5000); // 5초마다 폴링
   }
 
-  // When the user clicks the button, open the modal
+  // When the user clicks the button
   generateButtonElement.onclick = function() {
     console.log("Generate button clicked");
 
     if (isPolling) {
       console.log("Already polling, ignoring click.");
-      showModal("이미 자기소개서 생성 작업이 진행 중입니다.\\n완료될 때까지 기다려 주십시오.");
+      alert("이미 자기소개서 생성 작업이 진행 중입니다.\n완료될 때까지 기다려 주십시오.");
       return;
     }
 
-    // 브라우저 알림 권한 요청 (이미 허용되었거나 거부된 경우 아무것도 하지 않음)
     requestNotificationPermission().then(granted => {
         if (!granted) {
             console.log("Browser notifications are not granted. Proceeding without them.");
-            // 사용자에게 알림이 꺼져있음을 안내하는 UI를 추가할 수 있음
         }
     });
 
-    if (!modal) {
-      console.error("Modal element is not available when button is clicked!");
-      return;
-    }
-    modal.style.display = "flex"; // Use flex to center the modal
-    console.log("Modal display set to flex");
-
-    // Get the URL from the textarea
     var job_url = job_url_textarea.value;
     console.log("Job URL value:", job_url);
-    // Get the user story from the textarea
     var userStory = userStoryTextarea.value;
     console.log("User Story value:", userStory);
 
-    // Validate if the URL is empty
     if (!job_url || job_url.trim() === "") {
       console.error("Job URL is empty. Aborting fetch.");
-      modalMessage.textContent = "채용 공고 URL을 입력해 주세요.";
-      generatedResumeTextarea.value = ""; // Clear previous resume
-      // btn.textContent = "자기소개서 생성"; // Reset button text if needed
-      // btn.disabled = false; // Re-enable button if needed
-      return; // Stop execution if URL is empty
+      alert("채용 공고 URL을 입력해 주세요.");
+      generatedResumeTextarea.value = ""; 
+      return; 
     }
-    // 사용자 프롬프트가 비어있거나 기본 프롬프트와 정확히 일치하는 경우, 빈 문자열로 처리 (선택적)
-    // if (!userStory || userStory.trim() === "" || userStory.trim() === defaultPromptText.trim()) {
-    //   userStory = ""; 
-    // }
 
-    // Show loading message
-    modalMessage.textContent = "자기소개서 생성을 요청하는 중...";
-    generatedResumeTextarea.value = ""; // Clear previous resume before new generation
-    // btn.textContent = "생성 중..."; // Change button text to indicate loading
-    // btn.disabled = true; // Disable button to prevent multiple clicks
-
-    // Show loading state
+    generatedResumeTextarea.value = "자기소개서 생성을 요청하는 중...";
     showLoadingState(true);
 
-    // Send the POST request to the server
-    // 서버 URL 수정: /generate_resume 제거
-    fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/', { // 수정된 URL
+    fetch('https://cvfactory-server-627721457878.asia-northeast3.run.app/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -307,13 +246,12 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => {
       console.log("Initial fetch response received:", response);
       if (!response.ok) {
-        // If server response is not ok (e.g., 4xx, 5xx), throw an error to catch it later
         return response.json().then(errData => {
           console.error("Initial fetch response not OK. Error data:", errData);
           throw new Error(errData.detail || `Server responded with status: ${response.status}`);
         });
       }
-      return response.json(); // Assuming server responds with JSON
+      return response.json();
     })
     .then(data => {
       console.log("Initial fetch success. Data:", data);
@@ -325,29 +263,10 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch((error) => {
       console.error("Initial fetch error:", error);
-      // Handle errors (e.g., display error message in the modal or as an alert)
       generatedResumeTextarea.value = "요청 처리 중 오류가 발생했습니다: " + error.message;
-      showModal("요청 처리 중 오류 발생: " + error.message);
+      showLoadingState(false); // 오류 발생 시 로딩 상태 해제
+      alert("요청 처리 중 오류 발생: " + error.message);
     });
     console.log("Fetch request initiated");
-  }
-
-  if (!span) {
-    console.warn("Close button (span) not found!");
-  } else {
-    // When the user clicks on <span> (x), close the modal
-    span.onclick = function() {
-      console.log("Close button (span) clicked");
-      hideModal();
-    }
-  }
-
-  // When the user clicks anywhere outside of the modal, close it
-  window.onclick = function(event) {
-    // console.log("Window clicked. Event target:", event.target);
-    if (event.target == modal) {
-      console.log("Clicked outside of the modal");
-      hideModal();
-    }
   }
 }); 

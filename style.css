@@ -265,51 +265,6 @@ footer {
   }
 }
 
-/* Modal Styles */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1001; /* Sit on top (higher than loading overlay) */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-  /* display: flex; /* Use flexbox for centering */ */
-  align-items: center; /* Center vertically */
-  justify-content: center; /* Center horizontally */
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: auto; /* Auto margin for centering (deprecated by flexbox) */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
-  max-width: 400px; /* Maximum width */
-  border-radius: 10px;
-  text-align: center;
-  position: relative; /* Needed for the close button positioning */
-}
-
-.close-button {
-  color: #aaa;
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.close-button:hover,
-.close-button:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
 /* 스피너 스타일 */
 .spinner {
   border: 3px solid rgba(255, 255, 255, 0.3); /* 스피너 테두리 색상 및 투명도 */
@@ -320,13 +275,6 @@ footer {
   -webkit-animation: spin 1s linear infinite; /* Safari */
   animation: spin 1s linear infinite;
   display: none; /* 초기에는 숨김, JS로 제어 */
-  /* 버튼 내에서 스피너를 중앙에 위치시키기 위한 스타일 */
-  /* position: absolute; */ /* 주석 처리 또는 삭제 - 버튼 내 텍스트와 함께 있도록 */
-  /* top: 50%; */
-  /* left: 50%; */
-  /* margin-top: -8px; /* height의 절반 (네거티브 마진) */
-  /* margin-left: -8px; /* width의 절반 (네거티브 마진) */
-  /* 버튼의 텍스트와 스피너가 같은 줄에 나타나도록 */
   vertical-align: middle; /* 텍스트와의 수직 정렬 */
   margin-left: 5px; /* 텍스트와의 간격 (필요시 조정) */
 }
