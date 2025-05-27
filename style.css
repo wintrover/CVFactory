@@ -282,8 +282,6 @@ footer {
   -webkit-animation: spin 1s linear infinite; /* Safari */
   animation: spin 1s linear infinite;
   display: none; /* 초기에는 숨김, JS로 제어 */
-  vertical-align: middle; /* 텍스트와의 수직 정렬 */
-  margin-left: 5px; /* 텍스트와의 간격 (필요시 조정) */
 }
 
 /* 스피너 애니메이션 */
