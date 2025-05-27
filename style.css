@@ -281,7 +281,6 @@ footer {
   width: 16px;
   height: 16px;
   animation: spin 1s linear infinite;
-  margin-left: 8px; /* 버튼 텍스트와의 간격 */
 }
 
 /* 스피너 애니메이션 */
