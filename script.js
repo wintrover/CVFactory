@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!isPolling) { // isPolling이 false이면 폴링 중단 (예: stopPolling 호출 시)
           return;
       }
-      // console.log(`Fetching status for task ${taskId}...`);
+      // console.log(`Fetching status for task ${taskId}...`); // 반복적인 로그 제거 또는 주석 처리
       fetch(`${API_BASE_URL}/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
         .then(response => {
           if (!response.ok) {
@@ -236,6 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
           } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY" || data.status === "PROGRESS") { 
             let currentStepMessage = data.current_step || data.status; 
+            // 이전 상태와 다를 경우에만 로그를 남기거나, 로그 레벨을 낮추는 것을 고려할 수 있습니다.
+            // 여기서는 매번 상태 메시지를 UI에 업데이트는 하되, 콘솔 로그는 줄입니다.
+            // console.log(`Task ${taskId} status: ${data.status}, step: ${currentStepMessage}`); // 상세 로그는 필요시 주석 해제
             statusMessageElement.textContent = `자기소개서 생성 중... (${currentStepMessage})`;
           } else {
             // 알 수 없는 상태
@@ -250,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
           statusMessageElement.textContent = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
         });
-    }, 5000); // 5초마다 폴링
+    }, 10000); // 폴링 주기를 5000ms (5초)에서 10000ms (10초)로 변경
   }
 
   // When the user clicks the button
