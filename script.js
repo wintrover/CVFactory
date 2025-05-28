@@ -415,13 +415,13 @@ document.addEventListener('DOMContentLoaded', function() {
           if (notificationMessage.length > 50) {
               notificationMessage = notificationMessage.substring(0, 47) + "...";
           }
-          showNotification(notificationMessage, response.status === "FAILURE" ? "error" : "success");
+          showBrowserNotification(notificationMessage, response.status === "FAILURE" ? "error" : "success");
 
         } else {
           // isFinalSuccess가 true이지만 cvContent가 없는 경우 (예: NO_CONTENT_FOR_COVER_LETTER는 cvContent에 메시지를 넣지만, 혹시 다른 케이스 대비)
           statusMessageElement.textContent = displayedMessage;
           showLoadingState(false);
-          showNotification(displayedMessage.split('\n')[0], "warning");
+          showBrowserNotification(displayedMessage.split('\n')[0], "warning");
         }
       } else {
         // 폴링 계속 (isFinalSuccess가 false인 경우)
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(error => {
       console.error("Error in fetch /create_cv/:", error);
-      // console.error(\`Error during fetch: ${error.message}, Stack: ${error.stack}\`);
+      // console.error(`Error during fetch: ${error.message}, Stack: ${error.stack}`);
       statusMessageElement.textContent = "자기소개서 생성 요청에 실패했습니다: " + error.message;
       showLoadingState(false); // 오류 발생 시 로딩 상태 해제
       stopPolling(); // 혹시 폴링이 시작되었다면 중지
