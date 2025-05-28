@@ -338,28 +338,95 @@ document.addEventListener('DOMContentLoaded', function() {
       })
     })
     .then(response => {
-      // console.log("Response from /create_cv/ endpoint:", response);
-      if (!response.ok) {
-        return response.json().then(errData => { // 에러 응답이 JSON 형태일 경우를 대비
-          // console.error("Server error response (before throwing):", errData);
-          // detail이 객체 형태일 수 있으므로, 문자열로 변환 시도
-          let detailMessage = errData.detail;
-          if (typeof detailMessage === 'object') {
-            detailMessage = JSON.stringify(detailMessage);
-          }
-          throw new Error(detailMessage || `Server responded with status: ${response.status}`);
-        });
+      // console.log("Raw task status response:", response); // 전체 응답 로깅
+
+      if (!response || typeof response !== 'object') {
+        throw new Error("서버 응답이 유효하지 않습니다.");
       }
-      return response.json();
-    })
-    .then(data => {
-      // console.log("Data from /create_cv/ endpoint:", data);
-      if (data && data.task_id) {
-        // console.log(\`Task ID ${data.task_id} received, starting polling.\`);
-        pollTaskStatus(data.task_id);
+
+      let displayedMessage = response.current_step || "상태 정보 없음";
+      let cvContent = "";
+      let isFinalSuccess = false;
+
+      if (response.status === "SUCCESS") {
+        // console.log("Task SUCCESS. Full result object:", response.result);
+        if (response.result && typeof response.result === 'object' && response.result.full_cover_letter_text) {
+          cvContent = response.result.full_cover_letter_text;
+          displayedMessage = response.result.message || "자기소개서가 성공적으로 생성되었습니다.";
+          
+          if (response.result.cover_letter_preview && response.result.cover_letter_preview.length > 0) {
+            displayedMessage += "\n미리보기: " + response.result.cover_letter_preview.substring(0, 100) + "...";
+          }
+          isFinalSuccess = true; // 최종 성공 상태
+          // console.log("Final success - CV content found:", cvContent.substring(0,100) + "...");
+        } else if (response.result && response.result.status === "NO_CONTENT_FOR_COVER_LETTER") {
+          cvContent = response.result.message || "자기소개서를 생성할 충분한 정보를 찾지 못했습니다. 다른 URL을 시도해주세요.";
+          displayedMessage = cvContent;
+          isFinalSuccess = true; // 이것도 최종 상태로 간주 (성공적 실패)
+          // console.log("Final state - NO_CONTENT_FOR_COVER_LETTER");
+        } else {
+          // SUCCESS 상태이지만, 아직 full_cover_letter_text가 준비되지 않음. 또는 다른 SUCCESS 케이스
+          displayedMessage = response.result && response.result.message ? response.result.message : displayedMessage;
+          displayedMessage += "\n(최종 결과 정리 중...)";
+          // console.log("SUCCESS but full_cover_letter_text not ready. Polling will continue. Current displayedMessage:", displayedMessage);
+          // isFinalSuccess는 false로 유지하여 폴링 계속
+        }
+      } else if (response.status === "FAILURE") {
+        cvContent = "자기소개서 생성에 실패했습니다.";
+        if (response.result && response.result.error_message) {
+          cvContent += "\n오류: " + response.result.error_message;
+        }
+        if (response.result && response.result.traceback) {
+          // console.error("Server-side traceback:", response.result.traceback);
+          // 사용자에게는 간단한 메시지만 표시할 수 있습니다.
+        }
+        displayedMessage = cvContent;
+        isFinalSuccess = true; // 실패도 최종 상태
+        // console.log("FAILURE state. displayedMessage:", displayedMessage);
+      } else if (response.status === "PENDING" || response.status === "STARTED" || response.status === "RETRY" || response.status === "PROGRESS") {
+        showLoadingState(true);
+        displayedMessage = response.current_step || "작업을 처리 중입니다...";
+        // isFinalSuccess는 false로 유지하여 폴링 계속
+        // console.log("Ongoing state:", response.status, "displayedMessage:", displayedMessage);
       } else {
-        // console.error("Task ID not found in response data:", data);
-        throw new Error("Task ID를 받지 못했습니다.");
+        // 알 수 없는 상태 또는 예상치 못한 상태
+        displayedMessage = "알 수 없는 작업 상태: " + response.status;
+        if(response.result && response.result.error_message) {
+          displayedMessage += "\n" + response.result.error_message;
+        }
+        isFinalSuccess = true; // 알 수 없는 상태도 일단 폴링 중단
+         // console.log("Unknown state. displayedMessage:", displayedMessage);
+      }
+
+      if (isFinalSuccess) {
+        clearTimeout(pollingIntervalId);
+        pollingIntervalId = null;
+        // console.log("Polling stopped. Final success:", isFinalSuccess);
+
+        if (cvContent) {
+          generatedResumeTextarea.value = cvContent;
+          statusMessageElement.textContent = displayedMessage;
+          showLoadingState(false);
+          
+          // 백엔드로 표시된 내용 로깅
+          logDisplayedCvToBackend(cvContent);
+
+          let notificationMessage = displayedMessage.split('\n')[0]; // 알림은 첫 줄만, 또는 간결한 메시지
+          if (notificationMessage.length > 50) {
+              notificationMessage = notificationMessage.substring(0, 47) + "...";
+          }
+          showNotification(notificationMessage, response.status === "FAILURE" ? "error" : "success");
+
+        } else {
+          // isFinalSuccess가 true이지만 cvContent가 없는 경우 (예: NO_CONTENT_FOR_COVER_LETTER는 cvContent에 메시지를 넣지만, 혹시 다른 케이스 대비)
+          statusMessageElement.textContent = displayedMessage;
+          showLoadingState(false);
+          showNotification(displayedMessage.split('\n')[0], "warning");
+        }
+      } else {
+        // 폴링 계속 (isFinalSuccess가 false인 경우)
+        statusMessageElement.textContent = displayedMessage;
+        // 로딩 애니메이션은 PENDING/STARTED 등에서 이미 true로 설정됨
       }
     })
     .catch(error => {
