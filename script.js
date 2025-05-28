@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     statusMessageElement.textContent = "자기소개서 생성 요청 중..."; 
     generatedResumeTextarea.value = ""; // 생성 시작 시 textarea 비우기
 
-    fetch(`${API_BASE_URL}/create_cv/`, { // CVFactory_Server의 생성 엔드포인트
+    fetch(`${API_BASE_URL}/`, { // CVFactory_Server의 생성 엔드포인트 (루트 경로로 수정)
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
