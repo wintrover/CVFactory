@@ -209,6 +209,9 @@ document.addEventListener('DOMContentLoaded', function() {
             statusMessageElement.textContent = displayedMessage;
             showLoadingState(false);
             
+            // 백엔드로 표시된 내용 로깅
+            logDisplayedCvToBackend(cvContent);
+
             let notificationMessage = displayedMessage.split('\n')[0]; // 알림은 첫 줄만, 또는 간결한 메시지
             if (cvContent && cvContent.length > 50 && displayedMessage.startsWith("자기소개서 생성")) { // 내용이 있고 성공 메시지면
                  notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
@@ -254,6 +257,39 @@ document.addEventListener('DOMContentLoaded', function() {
           statusMessageElement.textContent = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
         });
     }, 10000); // 폴링 주기를 5000ms (5초)에서 10000ms (10초)로 변경
+  }
+
+  function logDisplayedCvToBackend(textToLog) {
+    if (!textToLog || textToLog.trim() === "") {
+      // console.log("로깅할 내용이 없어 백엔드 로깅 요청을 보내지 않습니다.");
+      return;
+    }
+    // console.log("백엔드로 표시된 자기소개서 내용 로깅 시도:", textToLog.substring(0,100) + "...");
+    fetch(`${API_BASE_URL}/log-displayed-cv`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        displayed_text: textToLog
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errData => {
+          throw new Error(errData.detail || `Server responded with status: ${response.status} during CV logging`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // console.log("표시된 CV 내용 백엔드 로깅 성공:", data.message);
+    })
+    .catch(error => {
+      console.error("표시된 CV 내용 백엔드 로깅 실패:", error);
+      // 사용자에게 이 실패를 알릴 필요는 일반적으로 없습니다.
+      // 개발/디버깅 단계에서는 중요할 수 있습니다.
+    });
   }
 
   // When the user clicks the button
