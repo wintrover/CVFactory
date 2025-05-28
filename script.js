@@ -277,80 +277,79 @@ document.addEventListener('DOMContentLoaded', function() {
       return; 
     }
 
-    // 자기소개서 내용을 여기에 직접 삽입합니다.
-    const coverLetterContent = `저는 생성형 AI와 LLM 엔지니어로서의 경력을 쌓아오며 다양한 프로젝트
-에 참여해 왔습니다. 특히, 대규모 언어 모델의 구조 및 학습, 인퍼런스
-에 대한 깊은 이해를 바탕으로 여러 서비스의 기획, 개발, 운영 경험을 
-쌓았습니다. Python을 활용한 개발 능력과 LangChain, Lan
-gGraph와 같은 LLM 오케스트레이션 툴을 활용한 워크플로우 구성에 
-강점이 있습니다. Retrieval-Augmented Generation
-(RAG) 기반 서비스 개발 경험도 보유하고 있어, 관련 프로젝트에 기여
-할 수 있습니다.
-
-멀티모달 입력 및 에이전트 기반 시스템 설계에 대한 경험도 있습니다. 클
-라우드 환경, 특히 AWS와 GCP에서의 AI 모델 운영 및 서비스 배포
- 경험이 풍부하여, 클라우드 기반 AI 시스템 구축에 자신 있습니다. 이
-미지 처리 알고리즘을 구현하고 다양한 알고리즘을 활용한 경험이 있으며, 
-효율적인 코드 작성을 위해 런타임과 메모리 최적화에 힘써 왔습니다.
-
-제가 보유한 기술과 경험을 바탕으로 ㈜바이스벌사의 생성형 AI/LLM 엔
-지니어로서의 역할을 충실히 수행할 수 있을 것이라 확신합니다. 저는 새로
-운 기술에 대한 끊임없는 탐구와 협동심을 바탕으로 팀과 함께 성장해 나가
-고자 합니다. 특히, MCP 기반의 차세대 자동화 구조 기획 및 PoC 
-개발과 같은 도전적인 프로젝트에 참여하여 제 역량을 더욱 발전시키고 싶습
-니다. 제 경력과 기술이 바이스벌사의 비전과 목표에 기여할 수 있는 좋은
- 파트너가 될 것이라 믿습니다.`;
-    
-    if (generatedResumeTextarea) {
-      generatedResumeTextarea.value = coverLetterContent;
-    }
-
+    // API를 통해 자기소개서 내용을 가져옵니다.
+    // TODO: 이 파일명은 동적으로 결정되어야 합니다.
+    const coverLetterFilename = "jobkorea.co.kr_recruit_gi_read_46819578_f44da7ed_coverletter_087ba592.txt"; 
     showLoadingState(true);
+    statusMessageElement.textContent = "자기소개서 내용을 불러오는 중...";
 
-    fetch(`${API_BASE_URL}/create_cv/`, { // CVFactory_Server의 생성 엔드포인트
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        job_url: job_url_textarea.value,
-        prompt: userStoryTextarea.value,
-        // is_local_test: true // 로컬 테스트용 플래그 (필요한 경우)
+    fetch(`${API_BASE_URL}/logs/${coverLetterFilename}`)
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => { 
+            throw new Error(`자기소개서 파일(${coverLetterFilename})을 불러오는 데 실패했습니다: ${response.status} ${text || ''}`);
+          });
+        }
+        return response.text();
       })
-    })
-    .then(response => {
-      // console.log("Response from /create_cv/ endpoint:", response);
-      if (!response.ok) {
-        return response.json().then(errData => { // 에러 응답이 JSON 형태일 경우를 대비
-          // console.error("Server error response (before throwing):", errData);
-          // detail이 객체 형태일 수 있으므로, 문자열로 변환 시도
-          let detailMessage = errData.detail;
-          if (typeof detailMessage === 'object') {
-            detailMessage = JSON.stringify(detailMessage);
+      .then(coverLetterText => {
+        if (generatedResumeTextarea) {
+          generatedResumeTextarea.value = coverLetterText;
+        }
+        statusMessageElement.textContent = "자기소개서 내용 로드 완료. 생성 요청 중..."; 
+        // 실제 생성 API 호출은 여기서 계속 진행
+        // showLoadingState(true); // 이미 위에서 true로 설정됨
+
+        fetch(`${API_BASE_URL}/create_cv/`, { // CVFactory_Server의 생성 엔드포인트
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            job_url: job_url_textarea.value,
+            prompt: userStoryTextarea.value,
+            // is_local_test: true // 로컬 테스트용 플래그 (필요한 경우)
+          })
+        })
+        .then(response => {
+          // console.log("Response from /create_cv/ endpoint:", response);
+          if (!response.ok) {
+            return response.json().then(errData => { // 에러 응답이 JSON 형태일 경우를 대비
+              // console.error("Server error response (before throwing):", errData);
+              // detail이 객체 형태일 수 있으므로, 문자열로 변환 시도
+              let detailMessage = errData.detail;
+              if (typeof detailMessage === 'object') {
+                detailMessage = JSON.stringify(detailMessage);
+              }
+              throw new Error(detailMessage || `Server responded with status: ${response.status}`);
+            });
           }
-          throw new Error(detailMessage || `Server responded with status: ${response.status}`);
+          return response.json();
+        })
+        .then(data => {
+          // console.log("Data from /create_cv/ endpoint:", data);
+          if (data && data.task_id) {
+            // console.log(\`Task ID ${data.task_id} received, starting polling.\`);
+            pollTaskStatus(data.task_id);
+          } else {
+            // console.error("Task ID not found in response data:", data);
+            throw new Error("Task ID를 받지 못했습니다.");
+          }
+        })
+        .catch(error => {
+          console.error("Error in fetch /create_cv/:", error);
+          // console.error(\`Error during fetch: ${error.message}, Stack: ${error.stack}\`);
+          statusMessageElement.textContent = "자기소개서 생성 요청에 실패했습니다: " + error.message;
+          showLoadingState(false); // 오류 발생 시 로딩 상태 해제
+          stopPolling(); // 혹시 폴링이 시작되었다면 중지
         });
-      }
-      return response.json();
-    })
-    .then(data => {
-      // console.log("Data from /create_cv/ endpoint:", data);
-      if (data && data.task_id) {
-        // console.log(\`Task ID ${data.task_id} received, starting polling.\`);
-        // 폴링 시작 전에 자기소개서 내용을 설정
-        // generatedResumeTextarea.value = coverLetterContent; 
-        pollTaskStatus(data.task_id);
-      } else {
-        // console.error("Task ID not found in response data:", data);
-        throw new Error("Task ID를 받지 못했습니다.");
-      }
-    })
-    .catch(error => {
-      console.error("Error in fetch /create_cv/:", error);
-      // console.error(\`Error during fetch: ${error.message}, Stack: ${error.stack}\`);
-      statusMessageElement.textContent = "자기소개서 생성 요청에 실패했습니다: " + error.message;
-      showLoadingState(false); // 오류 발생 시 로딩 상태 해제
-      stopPolling(); // 혹시 폴링이 시작되었다면 중지
-    });
+      })
+      .catch(error => {
+        console.error("Error fetching cover letter from /logs/ endpoint:", error);
+        statusMessageElement.textContent = error.message;
+        generatedResumeTextarea.value = "자기소개서 내용을 불러오지 못했습니다.";
+        showLoadingState(false);
+        // stopPolling(); // 여기서는 create_cv 호출 전이므로 stopPolling은 불필요
+      });
   }
 }); 
