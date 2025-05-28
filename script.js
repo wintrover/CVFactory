@@ -170,9 +170,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.result && typeof data.result === 'object') {
                 // data.result는 백엔드의 final_pipeline_result 객체여야 합니다.
-                if (data.result.status === "SUCCESS" && data.result.cover_letter_preview) {
+                if (data.result.status === "SUCCESS" && data.result.full_cover_letter_text) {
+                    cvContent = data.result.full_cover_letter_text; // 전체 자기소개서 텍스트 사용
+                    displayedMessage = "자기소개서 생성이 완료되었습니다!"; // 성공 메시지 유지
+                } else if (data.result.status === "SUCCESS" && data.result.cover_letter_preview) {
+                    // full_cover_letter_text가 없고 preview만 있는 경우 (이전 버전 호환 또는 예외 상황)
                     cvContent = data.result.cover_letter_preview;
-                    // displayedMessage는 기본 메시지 유지
+                    displayedMessage = "자기소개서 미리보기가 로드되었습니다. (전체 내용 확인 필요)";
+                    logger.warn("Task SUCCESS but full_cover_letter_text missing, using preview.");
                 } else if (data.result.status === "NO_CONTENT_FOR_COVER_LETTER" && data.result.message) {
                     cvContent = data.result.message; 
                     displayedMessage = data.result.message;
@@ -277,79 +282,53 @@ document.addEventListener('DOMContentLoaded', function() {
       return; 
     }
 
-    // API를 통해 자기소개서 내용을 가져옵니다.
-    // TODO: 이 파일명은 동적으로 결정되어야 합니다.
-    const coverLetterFilename = "jobkorea.co.kr_recruit_gi_read_46819578_f44da7ed_coverletter_087ba592.txt"; 
+    // 이전에 /logs/filename API를 호출하던 부분은 모두 제거합니다.
     showLoadingState(true);
-    statusMessageElement.textContent = "자기소개서 내용을 불러오는 중...";
+    statusMessageElement.textContent = "자기소개서 생성 요청 중..."; 
+    generatedResumeTextarea.value = ""; // 생성 시작 시 textarea 비우기
 
-    fetch(`${API_BASE_URL}/logs/${coverLetterFilename}`)
-      .then(response => {
-        if (!response.ok) {
-          return response.text().then(text => { 
-            throw new Error(`자기소개서 파일(${coverLetterFilename})을 불러오는 데 실패했습니다: ${response.status} ${text || ''}`);
-          });
-        }
-        return response.text();
+    fetch(`${API_BASE_URL}/create_cv/`, { // CVFactory_Server의 생성 엔드포인트
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        job_url: job_url_textarea.value,
+        prompt: userStoryTextarea.value,
+        // is_local_test: true // 로컬 테스트용 플래그 (필요한 경우)
       })
-      .then(coverLetterText => {
-        if (generatedResumeTextarea) {
-          generatedResumeTextarea.value = coverLetterText;
-        }
-        statusMessageElement.textContent = "자기소개서 내용 로드 완료. 생성 요청 중..."; 
-        // 실제 생성 API 호출은 여기서 계속 진행
-        // showLoadingState(true); // 이미 위에서 true로 설정됨
-
-        fetch(`${API_BASE_URL}/create_cv/`, { // CVFactory_Server의 생성 엔드포인트
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            job_url: job_url_textarea.value,
-            prompt: userStoryTextarea.value,
-            // is_local_test: true // 로컬 테스트용 플래그 (필요한 경우)
-          })
-        })
-        .then(response => {
-          // console.log("Response from /create_cv/ endpoint:", response);
-          if (!response.ok) {
-            return response.json().then(errData => { // 에러 응답이 JSON 형태일 경우를 대비
-              // console.error("Server error response (before throwing):", errData);
-              // detail이 객체 형태일 수 있으므로, 문자열로 변환 시도
-              let detailMessage = errData.detail;
-              if (typeof detailMessage === 'object') {
-                detailMessage = JSON.stringify(detailMessage);
-              }
-              throw new Error(detailMessage || `Server responded with status: ${response.status}`);
-            });
+    })
+    .then(response => {
+      // console.log("Response from /create_cv/ endpoint:", response);
+      if (!response.ok) {
+        return response.json().then(errData => { // 에러 응답이 JSON 형태일 경우를 대비
+          // console.error("Server error response (before throwing):", errData);
+          // detail이 객체 형태일 수 있으므로, 문자열로 변환 시도
+          let detailMessage = errData.detail;
+          if (typeof detailMessage === 'object') {
+            detailMessage = JSON.stringify(detailMessage);
           }
-          return response.json();
-        })
-        .then(data => {
-          // console.log("Data from /create_cv/ endpoint:", data);
-          if (data && data.task_id) {
-            // console.log(\`Task ID ${data.task_id} received, starting polling.\`);
-            pollTaskStatus(data.task_id);
-          } else {
-            // console.error("Task ID not found in response data:", data);
-            throw new Error("Task ID를 받지 못했습니다.");
-          }
-        })
-        .catch(error => {
-          console.error("Error in fetch /create_cv/:", error);
-          // console.error(\`Error during fetch: ${error.message}, Stack: ${error.stack}\`);
-          statusMessageElement.textContent = "자기소개서 생성 요청에 실패했습니다: " + error.message;
-          showLoadingState(false); // 오류 발생 시 로딩 상태 해제
-          stopPolling(); // 혹시 폴링이 시작되었다면 중지
+          throw new Error(detailMessage || `Server responded with status: ${response.status}`);
         });
-      })
-      .catch(error => {
-        console.error("Error fetching cover letter from /logs/ endpoint:", error);
-        statusMessageElement.textContent = error.message;
-        generatedResumeTextarea.value = "자기소개서 내용을 불러오지 못했습니다.";
-        showLoadingState(false);
-        // stopPolling(); // 여기서는 create_cv 호출 전이므로 stopPolling은 불필요
-      });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // console.log("Data from /create_cv/ endpoint:", data);
+      if (data && data.task_id) {
+        // console.log(\`Task ID ${data.task_id} received, starting polling.\`);
+        pollTaskStatus(data.task_id);
+      } else {
+        // console.error("Task ID not found in response data:", data);
+        throw new Error("Task ID를 받지 못했습니다.");
+      }
+    })
+    .catch(error => {
+      console.error("Error in fetch /create_cv/:", error);
+      // console.error(\`Error during fetch: ${error.message}, Stack: ${error.stack}\`);
+      statusMessageElement.textContent = "자기소개서 생성 요청에 실패했습니다: " + error.message;
+      showLoadingState(false); // 오류 발생 시 로딩 상태 해제
+      stopPolling(); // 혹시 폴링이 시작되었다면 중지
+    });
   }
 }); 
