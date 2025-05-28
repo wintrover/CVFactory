@@ -44,28 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
   var generatedResumeTextarea = document.getElementById("generated_resume");
   var statusMessageElement = document.getElementById("statusMessage"); // 상태 메시지 요소 가져오기
 
-  let pollingIntervalId = null; // 폴링 인터벌 ID
-  let isPolling = false; // 현재 폴링 중인지 여부를 나타내는 플래그
+  let eventSource = null; // SSE EventSource 객체
 
   // 요소 존재 여부 확인
-  if (!generateButtonElement || !buttonText || !spinner) {
-    console.error("Generate button or its inner elements not found!");
-    return;
-  }
-  if (!job_url_textarea) {
-    console.error("Job URL textarea not found!");
-    return;
-  }
-  if (!userStoryTextarea) {
-    console.error("User Story textarea not found!");
-    return;
-  }
-  if (!generatedResumeTextarea) {
-    console.error("Generated resume textarea not found!");
-    return;
-  }
-  if (!statusMessageElement) { // statusMessageElement 존재 여부 확인
-    console.error("Status message element not found!");
+  if (!generateButtonElement || !buttonText || !spinner || !job_url_textarea || !userStoryTextarea || !generatedResumeTextarea || !statusMessageElement) {
+    console.error("One or more essential UI elements are missing!");
     return;
   }
 
@@ -120,255 +103,225 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function stopPolling() {
-    if (pollingIntervalId) {
-      clearInterval(pollingIntervalId);
-      pollingIntervalId = null;
-    }
-    isPolling = false;
-    showLoadingState(false); // 폴링 중지 시 항상 로딩 상태 해제
-  }
-
-  function pollTaskStatus(taskId) {
-    // console.log("Polling for task ID:", taskId);
-    isPolling = true; // 폴링 시작
-    showLoadingState(true); // 폴링 시작 시 로딩 상태 표시
-
-    let initialMessage = "자기소개서를 생성 중입니다... 잠시만 기다려 주세요.";
+  function startTaskStreaming(taskId) {
+    console.log("Starting SSE connection for task ID:", taskId);
+    showLoadingState(true);
+    
+    let initialMessage = "자기소개서 생성을 시작합니다... 잠시만 기다려 주세요.";
     if (('Notification' in window) && Notification.permission !== 'granted') {
       initialMessage += " 브라우저 알림을 허용하시면 작업 완료 시 알려드립니다.";
     }
     statusMessageElement.textContent = initialMessage;
-    generatedResumeTextarea.value = ""; // 자기소개서 영역은 비워둠
-    // console.log(initialMessage);
+    generatedResumeTextarea.value = ""; // 이전 결과 비우기
 
-    if (pollingIntervalId) { // 이전 폴링이 있다면 중지
-        clearInterval(pollingIntervalId);
+    if (eventSource) {
+        eventSource.close(); // 이전 EventSource가 있다면 닫기
     }
 
-    pollingIntervalId = setInterval(function() {
-      if (!isPolling) { // isPolling이 false이면 폴링 중단 (예: stopPolling 호출 시)
-          return;
-      }
-      // console.log(`Fetching status for task ${taskId}...`); // 반복적인 로그 제거 또는 주석 처리
-      fetch(`${API_BASE_URL}/tasks/${taskId}`) // CVFactory_Server의 상태 확인 엔드포인트
-        .then(response => {
-          if (!response.ok) {
-            return response.json().then(errData => {
-              throw new Error(errData.detail || `Server responded with status: ${response.status}`);
-            });
-          }
-          return response.json();
-        })
-        .then(data => {
-          // console.log("Task status data received:", data);
-          if (data.status === "SUCCESS") {
-            // console.log("Task SUCCESS: Clearing interval.");
-            stopPolling(); 
-            let displayedMessage = "자기소개서 생성이 완료되었습니다!";
-            let cvContent = "";
+    eventSource = new EventSource(API_BASE_URL + "/stream-task-status/" + taskId);
 
-            if (data.result && typeof data.result === 'object') {
-                // data.result는 백엔드의 final_pipeline_result 객체여야 합니다.
-                if (data.result.status === "SUCCESS" && data.result.full_cover_letter_text) {
-                    cvContent = data.result.full_cover_letter_text; // 전체 자기소개서 텍스트 사용
-                    displayedMessage = "자기소개서 생성이 완료되었습니다!"; // 성공 메시지 유지
-                } else if (data.result.status === "SUCCESS" && data.result.cover_letter_preview) {
-                    // full_cover_letter_text가 없고 preview만 있는 경우 (이전 버전 호환 또는 예외 상황)
-                    cvContent = data.result.cover_letter_preview;
-                    displayedMessage = "자기소개서 미리보기가 로드되었습니다. (전체 내용 확인 필요)";
-                    logger.warn("Task SUCCESS but full_cover_letter_text missing, using preview.");
-                } else if (data.result.status === "NO_CONTENT_FOR_COVER_LETTER" && data.result.message) {
-                    cvContent = data.result.message; 
-                    displayedMessage = data.result.message;
-                } else if (data.result.message) { 
-                    cvContent = data.result.message; // 메시지만 있는 경우 (예: 파일 경로만 반환 시)
-                    displayedMessage = data.result.message;
-                     if (data.result.cover_letter_preview) { // 혹시 preview가 message와 같이 있다면 preview 우선
-                        cvContent = data.result.cover_letter_preview;
-                        displayedMessage = "자기소개서 생성이 완료되었습니다!";
-                    }
-                } else { // 예상치 못한 객체 구조
-                    cvContent = "생성된 자기소개서 내용을 분석하는 데 실패했습니다. (서버 응답 형식 오류)";
-                    displayedMessage = "자기소개서 내용 분석 실패.";
-                    console.warn("Task SUCCESS but result object structure is unexpected:", data.result);
-                }
-            } else if (data.result && typeof data.result === 'string') { 
-                // 이 경우는 process_job_posting_pipeline의 반환값(루트 태스크 ID)이 그대로 온 경우일 수 있음.
-                // main.py 수정으로 이 경우는 거의 없어야 하지만, 방어 코드.
-                cvContent = "자기소개서 결과 처리 중 오류가 발생했습니다. (잘못된 응답 형식)";
-                displayedMessage = "자기소개서 결과 처리 오류.";
-                console.warn("Task SUCCESS but result is a string:", data.result);
-            } else { // data.result가 null이거나 예상치 못한 타입
-                cvContent = "생성된 자기소개서 내용을 받아오지 못했습니다. (결과 없음)";
-                displayedMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
-                console.warn("Task SUCCESS but result is null or unexpected type:", data.result);
+    eventSource.onopen = function() {
+        console.log("SSE connection opened for task " + taskId + ".");
+        statusMessageElement.textContent = "서버와 연결되었습니다. 작업 진행 상황을 곧 받아옵니다...";
+    };
+
+    eventSource.onmessage = function(event) {
+      // console.log("SSE message received:", event.data);
+      try {
+        const data = JSON.parse(event.data);
+        // console.log("Parsed SSE data:", data);
+
+        let statusText = data.status;
+        if (data.current_step) {
+            statusText = data.current_step + " (상태: " + data.status + ")";
+        }
+        statusMessageElement.textContent = "진행 상황: " + statusText;
+
+        if (data.status === "SUCCESS") {
+          console.log("SSE Task SUCCESS:", data);
+          showLoadingState(false);
+          let displayedMessage = "자기소개서 생성이 완료되었습니다!";
+          let cvContent = "";
+
+          if (data.result && typeof data.result === 'object') {
+            if (data.result.full_cover_letter_text) { // FastAPI의 TaskStatusResponse.result.full_cover_letter_text
+                cvContent = data.result.full_cover_letter_text;
+            } else if (data.result.result && data.result.result.full_cover_letter_text) { // FastAPI의 TaskStatusResponse.result.result.full_cover_letter_text (중첩된 경우)
+                cvContent = data.result.result.full_cover_letter_text;
+            } else if (data.result.message) { // 다른 메시지 필드가 있는 경우
+                cvContent = data.result.message;
+                displayedMessage = data.result.message;
+            } else {
+                cvContent = "생성된 자기소개서 내용을 분석하는 데 실패했습니다. (서버 응답 형식 오류)";
+                displayedMessage = "자기소개서 내용 분석 실패.";
+                console.warn("SSE SUCCESS but result object structure is unexpected:", data.result);
             }
-            
-            generatedResumeTextarea.value = cvContent;
-            statusMessageElement.textContent = displayedMessage;
-            showLoadingState(false);
-            
-            // 백엔드로 표시된 내용 로깅
-            logDisplayedCvToBackend(cvContent);
-
-            let notificationMessage = displayedMessage.split('\n')[0]; // 알림은 첫 줄만, 또는 간결한 메시지
-            if (cvContent && cvContent.length > 50 && displayedMessage.startsWith("자기소개서 생성")) { // 내용이 있고 성공 메시지면
-                 notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
-            }
-
-            showBrowserNotification("자기소개서 생성 완료!", notificationMessage, () => {
-                generatedResumeTextarea.focus();
-            });
-
-          } else if (data.status === "FAILURE") {
-            console.error("Task FAILURE: Clearing interval.", data.result ? (data.result.error || data.result) : 'No error details');
-            stopPolling(); 
-            let errorMessage = "자기소개서 생성에 실패했습니다.";
-            if (data.result && data.result.error) {
-                errorMessage += ` 오류: ${data.result.error}`;
-            } else if (data.result && typeof data.result === 'string') {
-                errorMessage += ` 오류: ${data.result}`;
-            }
-            
-            let currentStepInfo = data.current_step ? ` (단계: ${data.current_step})` : "";
-            statusMessageElement.textContent = errorMessage + currentStepInfo;
-            
-            showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' ') + currentStepInfo, () => {
-                // 실패 시에는 굳이 포커스하지 않아도 될 수 있음
-            });
-          } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY" || data.status === "PROGRESS") { 
-            let currentStepMessage = data.current_step || data.status; 
-            // 이전 상태와 다를 경우에만 로그를 남기거나, 로그 레벨을 낮추는 것을 고려할 수 있습니다.
-            // 여기서는 매번 상태 메시지를 UI에 업데이트는 하되, 콘솔 로그는 줄입니다.
-            // console.log(`Task ${taskId} status: ${data.status}, step: ${currentStepMessage}`); // 상세 로그는 필요시 주석 해제
-            statusMessageElement.textContent = `자기소개서 생성 중... (${currentStepMessage})`;
+          } else if (data.result && typeof data.result === 'string') {
+             cvContent = "자기소개서 결과 처리 중 오류가 발생했습니다. (잘못된 응답 형식)";
+             displayedMessage = "자기소개서 결과 처리 오류.";
+             console.warn("SSE SUCCESS but result is a string:", data.result);
           } else {
-            // 알 수 없는 상태
-            stopPolling(); // 알 수 없는 상태 시 폴링 중지 및 로딩 상태 해제
-            // generatedResumeTextarea.value = `알 수 없는 작업 상태입니다: ${data.status}`;
-            statusMessageElement.textContent = `알 수 없는 작업 상태입니다: ${data.status}`;
+             cvContent = "생성된 자기소개서 내용을 받아오지 못했습니다. (결과 없음)";
+             displayedMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
+             console.warn("SSE SUCCESS but result is null or unexpected type:", data.result);
           }
-        })
-        .catch(error => {
-          console.error("Polling error:", error);
-          stopPolling(); // 오류 시 폴링 중지 및 로딩 상태 해제
-          // generatedResumeTextarea.value = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
-          statusMessageElement.textContent = "작업 상태 확인 중 오류가 발생했습니다: " + error.message;
-        });
-    }, 10000); // 폴링 주기를 5000ms (5초)에서 10000ms (10초)로 변경
+          
+          generatedResumeTextarea.value = cvContent;
+          statusMessageElement.textContent = displayedMessage; // 최종 성공 메시지
+          logDisplayedCvToBackend(cvContent);
+
+          let notificationMessage = displayedMessage.split('\n')[0];
+          if (cvContent && cvContent.length > 50 && displayedMessage.startsWith("자기소개서 생성")) {
+               notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
+          }
+          showBrowserNotification("자기소개서 생성 완료!", notificationMessage, () => {
+              generatedResumeTextarea.focus();
+          });
+          eventSource.close(); // 성공 시 연결 종료
+          console.log("SSE connection closed on SUCCESS.");
+
+        } else if (data.status === "FAILURE" || data.status === "ERROR_INTERNAL" || data.status === "ERROR_SETUP" || data.status === "ERROR_STREAM" || data.status === "ERROR_SERIALIZATION" || data.status === "ERROR_UNEXPECTED_STREAM") {
+          console.error("SSE Task FAILURE or ERROR:", data);
+          showLoadingState(false);
+          let errorMessage = "자기소개서 생성에 실패했습니다.";
+          if (data.result && data.result.error) {
+              errorMessage += " 오류: " + data.result.error;
+          } else if (data.result && typeof data.result === 'string') { // 실패 시 result가 문자열일 경우
+              errorMessage += " 오류: " + data.result;
+          } else if (data.message) { // FastAPI 에러 메시지
+              errorMessage = data.message;
+          }
+          
+          let currentStepInfo = data.current_step ? " (단계: " + data.current_step + ")" : "";
+          statusMessageElement.textContent = errorMessage + currentStepInfo;
+          
+          showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' ') + currentStepInfo);
+          eventSource.close(); // 실패 시 연결 종료
+          console.log("SSE connection closed on FAILURE or ERROR.");
+
+        } else if (data.status === "PENDING" || data.status === "STARTED" || data.status === "RETRY" || data.status === "PROGRESS") {
+          // 진행 중 상태 업데이트 (이미 위에서 statusMessageElement 업데이트 됨)
+          console.log("SSE Task " + taskId + " status: " + data.status + ", step: " + (data.current_step || 'N/A'));
+        } else {
+          // 알 수 없는 상태
+          console.warn("SSE Unknown task status for " + taskId + ": " + JSON.stringify(data));
+          statusMessageElement.textContent = "알 수 없는 작업 상태: " + (data.status || 'N/A');
+          // 알 수 없는 상태라도 일단은 연결 유지, 서버에서 종료해주길 기대
+        }
+      } catch (e) {
+        console.error("Error parsing SSE message or updating UI:", e, "Raw data:", event.data);
+        statusMessageElement.textContent = "데이터 처리 중 오류가 발생했습니다.";
+        // 파싱 오류 시에는 연결을 유지할 수도, 닫을 수도 있음. 여기서는 일단 유지.
+      }
+    };
+
+    eventSource.onerror = function(err) {
+      console.error("EventSource failed:", err);
+      showLoadingState(false);
+      statusMessageElement.textContent = "서버와 연결 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      eventSource.close(); // 에러 발생 시 명시적으로 연결 종료
+      console.log("SSE connection closed on ERROR.");
+    };
   }
 
   function logDisplayedCvToBackend(textToLog) {
-    if (!textToLog || textToLog.trim() === "") {
-      // console.log("로깅할 내용이 없어 백엔드 로깅 요청을 보내지 않습니다.");
-      return;
-    }
-    // console.log("백엔드로 표시된 자기소개서 내용 로깅 시도:", textToLog.substring(0,100) + "...");
-    fetch(`${API_BASE_URL}/log-displayed-cv`, {
+    // console.log(\`Logging displayed CV to backend. Length: \${textToLog ? textToLog.length : 0}\`);
+    const payload = {
+      displayed_text: textToLog || ""
+    };
+  
+    fetch(API_BASE_URL + "/log-displayed-cv", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        displayed_text: textToLog
-      })
+      body: JSON.stringify(payload),
     })
     .then(response => {
       if (!response.ok) {
+        console.warn("Backend logging failed with status: " + response.status);
+        return response.json().then(errData => { throw new Error(errData.detail || 'Unknown error'); });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // console.log('Backend logging successful:', data.message);
+    })
+    .catch(error => {
+      console.error('Error logging displayed CV to backend:', error);
+    });
+  }
+  
+  generateButtonElement.addEventListener('click', function() {
+    // console.log("Generate button clicked.");
+    var url = job_url_textarea.value.trim();
+    var userPrompt = userStoryTextarea.value.trim();
+    // console.log(\`URL: \${url}, Prompt: \${userPrompt ? 'Provided' : 'Not provided'}\`);
+
+    if (!url) {
+      // console.log("URL is empty. Alerting user.");
+      alert("채용 공고 URL을 입력해주세요.");
+      return;
+    }
+
+    // console.log("Calling showLoadingState(true)");
+    showLoadingState(true);
+    statusMessageElement.textContent = "자기소개서 생성 요청 중..."; // 초기 메시지
+    generatedResumeTextarea.value = ""; // 이전 결과 지우기
+
+    const payload = {
+      job_url: url,
+      prompt: userPrompt,
+    };
+    // console.log("Payload for POST request:", payload);
+
+    fetch(API_BASE_URL + "/", { // CVFactory_Server의 메인 엔드포인트
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+    .then(response => {
+      // console.log("Received response from server.");
+      if (!response.ok) {
+        // console.error("Server responded with an error:", response.status);
+        showLoadingState(false);
         return response.json().then(errData => {
-          throw new Error(errData.detail || `Server responded with status: ${response.status} during CV logging`);
+            // console.error("Error data from server:", errData);
+            let detailMessage = "알 수 없는 오류";
+            if (errData && errData.detail) {
+                if (typeof errData.detail === 'string') {
+                    detailMessage = errData.detail;
+                } else if (Array.isArray(errData.detail) && errData.detail.length > 0 && errData.detail[0].msg && Array.isArray(errData.detail[0].loc)) {
+                    // FastAPI 유효성 검사 오류 형식 처리
+                    detailMessage = errData.detail.map(d => d.loc.join('.') + " - " + d.msg).join(', ');
+                } else if (typeof errData.detail === 'object') {
+                    detailMessage = JSON.stringify(errData.detail);
+                }
+            }
+            throw new Error(detailMessage);
         });
       }
       return response.json();
     })
     .then(data => {
-      // console.log("표시된 CV 내용 백엔드 로깅 성공:", data.message);
-    })
-    .catch(error => {
-      console.error("표시된 CV 내용 백엔드 로깅 실패:", error);
-      // 사용자에게 이 실패를 알릴 필요는 일반적으로 없습니다.
-      // 개발/디버깅 단계에서는 중요할 수 있습니다.
-    });
-  }
-
-  // When the user clicks the button
-  generateButtonElement.onclick = function() {
-    // console.log("Generate button clicked");
-
-    if (isPolling) {
-      // console.log("Already polling, ignoring click.");
-      alert("이미 자기소개서 생성 작업이 진행 중입니다.\n완료될 때까지 기다려 주십시오.");
-      return;
-    }
-
-    requestNotificationPermission().then(granted => {
-        if (!granted) {
-            // console.log("Browser notifications are not granted. Proceeding without them.");
-        }
-    });
-
-    var job_url = job_url_textarea.value;
-    // console.log("Job URL value:", job_url);
-    var userStory = userStoryTextarea.value;
-    // console.log("User Story value:", userStory);
-
-    if (!job_url || job_url.trim() === "") {
-      console.error("Job URL is empty. Aborting fetch.");
-      alert("채용 공고 URL을 입력해 주세요.");
-      // generatedResumeTextarea.value = ""; 
-      statusMessageElement.textContent = "채용 공고 URL을 입력해 주세요.";
-      return; 
-    }
-
-    // 이전에 /logs/filename API를 호출하던 부분은 모두 제거합니다.
-    showLoadingState(true);
-    statusMessageElement.textContent = "자기소개서 생성 요청 중..."; 
-    generatedResumeTextarea.value = ""; // 생성 시작 시 textarea 비우기
-
-    fetch(`${API_BASE_URL}/`, { // CVFactory_Server의 생성 엔드포인트 (루트 경로로 수정)
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        job_url: job_url_textarea.value,
-        prompt: userStoryTextarea.value,
-        // is_local_test: true // 로컬 테스트용 플래그 (필요한 경우)
-      })
-    })
-    .then(response => {
-      // console.log("Response from / endpoint (initial task creation):", response);
-      if (!response.ok) {
-        return response.json().then(errData => { 
-          let detailMessage = errData.detail;
-          if (typeof detailMessage === 'object') {
-            detailMessage = JSON.stringify(detailMessage);
-          }
-          throw new Error(detailMessage || `Server responded with status: ${response.status}`);
-        });
-      }
-      return response.json(); // This should be TaskStatusResponse with task_id and PENDING status
-    })
-    .then(data => {
-      // console.log("Data from / endpoint (initial task creation):", data);
-      if (data && data.task_id) {
-        // console.log(`Task ID ${data.task_id} received from initial call, starting polling.`);
-        pollTaskStatus(data.task_id); // 폴링 시작
-        // 초기 UI 업데이트는 pollTaskStatus 내부에서 처리하므로 여기서는 중복으로 하지 않음
-        // statusMessageElement.textContent = data.current_step || "작업 요청이 접수되었습니다. 상태 확인 중...";
-        // showLoadingState(true); // 이미 true일 수 있지만, 명시적으로.
+      // console.log("Successfully received task ID:", data);
+      if (data.task_id) {
+        statusMessageElement.textContent = "작업이 시작되었습니다 (ID: " + data.task_id + "). 잠시 후 결과가 표시됩니다.";
+        startTaskStreaming(data.task_id); // SSE 스트리밍 시작
       } else {
-        // console.error("Task ID not found in initial response data:", data);
-        throw new Error("작업 ID를 받지 못했습니다.");
+        // console.error("Task ID not found in response data:", data);
+        showLoadingState(false);
+        statusMessageElement.textContent = "작업 ID를 받지 못했습니다.";
+        generatedResumeTextarea.value = "오류: 서버에서 작업 ID를 반환하지 않았습니다.";
       }
     })
     .catch(error => {
-      console.error("Error in fetch /create_cv/:", error);
-      // console.error(`Error during fetch: ${error.message}, Stack: ${error.stack}`);
+      console.error("Error during fetch operation:", error);
+      showLoadingState(false);
       statusMessageElement.textContent = "자기소개서 생성 요청에 실패했습니다: " + error.message;
-      showLoadingState(false); // 오류 발생 시 로딩 상태 해제
-      stopPolling(); // 혹시 폴링이 시작되었다면 중지
+      generatedResumeTextarea.value = "오류로 인해 자기소개서를 생성할 수 없습니다: " + error.message;
     });
-  }
+  });
 }); 
