@@ -137,18 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
           PENDING: "작업 대기 중입니다...",
           STARTED: "자기소개서 생성을 시작합니다...",
           RETRY: "일시적인 오류로 재시도 중입니다...",
-          PROGRESS: "자기소개서를 생성 중입니다...", // 기본 PROGRESS 메시지
-          // SUCCESS, FAILURE 등은 아래에서 별도 처리
-        };
-
-        const currentStepMessages = {
-          "채용공고 분석 중": "채용 공고를 꼼꼼히 분석하고 있어요. 잠시만 기다려 주세요.",
-          "핵심 요구사항 파악 중": "핵심 요구사항을 파악하고 있습니다. 거의 다 왔어요!",
-          "사용자 경험 분석 중": "제출해주신 경험을 바탕으로 맞춤형 내용을 구성하고 있습니다.",
-          "초안 생성 중": "자기소개서 초안을 만들고 있어요. 멋진 결과물을 기대해주세요!",
-          "초안 검토 및 수정 중": "만들어진 초안을 검토하고, 더 좋은 내용으로 다듬고 있습니다.",
-          "최종 검토 중": "거의 완성되었어요! 최종 검토 후 곧 보여드릴게요.",
-          "자기소개서 생성 중": "자기소개서를 생성하고 있습니다. 잠시만 기다려주세요." // 포괄적인 생성 중 메시지
+          PROGRESS: "자기소개서를 생성 중입니다...", // PROGRESS 상태의 기본 메시지
         };
 
         if (data.status === "SUCCESS") {
@@ -171,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
           if (coverLetterText) {
             generatedResumeTextarea.value = coverLetterText;
-            statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
+            statusText = "자기소개서 생성이 완료되었습니다!"; // 성공 메시지
             logDisplayedCvToBackend(coverLetterText);
 
             let notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
@@ -183,51 +172,45 @@ document.addEventListener('DOMContentLoaded', function() {
           } else {
             if (!document.getElementById('error_info_container').textContent.includes('오류')){
                 updateErrorInfo('생성된 자기소개서 내용이 비어있습니다.');
+                statusText = "생성된 자기소개서 내용이 비어있습니다."; // 사용자에게도 알림
             }
           }
         } else if (data.status === "FAILURE" || data.status === "ERROR_INTERNAL" || data.status === "ERROR_SETUP" || data.status === "ERROR_STREAM" || data.status === "ERROR_SERIALIZATION" || data.status === "ERROR_UNEXPECTED_STREAM") {
           console.error("SSE Task FAILURE or ERROR:", data);
           showLoadingState(false);
-          let errorMessage = "자기소개서 생성에 실패했습니다.";
-          if (data.result && data.result.error) {
-              errorMessage += " 오류: " + data.result.error;
-          } else if (data.result && typeof data.result === 'string') { // 실패 시 result가 문자열일 경우
-              errorMessage += " 오류: " + data.result;
-          } else if (data.message) { // FastAPI 에러 메시지
-              errorMessage = data.message;
+          if (data.result && data.result.error_message) { // 백엔드에서 get_detailed_error_info 사용 시
+              statusText = "오류: " + data.result.error_message;
+          } else if (data.result && data.result.error) { // 기존 오류 형식
+              statusText = "오류: " + data.result.error;
+          } else if (data.result && typeof data.result === 'string') {
+              statusText = "오류: " + data.result;
+          } else if (data.message) { // FastAPI HTTP 예외 메시지
+              statusText = data.message;
+          } else {
+            statusText = "자기소개서 생성 중 알 수 없는 오류가 발생했습니다.";
           }
           
           let currentStepInfo = data.current_step ? " (진행 단계: " + data.current_step + ")" : "";
-          statusMessageElement.textContent = errorMessage + currentStepInfo;
-          
-          showBrowserNotification("자기소개서 생성 실패", errorMessage.replace(/\n/g, ' ') + currentStepInfo);
-          eventSource.close(); // 실패 시 연결 종료
+          statusText += currentStepInfo;
+          updateErrorInfo(statusText, data); // 상세 오류 정보 표시 함수 호출
+          eventSource.close(); // 실패 또는 오류 시 연결 종료
           console.log("SSE connection closed on FAILURE or ERROR.");
-
-        } else if (friendlyMessages[data.status]) {
-          // PENDING, STARTED, RETRY, PROGRESS 상태 처리
-          if (data.status === "PROGRESS" && data.current_step && currentStepMessages[data.current_step]) {
-            statusText = currentStepMessages[data.current_step];
-          } else if (data.status === "PROGRESS" && data.current_step) {
-            // currentStepMessages에 정의되지 않은 새로운 단계가 올 경우
-            statusText = data.current_step + " 진행 중...";
-          } else {
+        } else { // PENDING, STARTED, PROGRESS, RETRY 등
+          if (data.current_step) { // current_step이 있으면 최우선 사용
+            statusText = data.current_step;
+          } else if (friendlyMessages[data.status]) { // current_step이 없을 때 status 기반 메시지
             statusText = friendlyMessages[data.status];
+          } else {
+            statusText = data.status || "상태를 받아오는 중..."; // 모든 매핑에 실패하면 원래 상태값 또는 기본 메시지
           }
-          console.log("[DEBUG] Before setting textContent - statusText:", statusText, "data.status:", data.status, "data.current_step:", data.current_step);
-          statusMessageElement.textContent = statusText;
-          console.log("SSE Task " + taskId + " status: " + data.status + ", step: " + (data.current_step || 'N/A') + ", message: " + statusText);
-        } else {
-          // 알 수 없는 상태
-          console.warn("SSE Unknown task status for " + taskId + ": " + JSON.stringify(data));
-          statusText = "알 수 없는 작업 상태입니다: " + (data.status || 'N/A');
-          if (data.current_step) {
-            statusText += " (현재 단계: " + data.current_step + ")";
-          }
-          console.log("[DEBUG] Before setting textContent (Unknown status) - statusText:", statusText);
-          statusMessageElement.textContent = statusText;
-          // 알 수 없는 상태라도 일단은 연결 유지, 서버에서 종료해주길 기대
         }
+        
+        console.log(`[DEBUG] 최종 statusText 결정: ${statusText}, 현재 상태: ${data.status}, 현재 단계: ${data.current_step || 'N/A'}`);
+        statusMessageElement.textContent = statusText;
+        // console.log(`SSE Task ${data.task_id} status: ${data.status}, step: ${data.current_step || 'N/A'}, message: ${statusText}`);
+
+        // 진행률 바 업데이트 (필요한 경우)
+        // ... existing code ...
       } catch (e) {
         console.error("Error parsing SSE message or updating UI:", e, "Raw data:", event.data);
         statusMessageElement.textContent = "데이터 처리 중 오류가 발생했습니다.";
