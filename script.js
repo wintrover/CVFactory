@@ -126,10 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     eventSource.onmessage = function(event) {
-      // console.log("SSE message received:", event.data);
+      console.log("[DEBUG] Raw SSE event.data:", event.data); // 원시 데이터 로깅
       try {
         const data = JSON.parse(event.data);
-        // console.log("Parsed SSE data:", data);
+        console.log("[DEBUG] Parsed SSE data object:", JSON.stringify(data, null, 2)); // 파싱된 객체 전체 로깅
 
         let statusText = "";
         // 사용자 친화적 메시지 매핑
@@ -214,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
           } else {
             statusText = friendlyMessages[data.status];
           }
+          console.log("[DEBUG] Before setting textContent - statusText:", statusText, "data.status:", data.status, "data.current_step:", data.current_step);
           statusMessageElement.textContent = statusText;
           console.log("SSE Task " + taskId + " status: " + data.status + ", step: " + (data.current_step || 'N/A') + ", message: " + statusText);
         } else {
@@ -223,6 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (data.current_step) {
             statusText += " (현재 단계: " + data.current_step + ")";
           }
+          console.log("[DEBUG] Before setting textContent (Unknown status) - statusText:", statusText);
           statusMessageElement.textContent = statusText;
           // 알 수 없는 상태라도 일단은 연결 유지, 서버에서 종료해주길 기대
         }
