@@ -140,46 +140,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.status === "SUCCESS") {
           console.log("SSE Task SUCCESS:", data);
           showLoadingState(false);
-          let displayedMessage = "자기소개서 생성이 완료되었습니다!";
-          let cvContent = "";
-
-          if (data.result && typeof data.result === 'object') {
-            if (data.result.full_cover_letter_text) { // FastAPI의 TaskStatusResponse.result.full_cover_letter_text
-                cvContent = data.result.full_cover_letter_text;
-            } else if (data.result.result && data.result.result.full_cover_letter_text) { // FastAPI의 TaskStatusResponse.result.result.full_cover_letter_text (중첩된 경우)
-                cvContent = data.result.result.full_cover_letter_text;
-            } else if (data.result.message) { // 다른 메시지 필드가 있는 경우
-                cvContent = data.result.message;
-                displayedMessage = data.result.message;
-            } else {
-                cvContent = "생성된 자기소개서 내용을 분석하는 데 실패했습니다. (서버 응답 형식 오류)";
-                displayedMessage = "자기소개서 내용 분석 실패.";
-                console.warn("SSE SUCCESS but result object structure is unexpected:", data.result);
-            }
-          } else if (data.result && typeof data.result === 'string') {
-             cvContent = "자기소개서 결과 처리 중 오류가 발생했습니다. (잘못된 응답 형식)";
-             displayedMessage = "자기소개서 결과 처리 오류.";
-             console.warn("SSE SUCCESS but result is a string:", data.result);
+          let coverLetterText = '';
+          if (typeof data.result === 'string') {
+            coverLetterText = data.result;
+            console.log('SSE SUCCESS but result is a string:', coverLetterText);
+          } else if (data.result && typeof data.result === 'object' && data.result.cover_letter_text) {
+            coverLetterText = data.result.cover_letter_text;
+            console.log('SSE SUCCESS with result.cover_letter_text:', coverLetterText);
+          } else if (data.result && typeof data.result === 'object') {
+            console.warn('SSE SUCCESS but result object structure is unexpected:', data.result);
+            updateErrorInfo('예상치 못한 결과 데이터 형식입니다.', data.result);
           } else {
-             cvContent = "생성된 자기소개서 내용을 받아오지 못했습니다. (결과 없음)";
-             displayedMessage = "자기소개서 내용을 받아오는 데 실패했습니다.";
-             console.warn("SSE SUCCESS but result is null or unexpected type:", data.result);
+            console.error('SSE SUCCESS but result is in an unknown format or missing:', data.result);
+            updateErrorInfo('자기소개서 내용을 가져올 수 없습니다.', data.result);
           }
           
-          generatedResumeTextarea.value = cvContent;
-          statusMessageElement.textContent = displayedMessage; // 최종 성공 메시지
-          logDisplayedCvToBackend(cvContent);
+          if (coverLetterText) {
+            generatedResumeTextarea.value = coverLetterText;
+            statusMessageElement.textContent = "자기소개서 생성이 완료되었습니다!";
+            logDisplayedCvToBackend(coverLetterText);
 
-          let notificationMessage = displayedMessage.split('\n')[0];
-          if (cvContent && cvContent.length > 50 && displayedMessage.startsWith("자기소개서 생성")) {
-               notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
+            let notificationMessage = "자기소개서가 성공적으로 생성되었습니다!";
+            showBrowserNotification("자기소개서 생성 완료!", notificationMessage, () => {
+                generatedResumeTextarea.focus();
+            });
+            eventSource.close(); // 성공 시 연결 종료
+            console.log("SSE connection closed on SUCCESS.");
+          } else {
+            if (!document.getElementById('error_info_container').textContent.includes('오류')){
+                updateErrorInfo('생성된 자기소개서 내용이 비어있습니다.');
+            }
           }
-          showBrowserNotification("자기소개서 생성 완료!", notificationMessage, () => {
-              generatedResumeTextarea.focus();
-          });
-          eventSource.close(); // 성공 시 연결 종료
-          console.log("SSE connection closed on SUCCESS.");
-
         } else if (data.status === "FAILURE" || data.status === "ERROR_INTERNAL" || data.status === "ERROR_SETUP" || data.status === "ERROR_STREAM" || data.status === "ERROR_SERIALIZATION" || data.status === "ERROR_UNEXPECTED_STREAM") {
           console.error("SSE Task FAILURE or ERROR:", data);
           showLoadingState(false);
