@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function logDisplayedCvToBackend(textToLog) {
-    // console.log(\`Logging displayed CV to backend. Length: \${textToLog ? textToLog.length : 0}\`);
+    // console.log(`Logging displayed CV to backend. Length: ${textToLog ? textToLog.length : 0}`);
     const payload = {
       displayed_text: textToLog || ""
     };
@@ -270,12 +270,12 @@ document.addEventListener('DOMContentLoaded', function() {
     generatedResumeTextarea.value = ""; // 이전 결과 지우기
 
     const payload = {
-      job_url: url,
-      prompt: userPrompt,
+      job_posting_url: url,
+      user_prompt: userPrompt,
     };
     // console.log("Payload for POST request:", payload);
 
-    fetch(API_BASE_URL + "/", { // CVFactory_Server의 메인 엔드포인트
+    fetch(API_BASE_URL + "/", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
