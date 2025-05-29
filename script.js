@@ -271,19 +271,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const payload = {
       job_posting_url: url,
-      user_prompt: userPrompt,
+      user_prompt: userPrompt || null // user_prompt가 없으면 null로 설정
     };
+
     // console.log("Payload for POST request:", payload);
 
     fetch(API_BASE_URL + "/", {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json', // Content-Type 변경
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload), // FormData 대신 JSON 페이로드 사용
     })
     .then(response => {
-      // console.log("Received response from server.");
+      // console.log("Raw response from /:", response);
       if (!response.ok) {
         // console.error("Server responded with an error:", response.status);
         showLoadingState(false);
