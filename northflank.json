@@ -89,7 +89,7 @@
                   }
                 },
                 {
-                  "kind": "Job",
+                  "kind": "CronJob",
                   "ref": "purgeCacheJob",
                   "spec": {
                     "name": "purge-cloudflare-cache-job",
