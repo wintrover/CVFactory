@@ -96,7 +96,7 @@
                     "schedule": "0 0 29 2 *",
                     "concurrencyPolicy": "Forbid",
                     "runOnImageChange": true,
-                    "retryLimit": 0,
+                    "backoffLimit": 0,
                     "timeoutSeconds": 600,
                     "billing": {
                       "deploymentPlan": "nf-compute-20",
