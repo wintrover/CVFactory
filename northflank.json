@@ -51,8 +51,8 @@
                     },
                     "buildSettings": {
                       "dockerfile": {
-                        "dockerFilePath": "/Dockerfile",
-                        "dockerWorkDir": "/app"
+                        "dockerFilePath": "Frontend/Dockerfile",
+                        "dockerWorkDir": "Frontend"
                       }
                     },
                     "deployment": {
@@ -109,8 +109,8 @@
                     },
                     "buildSettings": {
                       "dockerfile": {
-                        "dockerFilePath": "/Dockerfile",
-                        "dockerWorkDir": "/app"
+                        "dockerFilePath": "Frontend/Dockerfile",
+                        "dockerWorkDir": "Frontend"
                       }
                     },
                     "deployment": {
