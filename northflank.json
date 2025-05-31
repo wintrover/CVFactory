@@ -1,5 +1,7 @@
 {
-    "apiVersion": "v1.2",
+  "apiVersion": "v1.2",
+  "spec": {
+    "kind": "Workflow",
     "spec": {
       "kind": "Workflow",
       "spec": {
@@ -134,4 +136,19 @@
         ]
       }
     }
-  }
+  },
+  "name": "cvfactory",
+  "options": {
+    "autorun": false,
+    "concurrencyPolicy": "allow"
+  },
+  "gitops": {
+    "repoUrl": "https://github.com/CV-Factory/Frontend",
+    "vcsService": "github",
+    "accountLogin": "CV-Factory",
+    "branch": "develop",
+    "filePath": "/northflank.json"
+  },
+  "description": "",
+  "$schema": "https://api.northflank.com/v1/schemas/template"
+}
