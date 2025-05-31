@@ -1,137 +1,145 @@
 {
-    "apiVersion": "v1.2",
+  "apiVersion": "v1.2",
+  "spec": {
+    "kind": "Workflow",
     "spec": {
-      "kind": "Workflow",
-      "spec": {
-        "type": "sequential",
-        "steps": [
-          {
-            "kind": "Project",
-            "ref": "cvfactoryProject",
-            "spec": {
-              "name": "CVFactory",
-              "region": "europe-west"
-            }
-          },
-          {
-            "kind": "Workflow",
-            "spec": {
-              "type": "sequential",
-              "context": {
-                "projectId": "${refs.cvfactoryProject.id}"
-              },
-              "steps": [
-                {
-                  "kind": "Addon",
-                  "ref": "cvfactory-db",
-                  "spec": {
-                    "name": "cvfactory-db",
-                    "type": "postgres",
-                    "version": "17",
-                    "billing": {
-                      "deploymentPlan": "nf-compute-20",
-                      "replicas": 1,
-                      "storage": 4096
-                    }
-                  }
-                },
-                {
-                  "kind": "CombinedService",
-                  "ref": "cvfactoryApp",
-                  "spec": {
-                    "name": "cvfactory",
-                    "billing": {
-                      "deploymentPlan": "nf-compute-20",
-                      "buildPlan": "nf-compute-400-16"
-                    },
-                    "vcsData": {
-                      "projectType": "github",
-                      "projectUrl": "https://github.com/wintrover/CVFactory",
-                      "projectBranch": "develop"
-                    },
-                    "buildSettings": {
-                      "dockerfile": {
-                        "dockerFilePath": "/Dockerfile",
-                        "dockerWorkDir": "/app"
-                      }
-                    },
-                    "deployment": {
-                      "instances": 1
-                    },
-                    "ports": [
-                      {
-                        "name": "http",
-                        "internalPort": 8000,
-                        "protocol": "HTTP",
-                        "public": true,
-                        "security": {
-                          "credentials": [],
-                          "policies": [],
-                          "sso": {}
-                        },
-                        "domains": []
-                      }
-                    ],
-                    "disabledCI": false,
-                    "buildConfiguration": {
-                      "pathIgnoreRules": [],
-                      "isAllowList": false,
-                      "ciIgnoreFlagsEnabled": false
-                    },
-                    "runtimeEnvironment": {
-                      "DJANGO_SECRET_KEY": "your_production_secret_key_from_northflank_secrets",
-                      "DJANGO_DEBUG": "False",
-                      "DJANGO_ALLOWED_HOSTS": "your_northflank_app_domain.northflank.app,your_custom_domain.com",
-                      "API_KEY": "your_production_api_key",
-                      "DEPLOYMENT_SHA": "${NORTHFLANK_GIT_COMMIT_SHA}"
-                    },
-                    "buildArguments": {}
-                  }
-                },
-                {
-                  "kind": "CronJob",
-                  "ref": "purgeCacheJob",
-                  "spec": {
-                    "name": "purge-cloudflare-cache-job",
-                    "schedule": "0 0 29 2 *",
-                    "concurrencyPolicy": "Forbid",
-                    "runOnImageChange": true,
-                    "backoffLimit": 0,
-                    "timeoutSeconds": 600,
-                    "billing": {
-                      "deploymentPlan": "nf-compute-20",
-                      "buildPlan": "nf-compute-400-16"
-                    },
-                    "vcsData": {
-                      "projectType": "github",
-                      "projectUrl": "https://github.com/wintrover/CVFactory",
-                      "projectBranch": "develop"
-                    },
-                    "buildSettings": {
-                      "dockerfile": {
-                        "dockerFilePath": "/Dockerfile",
-                        "dockerWorkDir": "/app"
-                      }
-                    },
-                    "deployment": {
-                      "runtimeCommand": [
-                        "python",
-                        "purge_cloudflare_cache.py"
-                      ]
-                    },
-                    "runtimeEnvironment": {
-                      "DJANGO_SECRET_KEY": "your_production_secret_key_from_northflank_secrets",
-                      "DJANGO_DEBUG": "False",
-                      "DJANGO_ALLOWED_HOSTS": "your_northflank_app_domain.northflank.app,your_custom_domain.com",
-                      "API_KEY": "your_production_api_key",
-                      "DEPLOYMENT_SHA": "${NORTHFLANK_GIT_COMMIT_SHA}"
-                    }
+      "type": "sequential",
+      "steps": [
+        {
+          "kind": "Project",
+          "ref": "cvfactoryProject",
+          "spec": {
+            "name": "CVFactory",
+            "region": "europe-west"
+          }
+        },
+        {
+          "kind": "Workflow",
+          "spec": {
+            "type": "sequential",
+            "context": {
+              "projectId": "${refs.cvfactoryProject.id}"
+            },
+            "steps": [
+              {
+                "kind": "Addon",
+                "ref": "cvfactory-db",
+                "spec": {
+                  "name": "cvfactory-db",
+                  "type": "postgres",
+                  "version": "17",
+                  "billing": {
+                    "deploymentPlan": "nf-compute-20",
+                    "replicas": 1,
+                    "storage": 4096
                   }
                 }
-              ]
-            }
+              },
+              {
+                "kind": "CombinedService",
+                "ref": "cvfactoryApp",
+                "spec": {
+                  "name": "cvfactory",
+                  "billing": {
+                    "deploymentPlan": "nf-compute-20",
+                    "buildPlan": "nf-compute-400-16"
+                  },
+                  "vcsData": {
+                    "projectType": "github",
+                    "projectUrl": "https://github.com/wintrover/CVFactory",
+                    "projectBranch": "develop"
+                  },
+                  "buildSettings": {
+                    "dockerfile": {
+                      "dockerFilePath": "/Dockerfile",
+                      "dockerWorkDir": "/app"
+                    }
+                  },
+                  "deployment": {
+                    "instances": 1
+                  },
+                  "ports": [
+                    {
+                      "name": "http",
+                      "internalPort": 8000,
+                      "protocol": "HTTP",
+                      "public": true,
+                      "security": {
+                        "credentials": [],
+                        "policies": [],
+                        "sso": {}
+                      },
+                      "domains": []
+                    }
+                  ],
+                  "disabledCI": false,
+                  "buildConfiguration": {
+                    "pathIgnoreRules": [],
+                    "isAllowList": false,
+                    "ciIgnoreFlagsEnabled": false
+                  },
+                  "runtimeEnvironment": {
+                    "DJANGO_SECRET_KEY": "your_production_secret_key_from_northflank_secrets",
+                    "DJANGO_DEBUG": "False",
+                    "DJANGO_ALLOWED_HOSTS": "your_northflank_app_domain.northflank.app,your_custom_domain.com",
+                    "API_KEY": "your_production_api_key",
+                    "DEPLOYMENT_SHA": "${NORTHFLANK_GIT_COMMIT_SHA}"
+                  },
+                  "buildArguments": {}
+                }
+              },
+              {
+                "kind": "CronJob",
+                "ref": "purgeCacheJob",
+                "spec": {
+                  "name": "purge-cloudflare-cache-job",
+                  "schedule": "0 0 29 2 *",
+                  "concurrencyPolicy": "forbid",
+                  "backoffLimit": 0,
+                  "billing": {
+                    "deploymentPlan": "nf-compute-20",
+                    "buildPlan": "nf-compute-400-16"
+                  },
+                  "buildSettings": {
+                    "dockerfile": {
+                      "dockerFilePath": "/Dockerfile",
+                      "dockerWorkDir": "/app"
+                    }
+                  },
+                  "deployment": {},
+                  "runtimeEnvironment": {
+                    "DJANGO_SECRET_KEY": "your_production_secret_key_from_northflank_secrets",
+                    "DJANGO_DEBUG": "False",
+                    "DJANGO_ALLOWED_HOSTS": "your_northflank_app_domain.northflank.app,your_custom_domain.com",
+                    "API_KEY": "your_production_api_key",
+                    "DEPLOYMENT_SHA": "${NORTHFLANK_GIT_COMMIT_SHA}"
+                  },
+                  "buildConfiguration": {
+                    "pathIgnoreRules": [],
+                    "isAllowList": false,
+                    "ciIgnoreFlagsEnabled": false
+                  },
+                  "buildArguments": {}
+                }
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     }
-  }
+  },
+  "name": "cvfactory",
+  "options": {
+    "autorun": false,
+    "concurrencyPolicy": "allow"
+  },
+  "gitops": {
+    "repoUrl": "https://github.com/CV-Factory/Frontend",
+    "vcsService": "github",
+    "accountLogin": "CV-Factory",
+    "branch": "develop",
+    "filePath": "/northflank.json"
+  },
+  "description": "",
+  "$schema": "https://api.northflank.com/v1/schemas/template"
+}
