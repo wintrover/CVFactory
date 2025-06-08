@@ -21,7 +21,7 @@ CVFactory is an AI-powered web application that helps users easily generate cust
 |----------|--------------|
 | Framework | Django |
 | Frontend | HTML, CSS, JavaScript |
-| Database | SQLite (development), PostgreSQL (production via dj-database-url) |
+| Database | SQLite (development) |
 | Web Server | Gunicorn |
 | Static Files | Whitenoise |
 | HTTP Client | Requests |
