@@ -118,10 +118,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     eventSource.onmessage = function(event) {
-      console.log("[DEBUG] Raw SSE event.data:", event.data); // 원시 데이터 로깅
+      // console.log("[DEBUG] Raw SSE event.data:", event.data); // 원시 데이터 로깅
       try {
         const data = JSON.parse(event.data);
-        console.log("[DEBUG] Parsed SSE data object:", JSON.stringify(data, null, 2)); // 파싱된 객체 전체 로깅
+        // console.log("[DEBUG] Parsed SSE data object:", JSON.stringify(data, null, 2)); // 파싱된 객체 전체 로깅
 
         let statusText = "";
         // 사용자 친화적 메시지 매핑
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
         
-        console.log(`[DEBUG] 최종 statusText 결정: ${statusText}, 현재 상태: ${data.status}, 현재 단계: ${data.current_step || 'N/A'}`);
+        // console.log(`[DEBUG] 최종 statusText 결정: ${statusText}, 현재 상태: ${data.status}, 현재 단계: ${data.current_step || 'N/A'}`);
         statusMessageElement.textContent = statusText;
         // console.log(`SSE Task ${data.task_id} status: ${data.status}, step: ${data.current_step || 'N/A'}, message: ${statusText}`);
 
