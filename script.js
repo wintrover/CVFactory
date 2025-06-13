@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
   회사가 자주 마주할 만한 문제가 뭔지 알려주세요.
   저의 역량과 경험이 뭔지 
   저의 역량을 통해서 회사의 문제들을 어떻게 해결해줄 수 있는지 
-  저의 성과를 수치를 근거로 보여주세요`;
+  저의 성과를 수치를 근거로 보여주세요.`;
 
   if (userStoryTextarea) {
     userStoryTextarea.value = defaultPromptText;
