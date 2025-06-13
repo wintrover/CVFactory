@@ -19,8 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // console.log("User Story textarea element:", userStoryTextarea);
 
   // 기본 프롬프트 내용 설정
-  const defaultPromptText = `
-자기소개서를 써주세요.
+  const defaultPromptText = `자기소개서를 써주세요.
 회사가 자주 마주할 만한 문제가 뭔지 알려주세요.
 저의 역량과 경험이 뭔지 
 저의 역량을 통해서
