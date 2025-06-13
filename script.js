@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function startTaskStreaming(taskId) {
-    console.log("Starting SSE connection for task ID:", taskId);
+    // console.log("Starting SSE connection for task ID:", taskId);
     showLoadingState(true);
     
     let initialMessage = "자기소개서 생성을 시작합니다... 잠시만 기다려 주세요.";
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     eventSource = new EventSource(API_BASE_URL + "/stream-task-status/" + taskId);
 
     eventSource.onopen = function() {
-        console.log("SSE connection opened for task " + taskId + ".");
+        // console.log("SSE connection opened for task " + taskId + ".");
         statusMessageElement.textContent = "서버와 연결되었습니다. 작업 진행 상황을 곧 받아옵니다...";
     };
 
@@ -133,15 +133,15 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (data.status === "SUCCESS") {
-          console.log("SSE Task SUCCESS:", data);
+          // console.log("SSE Task SUCCESS:", data);
           showLoadingState(false);
           let coverLetterText = '';
           if (typeof data.result === 'string') {
             coverLetterText = data.result;
-            console.log('SSE SUCCESS but result is a string:', coverLetterText);
+            // console.log('SSE SUCCESS but result is a string:', coverLetterText);
           } else if (data.result && typeof data.result === 'object' && data.result.cover_letter_text) {
             coverLetterText = data.result.cover_letter_text;
-            console.log('SSE SUCCESS with result.cover_letter_text:', coverLetterText);
+            // console.log('SSE SUCCESS with result.cover_letter_text:', coverLetterText);
           } else if (data.result && typeof data.result === 'object') {
             console.warn('SSE SUCCESS but result object structure is unexpected:', data.result);
             updateErrorInfo('예상치 못한 결과 데이터 형식입니다.', data.result);
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 generatedResumeTextarea.focus();
             });
             eventSource.close(); // 성공 시 연결 종료
-            console.log("SSE connection closed on SUCCESS.");
+            // console.log("SSE connection closed on SUCCESS.");
           } else {
             if (!document.getElementById('error_info_container').textContent.includes('오류')){
                 updateErrorInfo('생성된 자기소개서 내용이 비어있습니다.');
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
           statusText += currentStepInfo;
           updateErrorInfo(statusText, data); // 상세 오류 정보 표시 함수 호출
           eventSource.close(); // 실패 또는 오류 시 연결 종료
-          console.log("SSE connection closed on FAILURE or ERROR.");
+          // console.log("SSE connection closed on FAILURE or ERROR.");
         } else { // PENDING, STARTED, PROGRESS, RETRY 등
           if (data.current_step) { // current_step이 있으면 최우선 사용
             statusText = data.current_step;
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
       showLoadingState(false);
       statusMessageElement.textContent = "서버와 연결 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
       eventSource.close(); // 에러 발생 시 명시적으로 연결 종료
-      console.log("SSE connection closed on ERROR.");
+      // console.log("SSE connection closed on ERROR.");
     };
   }
 
